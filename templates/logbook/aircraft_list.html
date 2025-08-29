@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Aircraft - Wingman{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="mb-2">
+          <i class="fas fa-helicopter aviation-icon"></i>
+          Aircraft Fleet
+        </h1>
+        <p class="text-muted">Manage your aircraft information</p>
+      </div>
+      <a href="{% url 'aircraft-create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Aircraft
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Aircraft Statistics -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3>{{ aircraft.count }}</h3>
+      <p><i class="fas fa-helicopter"></i> Total Aircraft</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_flights }}</h3>
+      <p><i class="fas fa-plane"></i> Total Flights</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-clock"></i> Total Hours</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3>{{ avg_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-chart-line"></i> Avg Hours</p>
+    </div>
+  </div>
+</div>
+
+<!-- Aircraft List -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-list aviation-icon"></i>
+          Aircraft List
+        </h5>
+      </div>
+      <div class="card-body">
+        {% if aircraft %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Registration</th>
+                <th>Type</th>
+                <th>Manufacturer</th>
+                <th>Year</th>
+                <th>Total Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for aircraft_item in aircraft %}
+              <tr>
+                <td>
+                  <span class="badge bg-info fs-6"
+                    >{{ aircraft_item.registration }}</span
+                  >
+                </td>
+                <td>
+                  <strong>{{ aircraft_item.type }}</strong>
+                </td>
+                <td>
+                  <span class="text-muted"
+                    >{{ aircraft_item.manufacturer|default:"N/A" }}</span
+                  >
+                </td>
+                <td>
+                  <span class="text-muted"
+                    >{{ aircraft_item.year_manufactured|default:"N/A" }}</span
+                  >
+                </td>
+                <td>
+                  <span class="badge bg-success"
+                    >{{ aircraft_item.total_time }}h</span
+                  >
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <a
+                      href="{% url 'aircraft-update' aircraft_item.pk %}"
+                      class="btn btn-sm btn-outline-warning"
+                      title="Edit"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <a
+                      href="{% url 'aircraft-delete' aircraft_item.pk %}"
+                      class="btn btn-sm btn-outline-danger"
+                      title="Delete"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Aircraft pagination" class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a
+                class="page-link"
+                href="?page={{ page_obj.previous_page_number }}"
+              >
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            {% endif %}
+
+            <li class="page-item active">
+              <span class="page-link">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+              </span>
+            </li>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a
+                class="page-link"
+                href="?page={{ page_obj.paginator.num_pages }}"
+              >
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %} {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-helicopter fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No aircraft found</h5>
+          <p class="text-muted">
+            Start by adding your first aircraft to the fleet.
+          </p>
+          <a href="{% url 'aircraft-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Your First Aircraft
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+{% if aircraft %}
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-tools aviation-icon"></i>
+          Quick Actions
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'aircraft-create' %}" class="btn btn-success w-100">
+              <i class="fas fa-plus"></i> Add Aircraft
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'flight-create' %}" class="btn btn-primary w-100">
+              <i class="fas fa-plane"></i> Log Flight
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'charts' %}" class="btn btn-info w-100">
+              <i class="fas fa-chart-bar"></i> View Analytics
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-warning w-100">
+              <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %} {% endblock %}

@@ -1,0 +1,32 @@
+from django.urls import path
+from django.contrib.auth import views as auth_views
+from . import views
+
+urlpatterns = [
+    # Authentication
+    path('register/', views.register_view, name='register'),
+    path('login/', auth_views.LoginView.as_view(template_name='logbook/login.html'), name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    
+    # Dashboard and main views
+    path('', views.dashboard, name='dashboard'),
+    path('charts/', views.charts_view, name='charts'),
+    path('profile/', views.profile_view, name='profile'),
+    
+    # Flight management
+    path('flights/', views.FlightListView.as_view(), name='flight-list'),
+    path('flights/new/', views.FlightCreateView.as_view(), name='flight-create'),
+    path('flights/<int:pk>/', views.FlightDetailView.as_view(), name='flight-detail'),
+    path('flights/<int:pk>/edit/', views.FlightUpdateView.as_view(), name='flight-update'),
+    path('flights/<int:pk>/delete/', views.FlightDeleteView.as_view(), name='flight-delete'),
+    
+    # Aircraft management
+    path('aircraft/', views.AircraftListView.as_view(), name='aircraft-list'),
+    path('aircraft/new/', views.AircraftCreateView.as_view(), name='aircraft-create'),
+    path('aircraft/<int:pk>/edit/', views.AircraftUpdateView.as_view(), name='aircraft-update'),
+    path('aircraft/<int:pk>/delete/', views.AircraftDeleteView.as_view(), name='aircraft-delete'),
+    
+    # Export and API
+    path('export/pdf/', views.export_pdf, name='export-pdf'),
+    path('api/stats/', views.api_flight_stats, name='api-stats'),
+]

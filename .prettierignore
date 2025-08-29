@@ -1,0 +1,23 @@
+# Django templates
+templates/**/*.html
+**/*.html
+
+# Python files (optional, if you want to keep them)
+*.py
+
+# Django specific
+**/migrations/**
+**/static/**
+**/media/**
+
+# Other common exclusions
+node_modules/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+.env
+.venv/

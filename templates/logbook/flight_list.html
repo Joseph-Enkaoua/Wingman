@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Flight Log - Wingman{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="mb-2">
+          <i class="fas fa-plane aviation-icon"></i>
+          Flight Log
+        </h1>
+        <p class="text-muted">Track and manage your flight history</p>
+      </div>
+      <a href="{% url 'flight-create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Log New Flight
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-search aviation-icon"></i>
+          Search & Filter Flights
+        </h5>
+      </div>
+      <div class="card-body">
+        <form method="get" class="row g-3">
+          <div class="col-md-2">
+            {{ search_form.date_from|as_crispy_field }}
+          </div>
+          <div class="col-md-2">{{ search_form.date_to|as_crispy_field }}</div>
+          <div class="col-md-2">{{ search_form.aircraft|as_crispy_field }}</div>
+          <div class="col-md-2">
+            {{ search_form.pilot_role|as_crispy_field }}
+          </div>
+          <div class="col-md-2">
+            {{ search_form.conditions|as_crispy_field }}
+          </div>
+          <div class="col-md-2">
+            {{ search_form.flight_type|as_crispy_field }}
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-search"></i> Search
+            </button>
+            <a href="{% url 'flight-list' %}" class="btn btn-outline-secondary">
+              <i class="fas fa-times"></i> Clear
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Flight Statistics -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3>{{ page_obj.paginator.count }}</h3>
+      <p><i class="fas fa-plane"></i> Total Flights</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-clock"></i> Total Hours</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_night_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-moon"></i> Night Hours</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_cross_country_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-route"></i> Cross-Country</p>
+    </div>
+  </div>
+</div>
+
+<!-- Flights Table -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-list aviation-icon"></i>
+          Flight Entries
+        </h5>
+      </div>
+      <div class="card-body">
+        {% if flights %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Aircraft</th>
+                <th>Route</th>
+                <th>Duration</th>
+                <th>Role</th>
+                <th>Conditions</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for flight in flights %}
+              <tr class="flight-card">
+                <td>
+                  <strong>{{ flight.date|date:"M d, Y" }}</strong><br />
+                  <small class="text-muted"
+                    >{{ flight.departure_time|time:"H:i" }} - {{
+                    flight.arrival_time|time:"H:i" }}</small
+                  >
+                </td>
+                <td>
+                  <span class="badge bg-info"
+                    >{{ flight.aircraft.registration }}</span
+                  ><br />
+                  <small class="text-muted">{{ flight.aircraft.type }}</small>
+                </td>
+                <td>
+                  <strong>{{ flight.departure_aerodrome }}</strong>
+                  <i class="fas fa-arrow-right mx-2"></i>
+                  <strong>{{ flight.arrival_aerodrome }}</strong>
+                </td>
+                <td>
+                  <span class="badge bg-success">{{ flight.total_time }}h</span>
+                  {% if flight.night_time > 0 %}
+                  <br /><span class="badge bg-dark"
+                    >{{ flight.night_time }}h night</span
+                  >
+                  {% endif %} {% if flight.cross_country_time > 0 %}
+                  <br /><span class="badge bg-warning"
+                    >{{ flight.cross_country_time }}h XC</span
+                  >
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-primary"
+                    >{{ flight.get_pilot_role_display }}</span
+                  >
+                  {% if flight.instructor_name %}
+                  <br /><small class="text-muted"
+                    >w/ {{ flight.instructor_name }}</small
+                  >
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-secondary"
+                    >{{ flight.get_conditions_display }}</span
+                  ><br />
+                  <span class="badge bg-info"
+                    >{{ flight.get_flight_type_display }}</span
+                  >
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <a
+                      href="{% url 'flight-detail' flight.pk %}"
+                      class="btn btn-sm btn-outline-primary"
+                      title="View Details"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a
+                      href="{% url 'flight-update' flight.pk %}"
+                      class="btn btn-sm btn-outline-warning"
+                      title="Edit"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <a
+                      href="{% url 'flight-delete' flight.pk %}"
+                      class="btn btn-sm btn-outline-danger"
+                      title="Delete"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Flight pagination" class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a
+                class="page-link"
+                href="?page=1{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}{% if request.GET.conditions %}&conditions={{ request.GET.conditions }}{% endif %}{% if request.GET.flight_type %}&flight_type={{ request.GET.flight_type }}{% endif %}"
+              >
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a
+                class="page-link"
+                href="?page={{ page_obj.previous_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}{% if request.GET.conditions %}&conditions={{ request.GET.conditions }}{% endif %}{% if request.GET.flight_type %}&flight_type={{ request.GET.flight_type }}{% endif %}"
+              >
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            {% endif %}
+
+            <li class="page-item active">
+              <span class="page-link">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+              </span>
+            </li>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a
+                class="page-link"
+                href="?page={{ page_obj.next_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}{% if request.GET.conditions %}&conditions={{ request.GET.conditions }}{% endif %}{% if request.GET.flight_type %}&flight_type={{ request.GET.flight_type }}{% endif %}"
+              >
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a
+                class="page-link"
+                href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}{% if request.GET.conditions %}&conditions={{ request.GET.conditions }}{% endif %}{% if request.GET.flight_type %}&flight_type={{ request.GET.flight_type }}{% endif %}"
+              >
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %} {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-plane fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No flights found</h5>
+          <p class="text-muted">
+            {% if request.GET %} No flights match your search criteria. Try
+            adjusting your filters. {% else %} You haven't logged any flights
+            yet. Start your aviation journey! {% endif %}
+          </p>
+          <a href="{% url 'flight-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Log Your First Flight
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Export Options -->
+{% if flights %}
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-download aviation-icon"></i>
+          Export Options
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-2">
+            <a href="{% url 'export-pdf' %}" class="btn btn-warning w-100">
+              <i class="fas fa-file-pdf"></i> Export to PDF
+            </a>
+          </div>
+          <div class="col-md-4 mb-2">
+            <a href="{% url 'charts' %}" class="btn btn-info w-100">
+              <i class="fas fa-chart-bar"></i> View Analytics
+            </a>
+          </div>
+          <div class="col-md-4 mb-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-success w-100">
+              <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %} {% endblock %} {% block extra_js %}
+<script>
+  // Add some interactivity to the flight cards
+  document.addEventListener("DOMContentLoaded", function () {
+    const flightRows = document.querySelectorAll(".flight-card");
+
+    flightRows.forEach((row) => {
+      row.addEventListener("mouseenter", function () {
+        this.style.backgroundColor = "#f8f9fa";
+      });
+
+      row.addEventListener("mouseleave", function () {
+        this.style.backgroundColor = "";
+      });
+    });
+  });
+</script>
+{% endblock %}

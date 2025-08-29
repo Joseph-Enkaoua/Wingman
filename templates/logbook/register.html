@@ -1,0 +1,132 @@
+{% extends 'base.html' %} {% load crispy_forms_tags %} {% block title %}Register
+- Wingman{% endblock %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card">
+      <div class="card-header text-center">
+        <h3 class="card-title mb-0">
+          <i class="fas fa-user-plus aviation-icon"></i>
+          Join Wingman
+        </h3>
+        <p class="text-muted mt-2">
+          Create your pilot account and start logging flights
+        </p>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+
+          <!-- Personal Information -->
+          <div class="row mb-3">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-user"></i> Personal Information
+              </h6>
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.first_name|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.last_name|as_crispy_field }}
+            </div>
+            <div class="col-12 mb-3">{{ form.email|as_crispy_field }}</div>
+          </div>
+
+          <!-- Account Information -->
+          <div class="row mb-3">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-key"></i> Account Information
+              </h6>
+            </div>
+            <div class="col-12 mb-3">{{ form.username|as_crispy_field }}</div>
+            <div class="col-md-6 mb-3">
+              {{ form.password1|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.password2|as_crispy_field }}
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-user-plus"></i> Create Account
+            </button>
+          </div>
+        </form>
+
+        <hr class="my-4" />
+
+        <div class="text-center">
+          <p class="mb-2">Already have an account?</p>
+          <a href="{% url 'login' %}" class="btn btn-outline-primary">
+            <i class="fas fa-sign-in-alt"></i> Sign In
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-rocket aviation-icon"></i>
+          Start Your Aviation Journey
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-plane fa-2x text-primary me-3 mt-1"></i>
+              <div>
+                <h6>Flight Logging</h6>
+                <small class="text-muted"
+                  >Log every flight with detailed information including
+                  aircraft, route, and conditions.</small
+                >
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-chart-line fa-2x text-success me-3 mt-1"></i>
+              <div>
+                <h6>Progress Tracking</h6>
+                <small class="text-muted"
+                  >Monitor your flight hours, night time, cross-country, and
+                  instrument time.</small
+                >
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-file-pdf fa-2x text-warning me-3 mt-1"></i>
+              <div>
+                <h6>Export Logbook</h6>
+                <small class="text-muted"
+                  >Generate professional PDF logbooks in EASA/FAA format for
+                  licensing requirements.</small
+                >
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-chart-bar fa-2x text-info me-3 mt-1"></i>
+              <div>
+                <h6>Analytics & Charts</h6>
+                <small class="text-muted"
+                  >Visualize your flying progress with interactive charts and
+                  statistics.</small
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Flight Analytics - Wingman{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="mb-2">
+          <i class="fas fa-chart-line aviation-icon"></i>
+          Flight Analytics
+        </h1>
+        <p class="text-muted">Visualize your flying progress and patterns</p>
+      </div>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Monthly Progress Chart -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-area aviation-icon"></i>
+          Monthly Flight Hours Progress
+        </h5>
+      </div>
+      <div class="card-body">
+        <canvas id="monthlyProgressChart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+  <!-- Aircraft Usage -->
+  <div class="col-lg-6 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-helicopter aviation-icon"></i>
+          Aircraft Usage
+        </h5>
+      </div>
+      <div class="card-body">
+        <canvas id="aircraftChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flight Type Distribution -->
+  <div class="col-lg-6 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-pie aviation-icon"></i>
+          Flight Type Distribution
+        </h5>
+      </div>
+      <div class="card-body">
+        <canvas id="flightTypeChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Conditions and Time Breakdown -->
+<div class="row mb-4">
+  <!-- Flight Conditions -->
+  <div class="col-lg-6 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-cloud-sun aviation-icon"></i>
+          Flight Conditions
+        </h5>
+      </div>
+      <div class="card-body">
+        <canvas id="conditionsChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Breakdown -->
+  <div class="col-lg-6 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-clock aviation-icon"></i>
+          Time Breakdown
+        </h5>
+      </div>
+      <div class="card-body">
+        <canvas id="timeBreakdownChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3 id="totalFlights">0</h3>
+      <p><i class="fas fa-plane"></i> Total Flights</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3 id="totalHours">0.0</h3>
+      <p><i class="fas fa-clock"></i> Total Hours</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3 id="avgFlightTime">0.0</h3>
+      <p><i class="fas fa-stopwatch"></i> Avg Flight Time</p>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="stats-card">
+      <h3 id="mostUsedAircraft">-</h3>
+      <p><i class="fas fa-helicopter"></i> Most Used Aircraft</p>
+    </div>
+  </div>
+</div>
+
+<!-- Export Options -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-download aviation-icon"></i>
+          Export &amp; Share
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'export-pdf' %}" class="btn btn-warning w-100">
+              <i class="fas fa-file-pdf"></i> Export PDF
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <button class="btn btn-info w-100" onclick="downloadChart()">
+              <i class="fas fa-download"></i> Download Charts
+            </button>
+          </div>
+          <div class="col-md-3 mb-2">
+            <button class="btn btn-success w-100" onclick="printCharts()">
+              <i class="fas fa-print"></i> Print Report
+            </button>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'flight-list' %}" class="btn btn-primary w-100">
+              <i class="fas fa-list"></i> View Flights
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Chart.js configuration
+  Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+  Chart.defaults.color = '#6c757d';
+
+  // Monthly Progress Chart
+  const monthlyData = {{ monthly_data|safe }};
+  const monthlyCtx = document.getElementById('monthlyProgressChart').getContext('2d');
+
+  new Chart(monthlyCtx, {
+      type: 'line',
+      data: {
+          labels: monthlyData.map(item => item.month),
+          datasets: [
+              {
+                  label: 'Total Hours',
+                  data: monthlyData.map(item => item.total_hours),
+                  borderColor: '#3b82f6',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  borderWidth: 3,
+                  fill: true,
+                  tension: 0.4,
+                  yAxisID: 'y'
+              },
+              {
+                  label: 'Night Hours',
+                  data: monthlyData.map(item => item.night_hours),
+                  borderColor: '#1f2937',
+                  backgroundColor: 'rgba(31, 41, 55, 0.1)',
+                  borderWidth: 2,
+                  fill: false,
+                  tension: 0.4,
+                  yAxisID: 'y'
+              },
+              {
+                  label: 'Cross-Country Hours',
+                  data: monthlyData.map(item => item.cross_country_hours),
+                  borderColor: '#f59e0b',
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                  borderWidth: 2,
+                  fill: false,
+                  tension: 0.4,
+                  yAxisID: 'y'
+              }
+          ]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+              mode: 'index',
+              intersect: false,
+          },
+          plugins: {
+              legend: {
+                  position: 'top',
+              },
+              title: {
+                  display: false
+              }
+          },
+          scales: {
+              y: {
+                  type: 'linear',
+                  display: true,
+                  position: 'left',
+                  title: {
+                      display: true,
+                      text: 'Flight Hours'
+                  }
+              }
+          }
+      }
+  });
+
+  // Aircraft Usage Chart
+  const aircraftData = {{ aircraft_data|safe }};
+  const aircraftCtx = document.getElementById('aircraftChart').getContext('2d');
+
+  new Chart(aircraftCtx, {
+      type: 'doughnut',
+      data: {
+          labels: aircraftData.map(item => item.aircraft__registration),
+          datasets: [{
+              data: aircraftData.map(item => item.total_hours),
+              backgroundColor: [
+                  '#3b82f6',
+                  '#10b981',
+                  '#f59e0b',
+                  '#ef4444',
+                  '#8b5cf6',
+                  '#06b6d4',
+                  '#84cc16',
+                  '#f97316'
+              ],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'bottom',
+              }
+          }
+      }
+  });
+
+  // Flight Type Distribution Chart
+  const flightTypeData = {{ flight_type_data|safe }};
+  const flightTypeCtx = document.getElementById('flightTypeChart').getContext('2d');
+
+  new Chart(flightTypeCtx, {
+      type: 'pie',
+      data: {
+          labels: flightTypeData.map(item => item.flight_type),
+          datasets: [{
+              data: flightTypeData.map(item => item.count),
+              backgroundColor: [
+                  '#3b82f6',
+                  '#10b981',
+                  '#f59e0b',
+                  '#ef4444',
+                  '#8b5cf6',
+                  '#06b6d4'
+              ],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'bottom',
+              }
+          }
+      }
+  });
+
+  // Flight Conditions Chart
+  const conditionsData = {{ conditions_data|safe }};
+  const conditionsCtx = document.getElementById('conditionsChart').getContext('2d');
+
+  new Chart(conditionsCtx, {
+      type: 'bar',
+      data: {
+          labels: conditionsData.map(item => item.conditions),
+          datasets: [{
+              label: 'Number of Flights',
+              data: conditionsData.map(item => item.count),
+              backgroundColor: [
+                  '#3b82f6',
+                  '#10b981',
+                  '#f59e0b'
+              ],
+              borderWidth: 1,
+              borderColor: '#ffffff'
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  display: false
+              }
+          },
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  title: {
+                      display: true,
+                      text: 'Number of Flights'
+                  }
+              }
+          }
+      }
+  });
+
+  // Time Breakdown Chart (assuming we have this data)
+  const timeBreakdownCtx = document.getElementById('timeBreakdownChart').getContext('2d');
+
+  // This would need to be populated with actual data from the backend
+  new Chart(timeBreakdownCtx, {
+      type: 'radar',
+      data: {
+          labels: ['Total Hours', 'Night Time', 'Instrument Time', 'Cross-Country', 'Dual Instruction', 'Solo Time'],
+          datasets: [{
+              label: 'Current Hours',
+              data: [50, 10, 5, 15, 20, 30], // This should come from backend
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              borderColor: '#3b82f6',
+              borderWidth: 2,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  display: false
+              }
+          },
+          scales: {
+              r: {
+                  beginAtZero: true,
+                  title: {
+                      display: true,
+                      text: 'Hours'
+                  }
+              }
+          }
+      }
+  });
+
+  // Update statistics
+  function updateStats() {
+      // This would typically come from an API call
+      document.getElementById('totalFlights').textContent = '25';
+      document.getElementById('totalHours').textContent = '50.5';
+      document.getElementById('avgFlightTime').textContent = '2.0';
+      document.getElementById('mostUsedAircraft').textContent = 'F-GABC';
+  }
+
+  // Download chart function
+  function downloadChart() {
+      const canvas = document.getElementById('monthlyProgressChart');
+      const link = document.createElement('a');
+      link.download = 'flight-analytics.png';
+      link.href = canvas.toDataURL();
+      link.click();
+  }
+
+  // Print charts function
+  function printCharts() {
+      window.print();
+  }
+
+  // Initialize stats
+  document.addEventListener('DOMContentLoaded', function() {
+      updateStats();
+  });
+</script>
+{% endblock %}

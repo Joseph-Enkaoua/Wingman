@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard - Wingman{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h1 class="mb-4">
+      <i class="fas fa-tachometer-alt aviation-icon"></i>
+      Flight Dashboard
+    </h1>
+    <p class="lead text-muted">
+      Welcome back, {{ user.get_full_name|default:user.username }}! Here's your
+      flight summary.
+    </p>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-clock"></i> Total Hours</p>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_flights }}</h3>
+      <p><i class="fas fa-plane"></i> Total Flights</p>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_night_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-moon"></i> Night Hours</p>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_cross_country_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-route"></i> Cross-Country</p>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed Statistics -->
+<div class="row mb-4">
+  <div class="col-lg-6 mb-3">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-pie aviation-icon"></i>
+          Flight Time Breakdown
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-6">
+            <div class="d-flex justify-content-between mb-2">
+              <span>PIC Hours:</span>
+              <strong>{{ total_pic_hours|floatformat:1 }}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Dual Instruction:</span>
+              <strong>{{ total_dual_hours|floatformat:1 }}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Solo Hours:</span>
+              <strong>{{ total_solo_hours|floatformat:1 }}</strong>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="d-flex justify-content-between mb-2">
+              <span>Instrument Time:</span>
+              <strong>{{ total_instrument_hours|floatformat:1 }}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Night Landings:</span>
+              <strong>{{ pilot_profile.user.flights.all|length }}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span>Day Landings:</span>
+              <strong>{{ pilot_profile.user.flights.all|length }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 mb-3">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-helicopter aviation-icon"></i>
+          Aircraft Usage
+        </h5>
+      </div>
+      <div class="card-body">
+        {% if aircraft_usage %} {% for aircraft in aircraft_usage %}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span><strong>{{ aircraft.aircraft__registration }}</strong></span>
+          <div>
+            <span class="badge bg-primary"
+              >{{ aircraft.flight_count }} flights</span
+            >
+            <span class="badge bg-success"
+              >{{ aircraft.total_hours|floatformat:1 }}h</span
+            >
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <p class="text-muted">No aircraft data available.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-line aviation-icon"></i>
+          Monthly Flight Hours (Last 12 Months)
+        </h5>
+      </div>
+      <div class="card-body">
+        <canvas id="monthlyChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Flights -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <h5 class="card-title mb-0">
+          <i class="fas fa-history aviation-icon"></i>
+          Recent Flights
+        </h5>
+        <a href="{% url 'flight-create' %}" class="btn btn-primary btn-sm">
+          <i class="fas fa-plus"></i> Log New Flight
+        </a>
+      </div>
+      <div class="card-body">
+        {% if recent_flights %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Aircraft</th>
+                <th>Route</th>
+                <th>Duration</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for flight in recent_flights %}
+              <tr class="flight-card">
+                <td>{{ flight.date|date:"M d, Y" }}</td>
+                <td>
+                  <span class="badge bg-info"
+                    >{{ flight.aircraft.registration }}</span
+                  >
+                </td>
+                <td>
+                  <strong>{{ flight.departure_aerodrome }}</strong>
+                  <i class="fas fa-arrow-right mx-2"></i>
+                  <strong>{{ flight.arrival_aerodrome }}</strong>
+                </td>
+                <td>
+                  <span class="badge bg-success">{{ flight.total_time }}h</span>
+                  {% if flight.night_time > 0 %}
+                  <span class="badge bg-dark"
+                    >{{ flight.night_time }}h night</span
+                  >
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-primary"
+                    >{{ flight.get_pilot_role_display }}</span
+                  >
+                </td>
+                <td>
+                  <a
+                    href="{% url 'flight-detail' flight.pk %}"
+                    class="btn btn-sm btn-outline-primary"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <a
+                    href="{% url 'flight-update' flight.pk %}"
+                    class="btn btn-sm btn-outline-warning"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="text-center mt-3">
+          <a href="{% url 'flight-list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-list"></i> View All Flights
+          </a>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="fas fa-plane fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No flights logged yet</h5>
+          <p class="text-muted">
+            Start your aviation journey by logging your first flight!
+          </p>
+          <a href="{% url 'flight-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Log Your First Flight
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-rocket aviation-icon"></i>
+          Quick Actions
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'flight-create' %}" class="btn btn-primary w-100">
+              <i class="fas fa-plus"></i> Log Flight
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'aircraft-create' %}" class="btn btn-success w-100">
+              <i class="fas fa-helicopter"></i> Add Aircraft
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'charts' %}" class="btn btn-info w-100">
+              <i class="fas fa-chart-bar"></i> View Charts
+            </a>
+          </div>
+          <div class="col-md-3 mb-2">
+            <a href="{% url 'export-pdf' %}" class="btn btn-warning w-100">
+              <i class="fas fa-file-pdf"></i> Export PDF
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Monthly Flight Hours Chart
+  const monthlyData = {{ monthly_hours|safe }};
+  const ctx = document.getElementById('monthlyChart').getContext('2d');
+
+  new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: monthlyData.map(item => item.month),
+          datasets: [{
+              label: 'Flight Hours',
+              data: monthlyData.map(item => item.hours),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 6,
+              pointHoverRadius: 8
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  display: false
+              }
+          },
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  title: {
+                      display: true,
+                      text: 'Flight Hours'
+                  },
+                  grid: {
+                      color: 'rgba(0, 0, 0, 0.1)'
+                  }
+              },
+              x: {
+                  grid: {
+                      display: false
+                  }
+              }
+          },
+          interaction: {
+              intersect: false,
+              mode: 'index'
+          }
+      }
+  });
+</script>
+{% endblock %}

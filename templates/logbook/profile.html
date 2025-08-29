@@ -1,0 +1,257 @@
+{% extends 'base.html' %} {% load crispy_forms_tags %} {% block title %}Pilot
+Profile - Wingman{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="mb-2">
+          <i class="fas fa-user aviation-icon"></i>
+          Pilot Profile
+        </h1>
+        <p class="text-muted">
+          Manage your pilot information and view your statistics
+        </p>
+      </div>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Profile Form -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-user-edit aviation-icon"></i>
+          Profile Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <form
+          method="post"
+          enctype="multipart/form-data"
+          class="needs-validation"
+          novalidate
+        >
+          {% csrf_token %}
+
+          <!-- Pilot Information -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-id-card"></i> Pilot Information
+              </h6>
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.license_number|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.license_type|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.medical_class|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.medical_expiry|as_crispy_field }}
+            </div>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-address-book"></i> Contact Information
+              </h6>
+            </div>
+            <div class="col-md-6 mb-3">{{ form.phone|as_crispy_field }}</div>
+            <div class="col-md-6 mb-3">{{ form.address|as_crispy_field }}</div>
+          </div>
+
+          <!-- Flight School Information -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-graduation-cap"></i> Flight School Information
+              </h6>
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.flight_school|as_crispy_field }}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.instructor|as_crispy_field }}
+            </div>
+          </div>
+
+          <!-- Profile Picture -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-primary mb-3">
+                <i class="fas fa-camera"></i> Profile Picture
+              </h6>
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.profile_picture|as_crispy_field }}
+            </div>
+            {% if pilot_profile.profile_picture %}
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Current Picture</label><br />
+              <img
+                src="{{ pilot_profile.profile_picture.url }}"
+                alt="Profile Picture"
+                class="img-thumbnail"
+                style="max-width: 150px"
+              />
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Form Actions -->
+          <div class="row">
+            <div class="col-12">
+              <hr class="my-4" />
+              <div class="d-flex justify-content-between">
+                <a
+                  href="{% url 'dashboard' %}"
+                  class="btn btn-outline-secondary"
+                >
+                  <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save"></i> Save Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flight Statistics -->
+  <div class="col-lg-4">
+    <!-- Pilot Summary -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-user-circle aviation-icon"></i>
+          Pilot Summary
+        </h5>
+      </div>
+      <div class="card-body text-center">
+        {% if pilot_profile.profile_picture %}
+        <img
+          src="{{ pilot_profile.profile_picture.url }}"
+          alt="Profile Picture"
+          class="rounded-circle mb-3"
+          style="width: 100px; height: 100px; object-fit: cover"
+        />
+        {% else %}
+        <div
+          class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+          style="width: 100px; height: 100px"
+        >
+          <i class="fas fa-user fa-3x text-muted"></i>
+        </div>
+        {% endif %}
+        <h5>{{ user.get_full_name|default:user.username }}</h5>
+        <p class="text-muted">{{ user.email }}</p>
+        {% if pilot_profile.license_type %}
+        <span class="badge bg-primary">{{ pilot_profile.license_type }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Flight Statistics -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-bar aviation-icon"></i>
+          Flight Statistics
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Total Hours:</span>
+            <strong
+              >{{ pilot_profile.total_flight_hours|floatformat:1 }}</strong
+            >
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Total Flights:</span>
+            <strong>{{ user.flights.count }}</strong>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Night Hours:</span>
+            <strong>{{ pilot_profile.total_night_hours|floatformat:1 }}</strong>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Cross-Country:</span>
+            <strong>
+              {{ pilot_profile.total_cross_country_hours|floatformat:1 }}
+            </strong>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Instrument Time:</span>
+            <strong
+              >{{ pilot_profile.total_instrument_hours|floatformat:1 }}</strong
+            >
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>PIC Hours:</span>
+            <strong>{{ pilot_profile.total_pic_hours|floatformat:1 }}</strong>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Dual Instruction:</span>
+            <strong>{{ pilot_profile.total_dual_hours|floatformat:1 }}</strong>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Solo Hours:</span>
+            <strong>{{ pilot_profile.total_solo_hours|floatformat:1 }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-tools aviation-icon"></i>
+          Quick Actions
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'flight-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Log Flight
+          </a>
+          <a href="{% url 'charts' %}" class="btn btn-info">
+            <i class="fas fa-chart-bar"></i> View Analytics
+          </a>
+          <a href="{% url 'export-pdf' %}" class="btn btn-warning">
+            <i class="fas fa-file-pdf"></i> Export PDF
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
