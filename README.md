@@ -120,7 +120,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Live Demo:** [https://wingman.cyou](https://wingman.cyou)
-- **Issues:** [GitHub Issues](https://github.com/yourusername/wingman/issues)
 - **Email:** spie.system@gmail.com
 
 ---
@@ -131,7 +130,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 _Wingman - Your trusted companion in the skies_
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/wingman?style=social)](https://github.com/yourusername/wingman)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/wingman?style=social)](https://github.com/yourusername/wingman)
+⭐ Star this repository if you find it useful!
 
 </div>
