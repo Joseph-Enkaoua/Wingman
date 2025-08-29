@@ -16,6 +16,7 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 # Fallback: If ALLOWED_HOSTS is empty or not set, use default Railway domains
 if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
     ALLOWED_HOSTS = [
+        'wingman.cyou',
         'web-production-ce69e.up.railway.app',
         '*.up.railway.app', 
         '*.railway.app',
