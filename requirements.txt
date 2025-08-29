@@ -7,3 +7,6 @@ reportlab==4.4.3
 matplotlib==3.10.5
 seaborn==0.13.2
 plotly==6.3.0
+gunicorn==21.2.0
+whitenoise==6.6.0
+dj-database-url==2.1.0
