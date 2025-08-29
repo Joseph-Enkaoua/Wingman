@@ -108,6 +108,29 @@
         backdrop-filter: blur(10px);
       }
 
+      .footer .row {
+        align-items: center;
+      }
+
+      .footer p {
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .footer .col-md-6 {
+        display: flex;
+        align-items: center;
+        min-height: 100%;
+      }
+
+      .footer .col-md-6:first-child {
+        justify-content: flex-start;
+      }
+
+      .footer .col-md-6:last-child {
+        justify-content: flex-end;
+      }
+
       .footer a {
         color: rgba(255, 255, 255, 0.8);
         text-decoration: none;
@@ -384,16 +407,18 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
-        <div class="row">
+        <div class="row align-items-center">
           <div class="col-md-6">
-            <p>
+            <p class="mb-0">
               &copy; 2025 Wingman Flight Logbook. Built with
               <i class="fas fa-heart" style="color: #ef4444"></i> for pilots.
             </p>
           </div>
-          <div class="col-md-6 text-end">
-            <a href="{% url 'privacy_policy' %}" class="text-muted me-3">Privacy Policy</a>
-            <a href="{% url 'terms_of_service' %}" class="text-muted">Terms of Service</a>
+          <div class="col-md-6">
+            <div class="text-end">
+              <a href="{% url 'privacy_policy' %}" class="text-white me-3">Privacy Policy</a>
+              <a href="{% url 'terms_of_service' %}" class="text-white">Terms of Service</a>
+            </div>
           </div>
         </div>
       </div>
