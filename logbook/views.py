@@ -454,9 +454,17 @@ def api_flight_stats(request):
 
 def privacy_policy(request):
     """Privacy Policy page"""
-    return render(request, 'privacy_policy.html')
+    from django.utils import timezone
+    context = {
+        'last_updated': timezone.now().strftime('%B %d, %Y')
+    }
+    return render(request, 'privacy_policy.html', context)
 
 
 def terms_of_service(request):
     """Terms of Service page"""
-    return render(request, 'terms_of_service.html')
+    from django.utils import timezone
+    context = {
+        'last_updated': timezone.now().strftime('%B %d, %Y')
+    }
+    return render(request, 'terms_of_service.html', context)
