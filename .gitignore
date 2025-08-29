@@ -145,3 +145,4 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
+wingman/__pycache__/*
