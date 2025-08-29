@@ -13,10 +13,14 @@ Your Django flight logbook application is now ready for deployment!
 ## 🔑 Your Secret Key
 
 ```
-1e1rt5!08!$&g8@xo1a4z)3wgj8e%=e7y%ic-2f=e6f3*o+=iu
+[SECRET_KEY_REMOVED_FOR_SECURITY]
 ```
 
-**⚠️ Keep this secret! Use it as your SECRET_KEY environment variable.**
+**⚠️ Generate a new secret key for production! Use the command below:**
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
 
 ## 🎯 Recommended Deployment: Railway
 
@@ -29,7 +33,7 @@ Your Django flight logbook application is now ready for deployment!
 1. **Sign up** at [railway.app](https://railway.app)
 2. **Connect GitHub** and select this repository
 3. **Add environment variables**:
-   - `SECRET_KEY`: `1e1rt5!08!$&g8@xo1a4z)3wgj8e%=e7y%ic-2f=e6f3*o+=iu`
+   - `SECRET_KEY`: Generate a new one using the command above
    - `ALLOWED_HOSTS`: `your-app.railway.app` (Railway will provide this)
    - `DATABASE_URL`: Railway will provide this automatically
 4. **Deploy** - Railway will auto-detect Django and deploy
