@@ -2,12 +2,17 @@ import os
 import dj_database_url
 from .settings import *
 
-# Debug: Print all environment variables to see what's available
-print("DEBUG: All environment variables:")
+# Debug: Print relevant environment variables
+print("DEBUG: Relevant environment variables:")
+relevant_vars = ['ALLOWED_HOSTS', 'SECRET_KEY', 'DATABASE_URL', 'RAILWAY_ENVIRONMENT', 'RAILWAY_PROJECT_ID', 'PORT']
+for key in relevant_vars:
+    value = os.environ.get(key, 'NOT_SET')
+    print(f"  {key}: {value}")
+
+# Also check for any variables containing 'HOST'
+print("DEBUG: Variables containing 'HOST':")
 for key, value in os.environ.items():
-    if 'HOST' in key or 'SECRET' in key or 'DATABASE' in key:
-        print(f"  {key}: {value}")
-    elif key in ['RAILWAY_ENVIRONMENT', 'RAILWAY_PROJECT_ID', 'PORT']:
+    if 'HOST' in key:
         print(f"  {key}: {value}")
 
 # SECURITY WARNING: don't run with debug turned on in production!
