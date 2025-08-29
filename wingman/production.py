@@ -24,6 +24,15 @@ if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
         '127.0.0.1'
     ]
 
+# CSRF Trusted Origins - needed for HTTPS forms
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-ce69e.up.railway.app',
+    'https://wingman.cyou',
+    'https://www.wingman.cyou',
+    'https://*.up.railway.app',
+    'https://*.railway.app',
+]
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
@@ -50,11 +59,11 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# HTTPS settings (uncomment if using HTTPS)
-# SECURE_SSL_REDIRECT = True
-# SECURE_HSTS_SECONDS = 31536000
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
+# HTTPS settings (enabled for production)
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 # Logging
 LOGGING = {
