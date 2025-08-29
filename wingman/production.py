@@ -17,11 +17,13 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
     ALLOWED_HOSTS = [
         'wingman.cyou',
+        'www.wingman.cyou',
         'web-production-ce69e.up.railway.app',
         '*.up.railway.app', 
         '*.railway.app',
         'localhost',
-        '127.0.0.1'
+        '127.0.0.1',
+        'testserver'  # For testing purposes
     ]
 
 # CSRF Trusted Origins - needed for HTTPS forms
@@ -65,6 +67,9 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
+# Additional security headers
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Logging
 LOGGING = {
     'version': 1,
@@ -77,5 +82,16 @@ LOGGING = {
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
+    },
+    'loggers': {
+        'django.security.DisallowedHost': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }

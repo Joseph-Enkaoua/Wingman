@@ -27,7 +27,7 @@ def logout_view(request):
     """Simple logout view that clears session and redirects to login"""
     from django.contrib.auth import logout
     logout(request)
-    return redirect('login')
+    return redirect('/login/')
 
 
 @login_required
@@ -450,3 +450,13 @@ def api_flight_stats(request):
     }
     
     return JsonResponse(stats)
+
+
+def privacy_policy(request):
+    """Privacy Policy page"""
+    return render(request, 'privacy_policy.html')
+
+
+def terms_of_service(request):
+    """Terms of Service page"""
+    return render(request, 'terms_of_service.html')

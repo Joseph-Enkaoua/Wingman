@@ -29,4 +29,8 @@ urlpatterns = [
     # Export and API
     path('export/pdf/', views.export_pdf, name='export-pdf'),
     path('api/stats/', views.api_flight_stats, name='api-stats'),
+    
+    # Legal pages
+    path('privacy/', views.privacy_policy, name='privacy_policy'),
+    path('terms/', views.terms_of_service, name='terms_of_service'),
 ]
