@@ -2,6 +2,14 @@ import os
 import dj_database_url
 from .settings import *
 
+# Debug: Print all environment variables to see what's available
+print("DEBUG: All environment variables:")
+for key, value in os.environ.items():
+    if 'HOST' in key or 'SECRET' in key or 'DATABASE' in key:
+        print(f"  {key}: {value}")
+    elif key in ['RAILWAY_ENVIRONMENT', 'RAILWAY_PROJECT_ID', 'PORT']:
+        print(f"  {key}: {value}")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
@@ -14,8 +22,18 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 print(f"DEBUG: ALLOWED_HOSTS environment variable: '{os.environ.get('ALLOWED_HOSTS', 'NOT_SET')}'")
 print(f"DEBUG: ALLOWED_HOSTS list: {ALLOWED_HOSTS}")
 
-# Temporary fix - uncomment the line below if environment variable isn't working
-# ALLOWED_HOSTS = ['web-production-ce69e.up.railway.app', '*.up.railway.app', '*.railway.app']
+# Fallback: If ALLOWED_HOSTS is empty or not set, use default Railway domains
+if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
+    print("DEBUG: ALLOWED_HOSTS is empty, using fallback values")
+    ALLOWED_HOSTS = [
+        'web-production-ce69e.up.railway.app',
+        '*.up.railway.app', 
+        '*.railway.app',
+        'localhost',
+        '127.0.0.1'
+    ]
+
+print(f"DEBUG: Final ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
