@@ -21,6 +21,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.up.railway.app',
     'https://*.railway.app',
     'https://*.railway.dev',
+    'https://wingman.cyou',
+    'https://www.wingman.cyou',
 ]
 
 # Database
