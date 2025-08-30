@@ -39,6 +39,9 @@ class FlightForm(forms.ModelForm):
         self.helper.label_class = ''
         self.helper.field_class = ''
         
+        # Determine button text based on whether this is an update or create
+        button_text = 'Update Flight' if self.instance and self.instance.pk else 'Log Flight'
+        
         self.helper.layout = Layout(
             Row(
                 Column('date', css_class='form-group col-md-6'),
@@ -80,7 +83,10 @@ class FlightForm(forms.ModelForm):
             'remarks',
             Row(
                 Column(
-                    Submit('submit', 'Save Flight', css_class='btn btn-primary'),
+                    HTML('<div class="d-flex justify-content-between">'),
+                    HTML('<a href="{% url \'flight-list\' %}" class="btn btn-outline-secondary"><i class="fas fa-times"></i> Cancel</a>'),
+                    Submit('submit', button_text, css_class='btn btn-primary'),
+                    HTML('</div>'),
                     css_class='form-group col-md-12'
                 ),
                 css_class='form-row'

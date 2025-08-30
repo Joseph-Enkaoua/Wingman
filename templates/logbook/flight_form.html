@@ -40,25 +40,6 @@
       </div>
       <div class="card-body">
         {% crispy form %}
-        
-        <!-- Form Actions -->
-        <div class="row mt-4">
-          <div class="col-12">
-            <hr class="my-4" />
-            <div class="d-flex justify-content-between">
-              <a
-                href="{% url 'flight-list' %}"
-                class="btn btn-outline-secondary"
-              >
-                <i class="fas fa-times"></i> Cancel
-              </a>
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i>
-                {% if form.instance.pk %}Update Flight{% else %}Log Flight{% endif %}
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
