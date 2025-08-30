@@ -120,10 +120,9 @@
               <tr class="flight-card">
                 <td>
                   <strong>{{ flight.date|date:"M d, Y" }}</strong><br />
-                  <small class="text-muted"
-                    >{{ flight.departure_time|time:"H:i" }} - {{
-                    flight.arrival_time|time:"H:i" }}</small
-                  >
+                  <small class="text-muted">
+                    {{ flight.departure_time|time:"H:i" }} - {{ flight.arrival_time|time:"H:i" }}
+                    </small>
                 </td>
                 <td>
                   <span class="badge bg-info"
