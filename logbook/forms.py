@@ -3,8 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Flight, Aircraft, PilotProfile
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Row, Column, Submit, Button, HTML
-from crispy_forms.bootstrap import PrependedText
+from crispy_forms.layout import Layout, Row, Column, Submit, HTML
 
 
 class FlightForm(forms.ModelForm):
@@ -100,7 +99,8 @@ class FlightForm(forms.ModelForm):
         date = cleaned_data.get('date')
         
         if departure_time and arrival_time and date:
-            from datetime import datetime, timedelta
+            from datetime import datetime
+            from datetime import timedelta
             
             departure_dt = datetime.combine(date, departure_time)
             arrival_dt = datetime.combine(date, arrival_time)
