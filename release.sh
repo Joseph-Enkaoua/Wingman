@@ -57,9 +57,13 @@ python manage.py check --database default || {
 echo "Current migration status:"
 python manage.py showmigrations
 
-# Force run all migrations
-echo "Running Django migrations..."
-python manage.py migrate --noinput --verbosity=2 --run-syncdb
+# Run force migration script
+echo "Running force migration script..."
+python force_migrate.py || {
+    echo "ERROR: Force migration failed!"
+    echo "Trying alternative migration approach..."
+    python manage.py migrate --run-syncdb --noinput
+}
 
 # Double-check that auth_user table exists
 echo "Verifying auth_user table exists..."
@@ -74,10 +78,6 @@ with connection.cursor() as cursor:
     count = cursor.fetchone()[0]
     print(f'auth_user table exists with {count} users')
 "
-
-# Initialize database if needed
-echo "Initializing database..."
-python manage.py init_database
 
 # Show migration status after
 echo "Migration status after running migrations:"
