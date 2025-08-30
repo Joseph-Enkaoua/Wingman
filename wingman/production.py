@@ -18,6 +18,14 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get
     '127.0.0.1',
 ]
 
+# CSRF trusted origins for HTTPS
+CSRF_TRUSTED_ORIGINS = [
+    'https://wingman.cyou',
+    'https://www.wingman.cyou',
+    'https://*.up.railway.app',
+    'https://*.railway.app',
+]
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 import dj_database_url
