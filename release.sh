@@ -20,10 +20,36 @@ if [ -z "$DATABASE_URL" ]; then
 fi
 echo "DATABASE_URL is set"
 
+# Show DATABASE_URL (masked for security)
+echo "DATABASE_URL format: $(echo $DATABASE_URL | sed 's/:[^:]*@/:***@/')"
+
+# Check if it's an internal Railway URL
+if [[ "$DATABASE_URL" == *"railway.internal"* ]]; then
+    echo "WARNING: Using internal Railway hostname. This might not work in all environments."
+    echo "Consider using the public PostgreSQL endpoint instead."
+fi
+
 # Check database connection
 echo "Testing database connection..."
 python manage.py check --database default || {
     echo "ERROR: Database connection failed!"
+    echo "This might be due to:"
+    echo "1. PostgreSQL service not running"
+    echo "2. Wrong DATABASE_URL format"
+    echo "3. Network connectivity issues"
+    echo ""
+    echo "Trying alternative connection methods..."
+    
+    # Try to connect with basic psql command to test connectivity
+    if command -v psql &> /dev/null; then
+        echo "Testing with psql..."
+        psql "$DATABASE_URL" -c "SELECT version();" || {
+            echo "psql connection also failed"
+            echo "Please check your Railway PostgreSQL service configuration"
+            exit 1
+        }
+    fi
+    
     exit 1
 }
 
