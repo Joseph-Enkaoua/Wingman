@@ -46,13 +46,27 @@ if not DATABASE_URL:
         "This is required for production deployment."
     )
 
+# Parse DATABASE_URL manually to ensure proper configuration
+import urllib.parse
+parsed_url = urllib.parse.urlparse(DATABASE_URL)
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': parsed_url.path[1:],  # Remove leading slash
+        'USER': parsed_url.username,
+        'PASSWORD': parsed_url.password,
+        'HOST': parsed_url.hostname,
+        'PORT': parsed_url.port or '5432',
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
+        'CONN_MAX_AGE': 600,
+        'CONN_HEALTH_CHECKS': True,
+    }
 }
+
+print(f"Database configured: {parsed_url.hostname}:{parsed_url.port}/{parsed_url.path[1:]}")
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
