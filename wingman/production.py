@@ -37,9 +37,18 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+# Validate that DATABASE_URL is set in production
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL environment variable is not set. "
+        "This is required for production deployment."
+    )
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3'),
+        default=DATABASE_URL,
         conn_max_age=600,
         conn_health_checks=True,
     )
