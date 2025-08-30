@@ -1,0 +1,16 @@
+# Don't ignore static files during deployment
+!static/
+!static/css/
+!static/js/
+!static/images/
+
+# Don't ignore templates
+!templates/
+
+# Don't ignore Django files
+!*.py
+!manage.py
+!requirements.txt
+!Procfile
+!railway.json
+!runtime.txt

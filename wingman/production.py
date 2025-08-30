@@ -67,7 +67,7 @@ MIDDLEWARE = [
 ]
 
 # Configure whitenoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Security settings
 SECURE_BROWSER_XSS_FILTER = True
