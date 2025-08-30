@@ -46,9 +46,6 @@ if not DATABASE_URL:
         "This is required for production deployment."
     )
 
-# Configure Django to use psycopg (version 3) instead of psycopg2
-import psycopg
-
 # Parse the DATABASE_URL to get connection parameters
 import urllib.parse
 parsed_url = urllib.parse.urlparse(DATABASE_URL)
