@@ -25,8 +25,19 @@ echo "DATABASE_URL format: $(echo $DATABASE_URL | sed 's/:[^:]*@/:***@/')"
 
 # Check if it's an internal Railway URL
 if [[ "$DATABASE_URL" == *"railway.internal"* ]]; then
-    echo "WARNING: Using internal Railway hostname. This might not work in all environments."
-    echo "Consider using the public PostgreSQL endpoint instead."
+    echo "❌ ERROR: Using internal Railway hostname!"
+    echo "   This will cause connection issues in deployment."
+    echo ""
+    echo "🔧 To fix this:"
+    echo "1. Go to your Railway PostgreSQL service"
+    echo "2. Click 'Connect' tab"
+    echo "3. Copy the 'Public Endpoint' URL"
+    echo "4. Update DATABASE_URL in your app's Variables"
+    echo ""
+    echo "Current DATABASE_URL format: $(echo $DATABASE_URL | sed 's/:[^:]*@/:***@/')"
+    echo "Should be: postgresql://postgres:***@containers-us-west-XX.railway.app:XXXXX/railway"
+    echo ""
+    exit 1
 fi
 
 # Check database connection
