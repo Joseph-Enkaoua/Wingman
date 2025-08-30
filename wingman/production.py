@@ -1,4 +1,5 @@
 import os
+from django.core.exceptions import ImproperlyConfigured
 from .settings import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -6,6 +7,16 @@ DEBUG = False
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+
+# Allowed hosts
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else [
+    'wingman.cyou',
+    'www.wingman.cyou',
+    '*.up.railway.app',
+    '*.railway.app',
+    'localhost',
+    '127.0.0.1',
+]
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
