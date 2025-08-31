@@ -37,15 +37,7 @@ if not DATABASE_URL:
     )
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600,
-        conn_health_checks=True,
-        engine='django.db.backends.postgresql',
-        options={
-            'connect_timeout': 10,
-        }
-    )
+    'default': dj_database_url.parse(DATABASE_URL)
 }
 
 # Static files (CSS, JavaScript, Images)
