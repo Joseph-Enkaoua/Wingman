@@ -1,1 +1,1 @@
-web: gunicorn wingman.wsgi:application
+web: python manage.py migrate --noinput && gunicorn wingman.wsgi:application
