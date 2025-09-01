@@ -150,6 +150,14 @@ def dashboard(request):
     total_solo_hours = pilot_profile.total_solo_hours
     total_pic_hours = pilot_profile.total_pic_hours
     
+    # Calculate landing statistics
+    landing_stats = Flight.objects.filter(pilot=user).aggregate(
+        total_day_landings=Sum('landings_day'),
+        total_night_landings=Sum('landings_night')
+    )
+    total_day_landings = landing_stats['total_day_landings'] or 0
+    total_night_landings = landing_stats['total_night_landings'] or 0
+    
     # Monthly flight hours for the last 12 months
     monthly_hours = []
     for i in range(12):
@@ -187,6 +195,8 @@ def dashboard(request):
         'total_dual_hours': total_dual_hours,
         'total_solo_hours': total_solo_hours,
         'total_pic_hours': total_pic_hours,
+        'total_day_landings': total_day_landings,
+        'total_night_landings': total_night_landings,
         'monthly_hours': json.dumps(monthly_hours),
         'aircraft_usage': aircraft_usage,
     }
