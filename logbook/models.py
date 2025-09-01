@@ -23,6 +23,7 @@ class Flight(models.Model):
         ('PIC', 'Pilot in Command'),
         ('SIC', 'Second in Command'),
         ('DUAL', 'Dual Instruction'),
+        ('TRAINER', 'Instructor Flight'),
         ('SOLO', 'Solo Flight'),
     ]
     
