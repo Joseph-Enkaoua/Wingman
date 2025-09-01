@@ -7,6 +7,10 @@ import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 from .settings import *
 
+# Ensure staticfiles directory exists early
+if not os.path.exists(STATIC_ROOT):
+    os.makedirs(STATIC_ROOT, exist_ok=True)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
