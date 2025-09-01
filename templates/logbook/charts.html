@@ -104,42 +104,28 @@
 
 <!-- Statistics Row -->
 <div class="row mb-4">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-info-circle aviation-icon"></i>
-          Flight Statistics
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="row text-center">
-          <div class="col-md-3 mb-3">
-            <div class="stat-item">
-              <h3 class="text-primary" id="totalFlights">{{ total_flights }}</h3>
-              <p class="text-muted mb-0">Total Flights</p>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3">
-            <div class="stat-item">
-              <h3 class="text-success" id="totalHours">{{ total_hours|floatformat:1 }}</h3>
-              <p class="text-muted mb-0">Total Hours</p>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3">
-            <div class="stat-item">
-              <h3 class="text-info" id="avgFlightTime">{{ avg_flight_time|floatformat:1 }}</h3>
-              <p class="text-muted mb-0">Avg Flight Time</p>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3">
-            <div class="stat-item">
-              <h3 class="text-warning" id="mostUsedAircraft">{{ most_used_aircraft }}</h3>
-              <p class="text-muted mb-0">Most Used Aircraft</p>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_flights }}</h3>
+      <p><i class="fas fa-plane"></i> Total Flights</p>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <h3>{{ total_hours|floatformat:1 }}</h3>
+      <p><i class="fas fa-clock"></i> Total Hours</p>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <h3>{{ avg_flight_time|floatformat:1 }}</h3>
+      <p><i class="fas fa-clock"></i> Avg Flight Time</p>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-3">
+    <div class="stats-card">
+      <h3>{{ most_used_aircraft }}</h3>
+      <p><i class="fas fa-plane"></i> Most Used Aircraft</p>
     </div>
   </div>
 </div>
@@ -391,14 +377,7 @@
       }
   });
 
-  // Update statistics
-  function updateStats() {
-      // Use real data from Django context
-      document.getElementById('totalFlights').textContent = '{{ total_flights }}';
-      document.getElementById('totalHours').textContent = '{{ total_hours|floatformat:1 }}';
-      document.getElementById('avgFlightTime').textContent = '{{ avg_flight_time|floatformat:1 }}';
-      document.getElementById('mostUsedAircraft').textContent = '{{ most_used_aircraft }}';
-  }
+
 
   // Export charts data to CSV function
   function exportChartsData() {
@@ -548,10 +527,6 @@
       window.print();
   }
 
-  // Initialize stats
-  document.addEventListener('DOMContentLoaded', function() {
-      updateStats();
-  });
+
 </script>
 {% endblock %}
-§
