@@ -28,6 +28,13 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     border: none;
     margin-bottom: 1rem;
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem 1.5rem 1rem;
 }
 
 .btn-primary {
