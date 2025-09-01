@@ -11,7 +11,7 @@
       Flight Dashboard
     </h1>
     <p class="lead text-muted">
-      Welcome back, {{ user.get_full_name|default:user.username }}! Here's your
+      Welcome back, {{ user.first_name|default:user.username }}! Here's your
       flight summary.
     </p>
   </div>
