@@ -17,6 +17,7 @@ help:
 	@echo "  redis-stop     - Stop Redis service"
 	@echo "  redis-status   - Check Redis service status"
 	@echo "  redis-test     - Test Redis connection"
+	@echo "  redis-clear-limits - Clear rate limiting data"
 	@echo ""
 	@echo "Django Management:"
 	@echo "  migrate        - Run database migrations"
@@ -57,6 +58,11 @@ redis-start:
 	@sleep 2
 	@echo "Redis started successfully!"
 
+redis-clear-limits:
+	@echo "Clearing Redis rate limiting data..."
+	@redis-cli -n 1 flushdb 2>/dev/null || echo "Redis not running or not accessible"
+	@echo "Rate limits cleared!"
+
 redis-stop:
 	@echo "Stopping Redis service..."
 	@brew services stop redis
@@ -93,6 +99,8 @@ clean:
 	@find . -type f -name "*.pyc" -delete
 	@find . -type d -name "__pycache__" -delete
 	@find . -type d -name "*.egg-info" -exec rm -rf {} +
+	@echo "Clearing Redis rate limiting data..."
+	@redis-cli -n 1 flushdb 2>/dev/null || echo "Redis not running or not accessible"
 	@echo "Cleanup complete!"
 
 install:
