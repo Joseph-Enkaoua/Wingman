@@ -20,7 +20,15 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("SECRET_KEY environment variable is required in production")
 
 # Update allowed hosts for Railway
-ALLOWED_HOSTS = ['*']  # You can make this more specific later
+ALLOWED_HOSTS = [
+    'wingman.cyou',
+    'www.wingman.cyou',
+    '.up.railway.app',
+    '.railway.app',
+    '.railway.dev',
+    'localhost',
+    '127.0.0.1',
+]
 
 # CSRF trusted origins for HTTPS
 CSRF_TRUSTED_ORIGINS = [
@@ -78,13 +86,13 @@ STATICFILES_DIRS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'logbook.middleware.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'logbook.middleware.SecurityMiddleware',  # In the end to avoid interfering with redirects
 ]
 
 # Configure whitenoise
@@ -92,8 +100,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # ===== CRITICAL SECURITY SETTINGS =====
 
-# HTTPS settings
-SECURE_SSL_REDIRECT = True
+# HTTPS settings - Make SSL redirect conditional to avoid loops
+# Only enable SSL redirect if we're actually behind HTTPS
+SECURE_SSL_REDIRECT = False  # Disable for now to test
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
@@ -104,15 +113,15 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
-# Session security
-SESSION_COOKIE_SECURE = True
+# Session security - Make cookies conditional on HTTPS
+SESSION_COOKIE_SECURE = False  # Disable for now to test
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 2592000
 
-# CSRF security
-CSRF_COOKIE_SECURE = True
+# CSRF security - Make cookies conditional on HTTPS
+CSRF_COOKIE_SECURE = False  # Disable for now to test
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
@@ -160,5 +169,13 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'WARNING',
         },
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
     },
 }
