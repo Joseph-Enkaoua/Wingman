@@ -143,23 +143,23 @@
       <div class="card-body">
         <div class="row">
           <div class="col-md-3 mb-2">
-            <a href="{% url 'export-pdf' %}" class="btn btn-warning w-100">
-              <i class="fas fa-file-pdf"></i> Export PDF
+            <a href="{% url 'export-pdf' %}" class="btn btn-danger w-100" style="background-color: #dc3545; border-color: #dc3545; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+              <i class="fas fa-file-pdf"></i>&nbsp;Export PDF
             </a>
           </div>
           <div class="col-md-3 mb-2">
-            <button class="btn btn-info w-100" onclick="exportChartsData()">
-              <i class="fas fa-file-csv"></i> Export Analytics Report
+            <button class="btn btn-primary w-100" onclick="exportChartsData()" style="background-color: #0d6efd; border-color: #0d6efd; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+              <i class="fas fa-file-csv"></i>&nbsp;Export Flight Log (FAA/EASA)
             </button>
           </div>
           <div class="col-md-3 mb-2">
-            <button class="btn btn-success w-100" onclick="printCharts()">
-              <i class="fas fa-print"></i> Print Report
+            <button class="btn btn-success w-100" onclick="printCharts()" style="background-color: #198754; border-color: #198754; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+              <i class="fas fa-print"></i>&nbsp;Print Report
             </button>
           </div>
           <div class="col-md-3 mb-2">
-            <a href="{% url 'flight-list' %}" class="btn btn-primary w-100">
-              <i class="fas fa-list"></i> View Flights
+            <a href="{% url 'flight-list' %}" class="btn btn-info w-100" style="background-color: #17a2b8; border-color: #17a2b8; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+              <i class="fas fa-list"></i>&nbsp;View Flights
             </a>
           </div>
         </div>
@@ -399,79 +399,79 @@
           // Get conditions data
           const conditionsData = {{ conditions_data|safe }};
           
-          // Create CSV content with better organization
-          let csvContent = 'FLIGHT ANALYTICS DATA EXPORT\n';
+          // Create CSV content with FAA/EASA compliant flight log format
+          let csvContent = '';
+          
+          // Header
+          csvContent += 'FLIGHT LOGBOOK EXPORT - FAA/EASA COMPLIANT FORMAT\n';
           csvContent += `Generated on: ${new Date().toLocaleDateString()}\n`;
           csvContent += `Pilot: {{ user.get_full_name|default:user.username }}\n`;
-          csvContent += '='.repeat(50) + '\n\n';
-          
-          // Summary Statistics Section
-          csvContent += 'SUMMARY STATISTICS\n';
-          csvContent += '='.repeat(20) + '\n';
-          csvContent += 'Metric,Value\n';
-          csvContent += `Total Flights,{{ total_flights }}\n`;
-          csvContent += `Total Flight Hours,{{ total_hours|floatformat:1 }}\n`;
-          csvContent += `Average Flight Duration,{{ avg_flight_time|floatformat:1 }} hours\n`;
-          csvContent += `Most Used Aircraft,{{ most_used_aircraft }}\n`;
           csvContent += '\n';
           
-          // Monthly Progress Section
-          csvContent += 'MONTHLY FLIGHT PROGRESS (Last 12 Months)\n';
-          csvContent += '='.repeat(40) + '\n';
-          csvContent += 'Month,Total Hours,Night Hours,Cross-Country Hours,Total Flights\n';
-          monthlyData.forEach(item => {
-              csvContent += `${item.month},${item.total_hours.toFixed(1)},${item.night_hours.toFixed(1)},${item.cross_country_hours.toFixed(1)},0\n`;
+          // FAA/EASA Compliant Flight Log Structure
+          csvContent += 'Date,AircraftID,AircraftType,From,To,Route,TotalTime,PIC,SIC,DualReceived,InstructorGiven,Solo,CrossCountry,Day,Night,IFR,SimulatedInstrument,Simulator,DayLandings,NightLandings,Remarks\n';
+          
+          // Get flight data from Django context
+          const flightData = {{ flights_data|safe }};
+          
+          // Process each flight entry
+          flightData.forEach(flight => {
+              // Calculate role-based time breakdowns
+              let picTime = 0.0, sicTime = 0.0, dualTime = 0.0, instructorTime = 0.0, soloTime = 0.0;
+              
+              if (flight.pilot_role === 'PIC') {
+                  picTime = flight.total_time;
+              } else if (flight.pilot_role === 'SIC') {
+                  sicTime = flight.total_time;
+              } else if (flight.pilot_role === 'DUAL') {
+                  dualTime = flight.total_time;
+              } else if (flight.pilot_role === 'INSTR') {
+                  instructorTime = flight.total_time;
+              } else if (flight.pilot_role === 'SOLO') {
+                  soloTime = flight.total_time;
+              }
+              
+              // Calculate day/night split
+              const dayTime = flight.total_time - flight.night_time;
+              
+              // Determine if IFR or simulated instrument
+              let ifrTime = 0.0, simulatedInstrumentTime = 0.0;
+              if (flight.conditions === 'IFR') {
+                  ifrTime = flight.total_time;
+              } else if (flight.conditions === 'SIM') {
+                  simulatedInstrumentTime = flight.total_time;
+              }
+              
+              // Create route string
+              const route = `${flight.departure_aerodrome}-${flight.arrival_aerodrome}`;
+              
+              // Format aircraft type with manufacturer
+              const aircraftType = flight.aircraft.manufacturer && flight.aircraft.type ? 
+                  `${flight.aircraft.manufacturer} ${flight.aircraft.type}` : 
+                  flight.aircraft.type || 'N/A';
+              
+              // Create remarks
+              let remarks = '';
+              if (flight.instructor_name) {
+                  remarks += `Instructor: ${flight.instructor_name}. `;
+              }
+              if (flight.flight_type) {
+                  remarks += `Type: ${flight.flight_type}. `;
+              }
+              if (flight.remarks) {
+                  remarks += flight.remarks;
+              }
+              remarks = remarks.trim() || 'N/A';
+              
+              // Build CSV row
+              csvContent += `${flight.date},${flight.aircraft.registration},${aircraftType},${flight.departure_aerodrome},${flight.arrival_aerodrome},${route},${flight.total_time.toFixed(1)},${picTime.toFixed(1)},${sicTime.toFixed(1)},${dualTime.toFixed(1)},${instructorTime.toFixed(1)},${soloTime.toFixed(1)},${flight.cross_country_time.toFixed(1)},${dayTime.toFixed(1)},${flight.night_time.toFixed(1)},${ifrTime.toFixed(1)},${simulatedInstrumentTime.toFixed(1)},0.0,${flight.landings_day},${flight.landings_night},${remarks}\n`;
           });
-          csvContent += '\n';
-          
-          // Aircraft Performance Section
-          csvContent += 'AIRCRAFT PERFORMANCE & USAGE\n';
-          csvContent += '='.repeat(35) + '\n';
-          csvContent += 'Aircraft Registration,Total Hours,Flight Count,Average Hours per Flight\n';
-          aircraftData.forEach(item => {
-              const avgHours = item.total_hours > 0 ? (item.total_hours / item.flight_count).toFixed(1) : '0.0';
-              csvContent += `${item.aircraft__registration},${item.total_hours.toFixed(1)},${item.flight_count},${avgHours}\n`;
-          });
-          csvContent += '\n';
-          
-          // Flight Type Analysis Section
-          csvContent += 'FLIGHT TYPE DISTRIBUTION\n';
-          csvContent += '='.repeat(30) + '\n';
-          csvContent += 'Flight Type,Number of Flights,Percentage of Total\n';
-          const totalFlightTypes = flightTypeData.reduce((sum, item) => sum + item.count, 0);
-          flightTypeData.forEach(item => {
-              const percentage = totalFlightTypes > 0 ? ((item.count / totalFlightTypes) * 100).toFixed(1) : '0.0';
-              csvContent += `${item.flight_type || 'Unknown'},${item.count},${percentage}%\n`;
-          });
-          csvContent += '\n';
-          
-          // Weather Conditions Section
-          csvContent += 'FLIGHT CONDITIONS ANALYSIS\n';
-          csvContent += '='.repeat(30) + '\n';
-          csvContent += 'Weather Conditions,Number of Flights,Percentage of Total\n';
-          const totalConditions = conditionsData.reduce((sum, item) => sum + item.count, 0);
-          conditionsData.forEach(item => {
-              const percentage = totalConditions > 0 ? ((item.count / totalConditions) * 100).toFixed(1) : '0.0';
-              csvContent += `${item.conditions || 'Unknown'},${item.count},${percentage}%\n`;
-          });
-          csvContent += '\n';
-          
-          // Time Breakdown Section
-          csvContent += 'TIME BREAKDOWN SUMMARY\n';
-          csvContent += '='.repeat(25) + '\n';
-          csvContent += 'Time Category,Hours\n';
-          csvContent += `Total Flight Time,{{ total_hours|floatformat:1 }}\n`;
-          csvContent += `Night Time,{{ pilot_profile.total_night_hours|floatformat:1 }}\n`;
-          csvContent += `Instrument Time,{{ pilot_profile.total_instrument_hours|floatformat:1 }}\n`;
-          csvContent += `Cross-Country Time,{{ pilot_profile.total_cross_country_hours|floatformat:1 }}\n`;
-          csvContent += `Dual Instruction,{{ pilot_profile.total_dual_hours|floatformat:1 }}\n`;
-          csvContent += `Solo Time,{{ pilot_profile.total_solo_hours|floatformat:1 }}\n`;
-          csvContent += '\n';
           
           // Footer
-          csvContent += '='.repeat(50) + '\n';
-          csvContent += 'End of Report\n';
+          csvContent += '\n';
+          csvContent += 'End of Flight Log\n';
           csvContent += `Generated by Wingman Flight Logbook on ${new Date().toLocaleString()}\n`;
+          csvContent += 'Note: This format is designed to be compatible with both FAA and EASA logbook requirements.\n';
           
           // Create and download CSV file
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

@@ -32,6 +32,7 @@ urlpatterns = [
     
     # Export and API
     path('export/pdf/', views.export_pdf, name='export-pdf'),
+    path('export/csv/', views.export_csv, name='export-csv'),
     path('api/stats/', views.api_flight_stats, name='api-stats'),
     
     # Legal pages

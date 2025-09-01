@@ -57,14 +57,15 @@
         <form method="post">
           {% csrf_token %}
           <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-danger">
-              <i class="fas fa-trash"></i> Confirm Delete
+            <button type="submit" class="btn btn-danger" style="color: white; font-weight: bold;">
+              <i class="fas fa-trash"></i>&nbsp;Confirm Delete
             </button>
             <a
               href="{% url 'aircraft-list' %}"
               class="btn btn-outline-secondary"
+              style="font-weight: bold;"
             >
-              <i class="fas fa-times"></i> Cancel
+              <i class="fas fa-times"></i>&nbsp;Cancel
             </a>
           </div>
         </form>

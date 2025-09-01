@@ -478,7 +478,11 @@ def charts_view(request):
     monthly_data.reverse()
     
     # Aircraft usage
-    aircraft_data = Flight.objects.filter(pilot=user).values('aircraft__registration').annotate(
+    aircraft_data = Flight.objects.filter(pilot=user).values(
+        'aircraft__registration', 
+        'aircraft__manufacturer', 
+        'aircraft__type'
+    ).annotate(
         total_hours=Sum('total_time'),
         flight_count=Count('id')
     ).order_by('-total_hours')
@@ -487,6 +491,8 @@ def charts_view(request):
     aircraft_data = [
         {
             'aircraft__registration': item['aircraft__registration'],
+            'aircraft__manufacturer': item['aircraft__manufacturer'] or '',
+            'aircraft__type': item['aircraft__type'] or '',
             'total_hours': float(item['total_hours'] or 0),
             'flight_count': item['flight_count']
         }
@@ -514,12 +520,39 @@ def charts_view(request):
         count=Count('id')
     ).order_by('-count').first()
     
+    # Get detailed flight data for CSV export
+    flights_data = Flight.objects.filter(pilot=user).select_related('aircraft').order_by('date', 'departure_time')
+    flights_for_csv = []
+    
+    for flight in flights_data:
+        flights_for_csv.append({
+            'date': flight.date.strftime('%Y-%m-%d'),
+            'aircraft': {
+                'registration': flight.aircraft.registration,
+                'manufacturer': flight.aircraft.manufacturer,
+                'type': flight.aircraft.type
+            },
+            'departure_aerodrome': flight.departure_aerodrome,
+            'arrival_aerodrome': flight.arrival_aerodrome,
+            'total_time': float(flight.total_time or 0),
+            'night_time': float(flight.night_time or 0),
+            'cross_country_time': float(flight.cross_country_time or 0),
+            'pilot_role': flight.pilot_role,
+            'conditions': flight.conditions,
+            'landings_day': int(flight.landings_day or 0),
+            'landings_night': int(flight.landings_night or 0),
+            'instructor_name': flight.instructor_name,
+            'flight_type': flight.flight_type,
+            'remarks': flight.remarks
+        })
+    
     context = {
         'pilot_profile': pilot_profile,
         'monthly_data': json.dumps(monthly_data),
         'aircraft_data': json.dumps(aircraft_data),
         'flight_type_data': json.dumps(list(flight_type_data)),
         'conditions_data': json.dumps(list(conditions_data)),
+        'flights_data': json.dumps(flights_for_csv),
         'total_flights': total_flights,
         'total_hours': float(total_hours),
         'avg_flight_time': float(avg_flight_time),
@@ -678,6 +711,85 @@ def export_pdf(request):
     # Build PDF
     doc.build(elements)
     return response
+
+
+@login_required
+def export_csv(request):
+    """Export flight logbook to CSV"""
+    import csv
+    from django.http import HttpResponse
+    
+    user = request.user
+    pilot_profile, created = PilotProfile.objects.get_or_create(user=user)
+    
+    # Get all flights
+    flights = Flight.objects.filter(pilot=user).order_by('date', 'departure_time')
+    
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="flight_logbook_{user.username}.csv"'
+    
+    # Create CSV writer
+    writer = csv.writer(response)
+    
+    # Write header
+    writer.writerow([
+        'Date', 'Aircraft', 'Type', 'From', 'To', 'Total Time', 'Night Time', 
+        'Cross Country Time', 'PIC Time', 'SIC Time', 'Dual Instruction', 'Instructor Present',
+        'Solo', 'Cross Country', 'Day', 'Night', 'IFR', 'Simulated Instrument',
+        'Simulator', 'Day Landings', 'Night Landings', 'Remarks'
+    ])
+    
+    # Write flight data
+    for flight in flights:
+        # Determine day/night condition
+        day_night = 'N' if flight.night_time > 0 else 'D'
+        
+        # Get instructor name if applicable
+        instructor_name = flight.instructor_name if flight.instructor_name else ''
+        
+        # Create aircraft type string with manufacturer
+        aircraft_type = flight.aircraft.type
+        if flight.aircraft.manufacturer:
+            aircraft_type = f"{flight.aircraft.manufacturer} {flight.aircraft.type}"
+        
+        # Calculate PIC/SIC time
+        pic_time = flight.total_time if flight.pilot_role == 'PIC' else 0
+        sic_time = flight.total_time if flight.pilot_role == 'SIC' else 0
+        
+        # Determine if cross country
+        is_cross_country = 'Y' if flight.cross_country_time > 0 else 'N'
+        
+        # Determine if solo
+        is_solo = 'Y' if flight.pilot_role == 'PIC' and not flight.instructor_name else 'N'
+        
+        writer.writerow([
+            flight.date.strftime('%Y-%m-%d'),
+            flight.aircraft.registration,
+            aircraft_type,
+            flight.departure_aerodrome,
+            flight.arrival_aerodrome,
+            f"{flight.total_time:.1f}",
+            f"{flight.night_time:.1f}",
+            f"{flight.cross_country_time:.1f}",
+            f"{pic_time:.1f}",
+            f"{sic_time:.1f}",
+            'Y' if flight.pilot_role == 'DUAL' else 'N',
+            'Y' if flight.instructor_name else 'N',
+            is_solo,
+            is_cross_country,
+            day_night,
+            'Y' if flight.night_time > 0 else 'N',
+            'Y' if flight.conditions == 'IFR' else 'N',
+            'Y' if flight.conditions == 'SIM' else 'N',
+            'Y' if flight.conditions == 'SIM' else 'N',
+            flight.landings_day,
+            flight.landings_night,
+            flight.remarks or ''
+        ])
+    
+    return response
+
 
 @login_required
 def api_flight_stats(request):

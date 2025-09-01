@@ -14,8 +14,8 @@
         </h1>
         <p class="text-muted">Manage your aircraft information</p>
       </div>
-      <a href="{% url 'aircraft-create' %}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add Aircraft
+      <a href="{% url 'aircraft-create' %}" class="btn btn-primary" style="color: white; font-weight: bold;">
+        <i class="fas fa-plus"></i>&nbsp;Add Aircraft
       </a>
     </div>
   </div>
@@ -105,6 +105,7 @@
                       href="{% url 'aircraft-update' aircraft_item.pk %}"
                       class="btn btn-sm btn-outline-warning"
                       title="Edit"
+                      style="font-weight: bold;"
                     >
                       <i class="fas fa-edit"></i>
                     </a>
@@ -112,6 +113,7 @@
                       href="{% url 'aircraft-delete' aircraft_item.pk %}"
                       class="btn btn-sm btn-outline-danger"
                       title="Delete"
+                      style="font-weight: bold;"
                     >
                       <i class="fas fa-trash"></i>
                     </a>
@@ -173,8 +175,8 @@
           <p class="text-muted">
             Start by adding your first aircraft to the fleet.
           </p>
-          <a href="{% url 'aircraft-create' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add Your First Aircraft
+          <a href="{% url 'aircraft-create' %}" class="btn btn-primary" style="color: white; font-weight: bold;">
+            <i class="fas fa-plus"></i>&nbsp;Add Your First Aircraft
           </a>
         </div>
         {% endif %}
@@ -197,23 +199,23 @@
       <div class="card-body">
         <div class="row">
           <div class="col-md-3 mb-2">
-            <a href="{% url 'aircraft-create' %}" class="btn btn-success w-100">
-              <i class="fas fa-plus"></i> Add Aircraft
+            <a href="{% url 'aircraft-create' %}" class="btn btn-success w-100" style="background-color: #198754; border-color: #198754; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+              <i class="fas fa-plus"></i>&nbsp;Add Aircraft
             </a>
           </div>
           <div class="col-md-3 mb-2">
-            <a href="{% url 'flight-create' %}" class="btn btn-primary w-100">
-              <i class="fas fa-plane"></i> Log Flight
+            <a href="{% url 'flight-create' %}" class="btn btn-primary w-100" style="background-color: #0d6efd; border-color: #0d6efd; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+              <i class="fas fa-plane"></i>&nbsp;Log Flight
             </a>
           </div>
           <div class="col-md-3 mb-2">
-            <a href="{% url 'charts' %}" class="btn btn-info w-100">
-              <i class="fas fa-chart-bar"></i> View Analytics
+            <a href="{% url 'charts' %}" class="btn btn-info w-100" style="background-color: #17a2b8; border-color: #17a2b8; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+              <i class="fas fa-chart-bar"></i>&nbsp;View Analytics
             </a>
           </div>
           <div class="col-md-3 mb-2">
-            <a href="{% url 'dashboard' %}" class="btn btn-warning w-100">
-              <i class="fas fa-tachometer-alt"></i> Dashboard
+            <a href="{% url 'dashboard' %}" class="btn btn-success w-100" style="background-color: #198754; border-color: #198754; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+              <i class="fas fa-tachometer-alt"></i>&nbsp;Dashboard
             </a>
           </div>
         </div>
