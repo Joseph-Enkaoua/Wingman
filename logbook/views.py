@@ -160,11 +160,33 @@ def dashboard(request):
     
     # Monthly flight hours for the last 12 months
     monthly_hours = []
+    from datetime import datetime
+    import calendar
+    
+    # Get current date
+    current_date = timezone.now().date()
+    
     for i in range(12):
-        month_start = timezone.now().replace(day=1) - timedelta(days=30*i)
-        month_end = month_start.replace(day=28) + timedelta(days=4)
-        month_end = month_end.replace(day=1) - timedelta(days=1)
+        # Calculate the month we're looking at
+        if i == 0:
+            # Current month
+            year = current_date.year
+            month = current_date.month
+        else:
+            # Previous months
+            if current_date.month - i <= 0:
+                year = current_date.year - 1
+                month = 12 + (current_date.month - i)
+            else:
+                year = current_date.year
+                month = current_date.month - i
         
+        # Calculate start and end of month
+        month_start = datetime(year, month, 1).date()
+        _, last_day = calendar.monthrange(year, month)
+        month_end = datetime(year, month, last_day).date()
+        
+        # Query flights for this month
         month_hours = Flight.objects.filter(
             pilot=user,
             date__gte=month_start,
@@ -389,10 +411,31 @@ def charts_view(request):
     
     # Monthly flight hours for the last 12 months
     monthly_data = []
+    from datetime import datetime
+    import calendar
+    
+    # Get current date
+    current_date = timezone.now().date()
+    
     for i in range(12):
-        month_start = timezone.now().replace(day=1) - timedelta(days=30*i)
-        month_end = month_start.replace(day=28) + timedelta(days=4)
-        month_end = month_end.replace(day=1) - timedelta(days=1)
+        # Calculate the month we're looking at
+        if i == 0:
+            # Current month
+            year = current_date.year
+            month = current_date.month
+        else:
+            # Previous months
+            if current_date.month - i <= 0:
+                year = current_date.year - 1
+                month = 12 + (current_date.month - i)
+            else:
+                year = current_date.year
+                month = current_date.month - i
+        
+        # Calculate start and end of month
+        month_start = datetime(year, month, 1).date()
+        _, last_day = calendar.monthrange(year, month)
+        month_end = datetime(year, month, last_day).date()
         
         month_flights = Flight.objects.filter(
             pilot=user,
