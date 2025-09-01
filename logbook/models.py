@@ -12,6 +12,11 @@ class Aircraft(models.Model):
     year_manufactured = models.IntegerField(blank=True, null=True)
     total_time = models.DecimalField(max_digits=8, decimal_places=1, default=0, help_text="Total aircraft time in hours")
     
+    class Meta:
+        ordering = ['registration']
+        verbose_name = "Aircraft"
+        verbose_name_plural = "Aircraft"
+    
     def __str__(self):
         return f"{self.registration} - {self.type}"
 
