@@ -215,7 +215,7 @@ class FlightListView(LoginRequiredMixin, ListView):
         queryset = Flight.objects.filter(pilot=self.request.user)
         
         # Apply search filters
-        form = FlightSearchForm(self.request.GET)
+        form = FlightSearchForm(self.request.GET, user=self.request.user)
         if form.is_valid():
             if form.cleaned_data.get('date_from'):
                 queryset = queryset.filter(date__gte=form.cleaned_data['date_from'])
@@ -234,7 +234,7 @@ class FlightListView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['search_form'] = FlightSearchForm(self.request.GET)
+        context['search_form'] = FlightSearchForm(self.request.GET, user=self.request.user)
         
         # Calculate statistics for the current user's flights
         user_flights = Flight.objects.filter(pilot=self.request.user)
