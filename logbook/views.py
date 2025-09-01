@@ -257,11 +257,14 @@ class FlightListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['search_form'] = FlightSearchForm(self.request.GET, user=self.request.user)
         
-        # Calculate statistics for the current user's flights
-        user_flights = Flight.objects.filter(pilot=self.request.user)
-        context['total_hours'] = user_flights.aggregate(total=Sum('total_time'))['total'] or 0
-        context['total_night_hours'] = user_flights.aggregate(total=Sum('night_time'))['total'] or 0
-        context['total_cross_country_hours'] = user_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        # Get the filtered queryset (same as get_queryset)
+        filtered_queryset = self.get_queryset()
+        
+        # Calculate statistics for the filtered flights
+        context['total_flights'] = filtered_queryset.count()
+        context['total_hours'] = filtered_queryset.aggregate(total=Sum('total_time'))['total'] or 0
+        context['total_night_hours'] = filtered_queryset.aggregate(total=Sum('night_time'))['total'] or 0
+        context['total_cross_country_hours'] = filtered_queryset.aggregate(total=Sum('cross_country_time'))['total'] or 0
         
         return context
 
