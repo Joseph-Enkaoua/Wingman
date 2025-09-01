@@ -734,10 +734,10 @@ def export_csv(request):
     
     # Write header
     writer.writerow([
-        'Date', 'Aircraft', 'Type', 'From', 'To', 'Total Time', 'Night Time', 
-        'Cross Country Time', 'PIC Time', 'SIC Time', 'Dual Instruction', 'Instructor Present',
-        'Solo', 'Cross Country', 'Day', 'Night', 'IFR', 'Simulated Instrument',
-        'Simulator', 'Day Landings', 'Night Landings', 'Remarks'
+        'Date', 'AircraftID', 'AircraftType', 'From', 'To', 'Route', 'TotalTime', 
+        'PIC', 'SIC', 'DualReceived', 'InstructorGiven', 'Solo', 'CrossCountry', 
+        'DayTime', 'NightTime', 'ActualInstrument', 'SimulatedInstrument', 'Simulator', 
+        'DayLandings', 'NightLandings', 'Remarks'
     ])
     
     # Write flight data
@@ -757,11 +757,20 @@ def export_csv(request):
         pic_time = flight.total_time if flight.pilot_role == 'PIC' else 0
         sic_time = flight.total_time if flight.pilot_role == 'SIC' else 0
         
-        # Determine if cross country
-        is_cross_country = 'Y' if flight.cross_country_time > 0 else 'N'
+        # Calculate solo time (PIC without instructor)
+        solo_time = flight.total_time if flight.pilot_role == 'PIC' and not flight.instructor_name else 0
         
-        # Determine if solo
-        is_solo = 'Y' if flight.pilot_role == 'PIC' and not flight.instructor_name else 'N'
+        # Calculate day time (total time minus night time)
+        day_time = flight.total_time - flight.night_time
+        
+        # Calculate dual received time
+        dual_received_time = flight.total_time if flight.pilot_role == 'DUAL' else 0
+        
+        # Calculate instructor given time
+        instructor_given_time = flight.total_time if flight.instructor_name else 0
+        
+        # Create route string
+        route = f"{flight.departure_aerodrome} to {flight.arrival_aerodrome}"
         
         writer.writerow([
             flight.date.strftime('%Y-%m-%d'),
@@ -769,20 +778,19 @@ def export_csv(request):
             aircraft_type,
             flight.departure_aerodrome,
             flight.arrival_aerodrome,
+            route,
             f"{flight.total_time:.1f}",
-            f"{flight.night_time:.1f}",
-            f"{flight.cross_country_time:.1f}",
             f"{pic_time:.1f}",
             f"{sic_time:.1f}",
-            'Y' if flight.pilot_role == 'DUAL' else 'N',
-            'Y' if flight.instructor_name else 'N',
-            is_solo,
-            is_cross_country,
-            day_night,
-            'Y' if flight.night_time > 0 else 'N',
-            'Y' if flight.conditions == 'IFR' else 'N',
-            'Y' if flight.conditions == 'SIM' else 'N',
-            'Y' if flight.conditions == 'SIM' else 'N',
+            f"{dual_received_time:.1f}",
+            f"{instructor_given_time:.1f}",
+            f"{solo_time:.1f}",
+            f"{flight.cross_country_time:.1f}",
+            f"{day_time:.1f}",
+            f"{flight.night_time:.1f}",
+            f"{flight.instrument_time:.1f}" if flight.conditions == 'IFR' else "0.0",
+            f"{flight.instrument_time:.1f}" if flight.conditions == 'SIM' else "0.0",
+            f"{flight.total_time:.1f}" if flight.conditions == 'SIM' else "0.0",
             flight.landings_day,
             flight.landings_night,
             flight.remarks or ''
