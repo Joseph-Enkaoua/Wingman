@@ -15,6 +15,7 @@ urlpatterns = [
     # Dashboard and main views
     path('', views.dashboard, name='dashboard'),
     path('charts/', views.charts_view, name='charts'),
+    path('charts/print/', views.print_charts_view, name='print-charts'),
     path('profile/', views.profile_view, name='profile'),
     
     # Flight management

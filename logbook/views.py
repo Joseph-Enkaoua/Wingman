@@ -563,6 +563,117 @@ def charts_view(request):
 
 
 @login_required
+def print_charts_view(request):
+    """Print-friendly view for flight charts and analytics"""
+    user = request.user
+    
+    # Get pilot profile
+    pilot_profile, created = PilotProfile.objects.get_or_create(user=user)
+    
+    # Monthly flight hours for the last 12 months
+    monthly_data = []
+    
+    # Get current date
+    current_date = timezone.now().date()
+    
+    for i in range(12):
+        # Calculate the month we're looking at
+        if i == 0:
+            # Current month
+            year = current_date.year
+            month = current_date.month
+        else:
+            # Previous months
+            if current_date.month - i <= 0:
+                year = current_date.year - 1
+                month = 12 + (current_date.month - i)
+            else:
+                year = current_date.year
+                month = current_date.month - i
+        
+        # Calculate start and end of month
+        month_start = datetime(year, month, 1).date()
+        _, last_day = calendar.monthrange(year, month)
+        month_end = datetime(year, month, last_day).date()
+        
+        month_flights = Flight.objects.filter(
+            pilot=user,
+            date__gte=month_start,
+            date__lte=month_end
+        )
+        
+        total_hours = month_flights.aggregate(total=Sum('total_time'))['total'] or 0
+        night_hours = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
+        cross_country_hours = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        
+        monthly_data.append({
+            'month': month_start.strftime('%b %Y'),
+            'total_hours': float(total_hours),
+            'night_hours': float(night_hours),
+            'cross_country_hours': float(cross_country_hours),
+        })
+    
+    monthly_data.reverse()
+    
+    # Aircraft usage
+    aircraft_data = Flight.objects.filter(pilot=user).values(
+        'aircraft__registration', 
+        'aircraft__manufacturer', 
+        'aircraft__type'
+    ).annotate(
+        total_hours=Sum('total_time'),
+        flight_count=Count('id')
+    ).order_by('-total_hours')
+    
+    # Convert Decimal values to float for JSON serialization
+    aircraft_data = [
+        {
+            'aircraft__registration': item['aircraft__registration'],
+            'aircraft__manufacturer': item['aircraft__manufacturer'] or '',
+            'aircraft__type': item['aircraft__type'] or '',
+            'total_hours': float(item['total_hours'] or 0),
+            'flight_count': item['flight_count']
+        }
+        for item in aircraft_data
+    ]
+    
+    # Flight type distribution
+    flight_type_data = Flight.objects.filter(pilot=user).values('flight_type').annotate(
+        count=Count('id')
+    )
+    
+    # Conditions distribution
+    conditions_data = Flight.objects.filter(pilot=user).values('conditions').annotate(
+        count=Count('id')
+    )
+    
+    # Calculate additional statistics
+    user_flights = Flight.objects.filter(pilot=user)
+    total_flights = user_flights.count()
+    total_hours = user_flights.aggregate(total=Sum('total_time'))['total'] or 0
+    avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
+    
+    # Get most used aircraft
+    most_used_aircraft = user_flights.values('aircraft__registration').annotate(
+        count=Count('id')
+    ).order_by('-count').first()
+    
+    context = {
+        'pilot_profile': pilot_profile,
+        'monthly_data': json.dumps(monthly_data),
+        'aircraft_data': json.dumps(aircraft_data),
+        'flight_type_data': json.dumps(list(flight_type_data)),
+        'conditions_data': json.dumps(list(conditions_data)),
+        'total_flights': total_flights,
+        'total_hours': float(total_hours),
+        'avg_flight_time': float(avg_flight_time),
+        'most_used_aircraft': most_used_aircraft['aircraft__registration'] if most_used_aircraft else 'N/A',
+    }
+    
+    return render(request, 'logbook/print_charts.html', context)
+
+
+@login_required
 def export_pdf(request):
     """Export flight logbook to PDF"""
     user = request.user

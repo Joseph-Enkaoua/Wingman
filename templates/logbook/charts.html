@@ -153,9 +153,9 @@
             </button>
           </div>
           <div class="col-md-3 mb-2">
-            <button class="btn btn-success w-100" onclick="printCharts()" style="background-color: #198754; border-color: #198754; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+            <a href="{% url 'print-charts' %}" class="btn btn-success w-100" style="background-color: #198754; border-color: #198754; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
               <i class="fas fa-print"></i>&nbsp;Print Report
-            </button>
+            </a>
           </div>
           <div class="col-md-3 mb-2">
             <a href="{% url 'flight-list' %}" class="btn btn-info w-100" style="background-color: #17a2b8; border-color: #17a2b8; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
@@ -522,10 +522,7 @@
       }, 5000);
   }
   
-  // Print charts function
-  function printCharts() {
-      window.print();
-  }
+
 
 
 </script>
