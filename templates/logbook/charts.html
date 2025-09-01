@@ -245,71 +245,88 @@
 
   // Aircraft Usage Chart
   const aircraftData = {{ aircraft_data|safe }};
+  console.log('Aircraft data:', aircraftData);
   const aircraftCtx = document.getElementById('aircraftChart').getContext('2d');
 
-  new Chart(aircraftCtx, {
-      type: 'doughnut',
-      data: {
-          labels: aircraftData.map(item => item.aircraft__registration),
-          datasets: [{
-              data: aircraftData.map(item => item.total_hours),
-              backgroundColor: [
-                  '#3b82f6',
-                  '#10b981',
-                  '#f59e0b',
-                  '#ef4444',
-                  '#8b5cf6',
-                  '#06b6d4',
-                  '#84cc16',
-                  '#f97316'
-              ],
-              borderWidth: 2,
-              borderColor: '#ffffff'
-          }]
-      },
-      options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-              legend: {
-                  position: 'bottom',
+  if (aircraftData && aircraftData.length > 0) {
+      new Chart(aircraftCtx, {
+          type: 'doughnut',
+          data: {
+              labels: aircraftData.map(item => item.aircraft__registration),
+              datasets: [{
+                  data: aircraftData.map(item => item.total_hours),
+                  backgroundColor: [
+                      '#3b82f6',
+                      '#10b981',
+                      '#f59e0b',
+                      '#ef4444',
+                      '#8b5cf6',
+                      '#06b6d4',
+                      '#84cc16',
+                      '#f97316'
+                  ],
+                  borderWidth: 2,
+                  borderColor: '#ffffff'
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                  legend: {
+                      position: 'bottom',
+                  }
               }
           }
-      }
-  });
+      });
+  } else {
+      // Show "No data available" message
+      aircraftCtx.font = '16px Arial';
+      aircraftCtx.fillStyle = '#6b7280';
+      aircraftCtx.textAlign = 'center';
+      aircraftCtx.fillText('No aircraft data available', aircraftCtx.canvas.width / 2, aircraftCtx.canvas.height / 2);
+  }
 
   // Flight Type Distribution Chart
   const flightTypeData = {{ flight_type_data|safe }};
   const flightTypeCtx = document.getElementById('flightTypeChart').getContext('2d');
 
-  new Chart(flightTypeCtx, {
-      type: 'pie',
-      data: {
-          labels: flightTypeData.map(item => item.flight_type),
-          datasets: [{
-              data: flightTypeData.map(item => item.count),
-              backgroundColor: [
-                  '#3b82f6',
-                  '#10b981',
-                  '#f59e0b',
-                  '#ef4444',
-                  '#8b5cf6',
-                  '#06b6d4'
-              ],
-              borderWidth: 2,
-              borderColor: '#ffffff'
-          }]
-      },
-      options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-              legend: {
-                  position: 'bottom',
+  if (flightTypeData && flightTypeData.length > 0) {
+      new Chart(flightTypeCtx, {
+          type: 'pie',
+          data: {
+              labels: flightTypeData.map(item => item.flight_type),
+              datasets: [{
+                  data: flightTypeData.map(item => item.count),
+                  backgroundColor: [
+                      '#3b82f6',
+                      '#10b981',
+                      '#f59e0b',
+                      '#ef4444',
+                      '#8b5cf6',
+                      '#06b6d4'
+                  ],
+                  borderWidth: 2,
+                  borderColor: '#ffffff'
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                  legend: {
+                      position: 'bottom',
+                  }
               }
           }
-      }
-  });
+      });
+  } else {
+      // Show "No data available" message
+      flightTypeCtx.font = '16px Arial';
+      flightTypeCtx.fillStyle = '#6b7280';
+      flightTypeCtx.textAlign = 'center';
+      flightTypeCtx.fillText('No flight type data available', flightTypeCtx.canvas.width / 2, flightTypeCtx.canvas.height / 2);
+  }
 
   // Flight Conditions Chart
   const conditionsData = {{ conditions_data|safe }};

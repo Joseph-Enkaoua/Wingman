@@ -462,6 +462,16 @@ def charts_view(request):
         flight_count=Count('id')
     ).order_by('-total_hours')
     
+    # Convert Decimal values to float for JSON serialization
+    aircraft_data = [
+        {
+            'aircraft__registration': item['aircraft__registration'],
+            'total_hours': float(item['total_hours'] or 0),
+            'flight_count': item['flight_count']
+        }
+        for item in aircraft_data
+    ]
+    
     # Flight type distribution
     flight_type_data = Flight.objects.filter(pilot=user).values('flight_type').annotate(
         count=Count('id')
@@ -474,9 +484,9 @@ def charts_view(request):
     
     context = {
         'monthly_data': json.dumps(monthly_data),
-        'aircraft_data': list(aircraft_data),
-        'flight_type_data': list(flight_type_data),
-        'conditions_data': list(conditions_data),
+        'aircraft_data': json.dumps(aircraft_data),
+        'flight_type_data': json.dumps(list(flight_type_data)),
+        'conditions_data': json.dumps(list(conditions_data)),
     }
     
     return render(request, 'logbook/charts.html', context)
