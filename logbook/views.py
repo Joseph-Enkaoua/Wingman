@@ -7,8 +7,9 @@ from django.urls import reverse_lazy, reverse
 from django.http import HttpResponse, JsonResponse
 from django.db.models import Sum, Count
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime
 import json
+import calendar
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
 from django.views import View
@@ -160,8 +161,6 @@ def dashboard(request):
     
     # Monthly flight hours for the last 12 months
     monthly_hours = []
-    from datetime import datetime
-    import calendar
     
     # Get current date
     current_date = timezone.now().date()
@@ -411,8 +410,6 @@ def charts_view(request):
     
     # Monthly flight hours for the last 12 months
     monthly_data = []
-    from datetime import datetime
-    import calendar
     
     # Get current date
     current_date = timezone.now().date()
