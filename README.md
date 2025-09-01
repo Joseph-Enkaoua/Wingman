@@ -65,6 +65,60 @@ python manage.py runserver
 
 Visit `http://127.0.0.1:8000` and start logging your flights!
 
+## 🛠️ Development with Makefile
+
+For developers, we've included a comprehensive Makefile to streamline your workflow:
+
+### Quick Commands
+
+```bash
+# Start everything (Redis + Django)
+make dev
+
+# Just start Django (assumes Redis is running)
+make start
+
+# Start Redis service
+make redis-start
+
+# Stop Redis service (when done working)
+make redis-stop
+
+# Check Redis status
+make redis-status
+
+# Run database migrations
+make migrate
+
+# Open Django shell
+make shell
+
+# Run tests
+make test
+
+# Clean up cache files
+make clean
+```
+
+### Development Workflow
+
+```bash
+# 1. Start working (starts Redis)
+make work
+
+# 2. Start Django server
+make start
+
+# 3. When done working (stops Redis)
+make done
+```
+
+### All Available Commands
+
+```bash
+make help  # Show all available commands
+```
+
 ## 📸 Screenshots
 
 <div align="center">

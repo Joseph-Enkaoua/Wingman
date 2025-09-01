@@ -9,8 +9,12 @@ from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
 import json
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
+from django.views import View
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from reportlab.lib import colors
@@ -19,6 +23,78 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 from .models import Flight, Aircraft, PilotProfile
 from .forms import FlightForm, AircraftForm, PilotProfileForm, UserRegistrationForm, FlightSearchForm
+
+
+class CustomLoginView(View):
+    """Custom login view with rate limiting and enhanced security"""
+    template_name = 'logbook/login.html'
+    
+    @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=False))
+    @method_decorator(ratelimit(key='ip', rate='20/h', method='POST', block=False))
+    def post(self, request, *args, **kwargs):
+        # Check rate limiting and show messages instead of blocking
+        was_limited = getattr(request, 'limited', False)
+        if was_limited:
+            messages.error(request, 'Too many login attempts. Please wait a few minutes before trying again for security reasons.')
+            return self.get(request, *args, **kwargs)
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                # Log successful login
+                import logging
+                logger = logging.getLogger('django.security')
+                logger.info(f'Successful login for user: {username} from IP: {self.get_client_ip(request)}')
+                return redirect('dashboard')
+            else:
+                messages.error(request, 'Invalid username or password.')
+                # Log failed login attempt
+                import logging
+                logger = logging.getLogger('django.security')
+                logger.warning(f'Failed login attempt for username: {username} from IP: {self.get_client_ip(request)}')
+        else:
+            messages.error(request, 'Invalid username or password.')
+        
+        return self.get(request, *args, **kwargs)
+    
+    def get(self, request, *args, **kwargs):
+        form = AuthenticationForm()
+        return render(request, self.template_name, {'form': form})
+    
+    def get_client_ip(self, request):
+        """Get client IP for logging purposes only"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+
+@ratelimit(key='ip', rate='3/h', method='POST', block=False)
+def register_view(request):
+    """Registration view with rate limiting"""
+    if request.method == 'POST':
+        # Check rate limiting and show messages instead of blocking
+        was_limited = getattr(request, 'limited', False)
+        if was_limited:
+            messages.error(request, 'Too many registration attempts. Please wait a few minutes before trying again for security reasons.')
+            form = UserRegistrationForm()
+            return render(request, 'logbook/register.html', {'form': form})
+            
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Account created successfully!')
+            return redirect('dashboard')
+    else:
+        form = UserRegistrationForm()
+    
+    return render(request, 'logbook/register.html', {'form': form})
 
 
 def logout_view(request):
@@ -414,21 +490,6 @@ def export_pdf(request):
     # Build PDF
     doc.build(elements)
     return response
-
-
-def register_view(request):
-    """User registration view"""
-    if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Account created successfully! Please log in.')
-            return redirect('login')
-    else:
-        form = UserRegistrationForm()
-    
-    return render(request, 'logbook/register.html', {'form': form})
-
 
 @login_required
 def api_flight_stats(request):
