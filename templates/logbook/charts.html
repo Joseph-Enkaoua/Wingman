@@ -371,14 +371,14 @@
   // Time Breakdown Chart (assuming we have this data)
   const timeBreakdownCtx = document.getElementById('timeBreakdownChart').getContext('2d');
 
-  // This would need to be populated with actual data from the backend
+  // Time breakdown chart with real data
   new Chart(timeBreakdownCtx, {
       type: 'radar',
       data: {
           labels: ['Total Hours', 'Night Time', 'Instrument Time', 'Cross-Country', 'Dual Instruction', 'Solo Time'],
           datasets: [{
               label: 'Current Hours',
-              data: [50, 10, 5, 15, 20, 30], // This should come from backend
+              data: [{{ total_hours|floatformat:1 }}, {{ pilot_profile.total_night_hours|floatformat:1 }}, {{ pilot_profile.total_instrument_hours|floatformat:1 }}, {{ pilot_profile.total_cross_country_hours|floatformat:1 }}, {{ pilot_profile.total_dual_hours|floatformat:1 }}, {{ pilot_profile.total_solo_hours|floatformat:1 }}],
               backgroundColor: 'rgba(59, 130, 246, 0.2)',
               borderColor: '#3b82f6',
               borderWidth: 2,
@@ -409,11 +409,11 @@
 
   // Update statistics
   function updateStats() {
-      // This would typically come from an API call
-      document.getElementById('totalFlights').textContent = '25';
-      document.getElementById('totalHours').textContent = '50.5';
-      document.getElementById('avgFlightTime').textContent = '2.0';
-      document.getElementById('mostUsedAircraft').textContent = 'F-GABC';
+      // Use real data from Django context
+      document.getElementById('totalFlights').textContent = '{{ total_flights }}';
+      document.getElementById('totalHours').textContent = '{{ total_hours|floatformat:1 }}';
+      document.getElementById('avgFlightTime').textContent = '{{ avg_flight_time|floatformat:1 }}';
+      document.getElementById('mostUsedAircraft').textContent = '{{ most_used_aircraft }}';
   }
 
   // Download chart function

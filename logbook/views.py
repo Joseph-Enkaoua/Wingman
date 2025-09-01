@@ -411,6 +411,9 @@ def charts_view(request):
     """View for flight charts and analytics"""
     user = request.user
     
+    # Get pilot profile
+    pilot_profile, created = PilotProfile.objects.get_or_create(user=user)
+    
     # Monthly flight hours for the last 12 months
     monthly_data = []
     
@@ -482,11 +485,27 @@ def charts_view(request):
         count=Count('id')
     )
     
+    # Calculate additional statistics
+    user_flights = Flight.objects.filter(pilot=user)
+    total_flights = user_flights.count()
+    total_hours = user_flights.aggregate(total=Sum('total_time'))['total'] or 0
+    avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
+    
+    # Get most used aircraft
+    most_used_aircraft = user_flights.values('aircraft__registration').annotate(
+        count=Count('id')
+    ).order_by('-count').first()
+    
     context = {
+        'pilot_profile': pilot_profile,
         'monthly_data': json.dumps(monthly_data),
         'aircraft_data': json.dumps(aircraft_data),
         'flight_type_data': json.dumps(list(flight_type_data)),
         'conditions_data': json.dumps(list(conditions_data)),
+        'total_flights': total_flights,
+        'total_hours': float(total_hours),
+        'avg_flight_time': float(avg_flight_time),
+        'most_used_aircraft': most_used_aircraft['aircraft__registration'] if most_used_aircraft else 'N/A',
     }
     
     return render(request, 'logbook/charts.html', context)
