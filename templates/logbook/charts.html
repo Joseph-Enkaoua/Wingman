@@ -102,41 +102,55 @@
   </div>
 </div>
 
-<!-- Statistics Cards -->
+<!-- Statistics Row -->
 <div class="row mb-4">
-  <div class="col-md-3 mb-3">
-    <div class="stats-card">
-      <h3 id="totalFlights">0</h3>
-      <p><i class="fas fa-plane"></i> Total Flights</p>
-    </div>
-  </div>
-  <div class="col-md-3 mb-3">
-    <div class="stats-card">
-      <h3 id="totalHours">0.0</h3>
-      <p><i class="fas fa-clock"></i> Total Hours</p>
-    </div>
-  </div>
-  <div class="col-md-3 mb-3">
-    <div class="stats-card">
-      <h3 id="avgFlightTime">0.0</h3>
-      <p><i class="fas fa-stopwatch"></i> Avg Flight Time</p>
-    </div>
-  </div>
-  <div class="col-md-3 mb-3">
-    <div class="stats-card">
-      <h3 id="mostUsedAircraft">-</h3>
-      <p><i class="fas fa-helicopter"></i> Most Used Aircraft</p>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-info-circle aviation-icon"></i>
+          Flight Statistics
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-3 mb-3">
+            <div class="stat-item">
+              <h3 class="text-primary" id="totalFlights">{{ total_flights }}</h3>
+              <p class="text-muted mb-0">Total Flights</p>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="stat-item">
+              <h3 class="text-success" id="totalHours">{{ total_hours|floatformat:1 }}</h3>
+              <p class="text-muted mb-0">Total Hours</p>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="stat-item">
+              <h3 class="text-info" id="avgFlightTime">{{ avg_flight_time|floatformat:1 }}</h3>
+              <p class="text-muted mb-0">Avg Flight Time</p>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3">
+            <div class="stat-item">
+              <h3 class="text-warning" id="mostUsedAircraft">{{ most_used_aircraft }}</h3>
+              <p class="text-muted mb-0">Most Used Aircraft</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Export Options -->
+<!-- Export & Share -->
 <div class="row">
   <div class="col-12">
     <div class="card">
       <div class="card-header">
         <h5 class="card-title mb-0">
-          <i class="fas fa-download aviation-icon"></i>
+          <i class="fas fa-share-alt aviation-icon"></i>
           Export &amp; Share
         </h5>
       </div>
@@ -148,8 +162,8 @@
             </a>
           </div>
           <div class="col-md-3 mb-2">
-            <button class="btn btn-info w-100" onclick="downloadChart()">
-              <i class="fas fa-download"></i> Download All Charts
+            <button class="btn btn-info w-100" onclick="exportChartsData()">
+              <i class="fas fa-file-csv"></i> Export Analytics Report
             </button>
           </div>
           <div class="col-md-3 mb-2">
@@ -167,7 +181,9 @@
     </div>
   </div>
 </div>
-{% endblock %} {% block extra_js %}
+{% endblock %}
+
+{% block extra_js %}
 <script>
   // Chart.js configuration
   Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
@@ -245,88 +261,60 @@
 
   // Aircraft Usage Chart
   const aircraftData = {{ aircraft_data|safe }};
-  console.log('Aircraft data:', aircraftData);
   const aircraftCtx = document.getElementById('aircraftChart').getContext('2d');
 
-  if (aircraftData && aircraftData.length > 0) {
-      new Chart(aircraftCtx, {
-          type: 'doughnut',
-          data: {
-              labels: aircraftData.map(item => item.aircraft__registration),
-              datasets: [{
-                  data: aircraftData.map(item => item.total_hours),
-                  backgroundColor: [
-                      '#3b82f6',
-                      '#10b981',
-                      '#f59e0b',
-                      '#ef4444',
-                      '#8b5cf6',
-                      '#06b6d4',
-                      '#84cc16',
-                      '#f97316'
-                  ],
-                  borderWidth: 2,
-                  borderColor: '#ffffff'
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                  legend: {
-                      position: 'bottom',
-                  }
+  new Chart(aircraftCtx, {
+      type: 'doughnut',
+      data: {
+          labels: aircraftData.map(item => item.aircraft__registration),
+          datasets: [{
+              data: aircraftData.map(item => item.total_hours),
+              backgroundColor: [
+                  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                  '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+              ],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'bottom',
               }
           }
-      });
-  } else {
-      // Show "No data available" message
-      aircraftCtx.font = '16px Arial';
-      aircraftCtx.fillStyle = '#6b7280';
-      aircraftCtx.textAlign = 'center';
-      aircraftCtx.fillText('No aircraft data available', aircraftCtx.canvas.width / 2, aircraftCtx.canvas.height / 2);
-  }
+      }
+  });
 
   // Flight Type Distribution Chart
   const flightTypeData = {{ flight_type_data|safe }};
   const flightTypeCtx = document.getElementById('flightTypeChart').getContext('2d');
 
-  if (flightTypeData && flightTypeData.length > 0) {
-      new Chart(flightTypeCtx, {
-          type: 'pie',
-          data: {
-              labels: flightTypeData.map(item => item.flight_type),
-              datasets: [{
-                  data: flightTypeData.map(item => item.count),
-                  backgroundColor: [
-                      '#3b82f6',
-                      '#10b981',
-                      '#f59e0b',
-                      '#ef4444',
-                      '#8b5cf6',
-                      '#06b6d4'
-                  ],
-                  borderWidth: 2,
-                  borderColor: '#ffffff'
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                  legend: {
-                      position: 'bottom',
-                  }
+  new Chart(flightTypeCtx, {
+      type: 'pie',
+      data: {
+          labels: flightTypeData.map(item => item.flight_type || 'Unknown'),
+          datasets: [{
+              data: flightTypeData.map(item => item.count),
+              backgroundColor: [
+                  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+              ],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'bottom',
               }
           }
-      });
-  } else {
-      // Show "No data available" message
-      flightTypeCtx.font = '16px Arial';
-      flightTypeCtx.fillStyle = '#6b7280';
-      flightTypeCtx.textAlign = 'center';
-      flightTypeCtx.fillText('No flight type data available', flightTypeCtx.canvas.width / 2, flightTypeCtx.canvas.height / 2);
-  }
+      }
+  });
 
   // Flight Conditions Chart
   const conditionsData = {{ conditions_data|safe }};
@@ -335,17 +323,13 @@
   new Chart(conditionsCtx, {
       type: 'bar',
       data: {
-          labels: conditionsData.map(item => item.conditions),
+          labels: conditionsData.map(item => item.conditions || 'Unknown'),
           datasets: [{
               label: 'Number of Flights',
               data: conditionsData.map(item => item.count),
-              backgroundColor: [
-                  '#3b82f6',
-                  '#10b981',
-                  '#f59e0b'
-              ],
-              borderWidth: 1,
-              borderColor: '#ffffff'
+              backgroundColor: '#3b82f6',
+              borderColor: '#1d4ed8',
+              borderWidth: 1
           }]
       },
       options: {
@@ -416,36 +400,149 @@
       document.getElementById('mostUsedAircraft').textContent = '{{ most_used_aircraft }}';
   }
 
-  // Download all charts function
-  function downloadChart() {
-      // Get all chart canvases
-      const charts = [
-          { id: 'monthlyProgressChart', name: 'Monthly Flight Hours Progress' },
-          { id: 'aircraftChart', name: 'Aircraft Usage' },
-          { id: 'flightTypeChart', name: 'Flight Type Distribution' },
-          { id: 'conditionsChart', name: 'Flight Conditions' },
-          { id: 'timeBreakdownChart', name: 'Time Breakdown' }
-      ];
+  // Export charts data to CSV function
+  function exportChartsData() {
+      const downloadBtn = event.target;
+      const originalText = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating CSV...';
+      downloadBtn.disabled = true;
       
-      // Download each chart individually
-      charts.forEach((chart, index) => {
-          const canvas = document.getElementById(chart.id);
-          if (canvas) {
-              try {
-                  // Add a small delay to prevent browser from blocking multiple downloads
-                  setTimeout(() => {
-                      const link = document.createElement('a');
-                      link.download = `${chart.name}.png`;
-                      link.href = canvas.toDataURL('image/png');
-                      link.click();
-                  }, index * 100); // 100ms delay between each download
-              } catch (error) {
-                  console.error(`Error downloading ${chart.name}:`, error);
-              }
-          }
-      });
+      try {
+          // Get monthly data
+          const monthlyData = {{ monthly_data|safe }};
+          
+          // Get aircraft data
+          const aircraftData = {{ aircraft_data|safe }};
+          
+          // Get flight type data
+          const flightTypeData = {{ flight_type_data|safe }};
+          
+          // Get conditions data
+          const conditionsData = {{ conditions_data|safe }};
+          
+          // Create CSV content with better organization
+          let csvContent = 'FLIGHT ANALYTICS DATA EXPORT\n';
+          csvContent += `Generated on: ${new Date().toLocaleDateString()}\n`;
+          csvContent += `Pilot: {{ user.get_full_name|default:user.username }}\n`;
+          csvContent += '='.repeat(50) + '\n\n';
+          
+          // Summary Statistics Section
+          csvContent += 'SUMMARY STATISTICS\n';
+          csvContent += '='.repeat(20) + '\n';
+          csvContent += 'Metric,Value\n';
+          csvContent += `Total Flights,{{ total_flights }}\n`;
+          csvContent += `Total Flight Hours,{{ total_hours|floatformat:1 }}\n`;
+          csvContent += `Average Flight Duration,{{ avg_flight_time|floatformat:1 }} hours\n`;
+          csvContent += `Most Used Aircraft,{{ most_used_aircraft }}\n`;
+          csvContent += '\n';
+          
+          // Monthly Progress Section
+          csvContent += 'MONTHLY FLIGHT PROGRESS (Last 12 Months)\n';
+          csvContent += '='.repeat(40) + '\n';
+          csvContent += 'Month,Total Hours,Night Hours,Cross-Country Hours,Total Flights\n';
+          monthlyData.forEach(item => {
+              csvContent += `${item.month},${item.total_hours.toFixed(1)},${item.night_hours.toFixed(1)},${item.cross_country_hours.toFixed(1)},0\n`;
+          });
+          csvContent += '\n';
+          
+          // Aircraft Performance Section
+          csvContent += 'AIRCRAFT PERFORMANCE & USAGE\n';
+          csvContent += '='.repeat(35) + '\n';
+          csvContent += 'Aircraft Registration,Total Hours,Flight Count,Average Hours per Flight\n';
+          aircraftData.forEach(item => {
+              const avgHours = item.total_hours > 0 ? (item.total_hours / item.flight_count).toFixed(1) : '0.0';
+              csvContent += `${item.aircraft__registration},${item.total_hours.toFixed(1)},${item.flight_count},${avgHours}\n`;
+          });
+          csvContent += '\n';
+          
+          // Flight Type Analysis Section
+          csvContent += 'FLIGHT TYPE DISTRIBUTION\n';
+          csvContent += '='.repeat(30) + '\n';
+          csvContent += 'Flight Type,Number of Flights,Percentage of Total\n';
+          const totalFlightTypes = flightTypeData.reduce((sum, item) => sum + item.count, 0);
+          flightTypeData.forEach(item => {
+              const percentage = totalFlightTypes > 0 ? ((item.count / totalFlightTypes) * 100).toFixed(1) : '0.0';
+              csvContent += `${item.flight_type || 'Unknown'},${item.count},${percentage}%\n`;
+          });
+          csvContent += '\n';
+          
+          // Weather Conditions Section
+          csvContent += 'FLIGHT CONDITIONS ANALYSIS\n';
+          csvContent += '='.repeat(30) + '\n';
+          csvContent += 'Weather Conditions,Number of Flights,Percentage of Total\n';
+          const totalConditions = conditionsData.reduce((sum, item) => sum + item.count, 0);
+          conditionsData.forEach(item => {
+              const percentage = totalConditions > 0 ? ((item.count / totalConditions) * 100).toFixed(1) : '0.0';
+              csvContent += `${item.conditions || 'Unknown'},${item.count},${percentage}%\n`;
+          });
+          csvContent += '\n';
+          
+          // Time Breakdown Section
+          csvContent += 'TIME BREAKDOWN SUMMARY\n';
+          csvContent += '='.repeat(25) + '\n';
+          csvContent += 'Time Category,Hours\n';
+          csvContent += `Total Flight Time,{{ total_hours|floatformat:1 }}\n`;
+          csvContent += `Night Time,{{ pilot_profile.total_night_hours|floatformat:1 }}\n`;
+          csvContent += `Instrument Time,{{ pilot_profile.total_instrument_hours|floatformat:1 }}\n`;
+          csvContent += `Cross-Country Time,{{ pilot_profile.total_cross_country_hours|floatformat:1 }}\n`;
+          csvContent += `Dual Instruction,{{ pilot_profile.total_dual_hours|floatformat:1 }}\n`;
+          csvContent += `Solo Time,{{ pilot_profile.total_solo_hours|floatformat:1 }}\n`;
+          csvContent += '\n';
+          
+          // Footer
+          csvContent += '='.repeat(50) + '\n';
+          csvContent += 'End of Report\n';
+          csvContent += `Generated by Wingman Flight Logbook on ${new Date().toLocaleString()}\n`;
+          
+          // Create and download CSV file
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          const timestamp = new Date().toISOString().slice(0, 10);
+          link.href = URL.createObjectURL(blob);
+          link.download = `flight_analytics_data_${timestamp}.csv`;
+          link.click();
+          
+          // Clean up
+          URL.revokeObjectURL(link.href);
+          
+          // Show success message
+          showMessage('CSV data exported successfully!', 'success');
+          
+      } catch (error) {
+          console.error('Error exporting CSV:', error);
+          showMessage('Error exporting data. Please try again.', 'error');
+      }
+      
+      // Restore button state
+      downloadBtn.innerHTML = originalText;
+      downloadBtn.disabled = false;
   }
 
+  // Show message function
+  function showMessage(message, type = 'info') {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'info'} alert-dismissible fade show`;
+      alertDiv.style.position = 'fixed';
+      alertDiv.style.top = '20px';
+      alertDiv.style.right = '20px';
+      alertDiv.style.zIndex = '9999';
+      alertDiv.style.minWidth = '300px';
+      
+      alertDiv.innerHTML = `
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      document.body.appendChild(alertDiv);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+          if (alertDiv.parentNode) {
+              alertDiv.parentNode.removeChild(alertDiv);
+          }
+      }, 5000);
+  }
+  
   // Print charts function
   function printCharts() {
       window.print();
@@ -457,3 +554,4 @@
   });
 </script>
 {% endblock %}
+§
