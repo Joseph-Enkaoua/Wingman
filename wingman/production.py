@@ -43,7 +43,10 @@ DATABASES = {
 }
 
 # Cache configuration for rate limiting
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_URL = os.environ.get('REDIS_URL')
+if not REDIS_URL:
+    raise ImproperlyConfigured("REDIS_URL environment variable is required in production")
+
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
