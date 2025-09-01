@@ -22,11 +22,13 @@ class Flight(models.Model):
     PILOT_ROLE_CHOICES = [
         ('PIC', 'Pilot in Command'),
         ('SIC', 'Second in Command'),
-        ('DUAL', 'Dual Instruction'),
-        ('TRAINER', 'Instructor Flight'),
         ('SOLO', 'Solo Flight'),
+        ('DUAL', 'Dual Instruction Received'),
+        ('INSTR', 'Flight Instruction Given'),
+        ('SP', 'Safety Pilot'),
+        ('SIM', 'Simulator'),
     ]
-    
+
     CONDITIONS_CHOICES = [
         ('VFR', 'Visual Flight Rules'),
         ('IFR', 'Instrument Flight Rules'),
@@ -50,7 +52,7 @@ class Flight(models.Model):
     # Flight details
     departure_aerodrome = models.CharField(max_length=100)
     arrival_aerodrome = models.CharField(max_length=100)
-    pilot_role = models.CharField(max_length=4, choices=PILOT_ROLE_CHOICES, default='PIC')
+    pilot_role = models.CharField(max_length=5, choices=PILOT_ROLE_CHOICES, default='PIC')
     conditions = models.CharField(max_length=4, choices=CONDITIONS_CHOICES, default='VFR')
     flight_type = models.CharField(max_length=15, choices=FLIGHT_TYPE_CHOICES, default='LOCAL')
     
