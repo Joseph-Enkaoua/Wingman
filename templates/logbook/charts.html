@@ -149,7 +149,7 @@
           </div>
           <div class="col-md-3 mb-2">
             <button class="btn btn-info w-100" onclick="downloadChart()">
-              <i class="fas fa-download"></i> Download Charts
+              <i class="fas fa-download"></i> Download All Charts
             </button>
           </div>
           <div class="col-md-3 mb-2">
@@ -416,13 +416,34 @@
       document.getElementById('mostUsedAircraft').textContent = '{{ most_used_aircraft }}';
   }
 
-  // Download chart function
+  // Download all charts function
   function downloadChart() {
-      const canvas = document.getElementById('monthlyProgressChart');
-      const link = document.createElement('a');
-      link.download = 'flight-analytics.png';
-      link.href = canvas.toDataURL();
-      link.click();
+      // Get all chart canvases
+      const charts = [
+          { id: 'monthlyProgressChart', name: 'Monthly Flight Hours Progress' },
+          { id: 'aircraftChart', name: 'Aircraft Usage' },
+          { id: 'flightTypeChart', name: 'Flight Type Distribution' },
+          { id: 'conditionsChart', name: 'Flight Conditions' },
+          { id: 'timeBreakdownChart', name: 'Time Breakdown' }
+      ];
+      
+      // Download each chart individually
+      charts.forEach((chart, index) => {
+          const canvas = document.getElementById(chart.id);
+          if (canvas) {
+              try {
+                  // Add a small delay to prevent browser from blocking multiple downloads
+                  setTimeout(() => {
+                      const link = document.createElement('a');
+                      link.download = `${chart.name}.png`;
+                      link.href = canvas.toDataURL('image/png');
+                      link.click();
+                  }, index * 100); // 100ms delay between each download
+              } catch (error) {
+                  console.error(`Error downloading ${chart.name}:`, error);
+              }
+          }
+      });
   }
 
   // Print charts function
