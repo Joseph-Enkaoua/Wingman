@@ -599,10 +599,15 @@ def export_pdf(request):
         # Get instructor name if applicable
         instructor_name = flight.instructor_name if flight.instructor_name else ''
         
+        # Create aircraft type string with manufacturer
+        aircraft_type = flight.aircraft.type
+        if flight.aircraft.manufacturer:
+            aircraft_type = f"{flight.aircraft.manufacturer} {flight.aircraft.type}"
+        
         flight_data.append([
             flight.date.strftime('%Y-%m-%d'),
             flight.aircraft.registration,
-            flight.aircraft.type[:15],  # Truncate if too long
+            aircraft_type[:20],  # Increased length to accommodate manufacturer + type
             flight.departure_aerodrome[:12],  # Truncate for space
             flight.arrival_aerodrome[:12],    # Truncate for space
             f"{flight.total_time:.1f}",
@@ -635,10 +640,9 @@ def export_pdf(request):
     elements.append(legend_title)
     elements.append(Spacer(1, 10))
     
-    # Legend content - clean, organized structure
+    # Legend content - simple, guaranteed to work structure
     legend_data = [
         ['Abbreviation', 'Full Meaning'],
-        ['', ''],
         ['PIC', 'Pilot in Command'],
         ['SIC', 'Second in Command'],
         ['SOLO', 'Solo Flight'],
@@ -646,35 +650,28 @@ def export_pdf(request):
         ['INSTR', 'Flight Instruction Given'],
         ['SP', 'Safety Pilot'],
         ['SIM', 'Simulator'],
-        ['', ''],
         ['VFR', 'Visual Flight Rules'],
         ['IFR', 'Instrument Flight Rules'],
         ['SVFR', 'Special VFR'],
-        ['', ''],
         ['XC', 'Cross-Country Time'],
         ['N', 'Night Time'],
         ['D', 'Day Time'],
-        ['', ''],
         ['Landings', 'Total Day + Night Landings'],
-        ['Type', 'Aircraft Make and Model'],
-        ['Remarks', 'See individual flight entries'],
+        ['Type', 'Manufacturer + Aircraft Type'],
     ]
     
-    legend_table = Table(legend_data, colWidths=[1.5*inch, 4.5*inch])
+    # Create legend table with simple styling
+    legend_table = Table(legend_data, colWidths=[2*inch, 4*inch])
     legend_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (0, -1), colors.whitesmoke),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('BACKGROUND', (1, 0), (1, 0), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('SPAN', (0, 1), (1, 1)),  # Merge empty row for spacing
-        ('SPAN', (0, 8), (1, 8)),  # Merge empty row for spacing
-        ('SPAN', (0, 12), (1, 12)), # Merge empty row for spacing
-        ('SPAN', (0, 16), (1, 16)), # Merge empty row for spacing
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
     ]))
     elements.append(legend_table)
     
