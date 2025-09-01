@@ -562,13 +562,19 @@ def password_reset_request(request):
                 })
                 
                 # Send email
-                send_mail(
-                    subject,
-                    message,
-                    None,  # Use DEFAULT_FROM_EMAIL
-                    [email],
-                    fail_silently=False,
-                )
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        None,  # Use DEFAULT_FROM_EMAIL
+                        [email],
+                        fail_silently=False,
+                    )
+                    logger.info(f'Password reset email sent successfully to {email}')
+                except Exception as e:
+                    logger.error(f'Failed to send password reset email to {email}: {str(e)}')
+                    messages.error(request, 'Failed to send password reset email. Please try again later.')
+                    return render(request, 'logbook/password_reset_request.html', {'form': form})
                 
                 messages.success(request, 'Password reset email has been sent. Please check your inbox.')
                 return redirect('login')
