@@ -24,6 +24,19 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from .models import Flight, Aircraft, PilotProfile
 from .forms import FlightForm, AircraftForm, PilotProfileForm, UserRegistrationForm, FlightSearchForm
 
+# Set up logger for this module
+import logging
+logger = logging.getLogger(__name__)
+
+def get_client_ip(request):
+    """Get client IP for logging purposes"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
 
 class CustomLoginView(View):
     """Custom login view with rate limiting and enhanced security"""
@@ -35,8 +48,10 @@ class CustomLoginView(View):
         # Check rate limiting and show messages instead of blocking
         was_limited = getattr(request, 'limited', False)
         if was_limited:
+            logger.warning(f'Rate limit exceeded for login attempts from IP: {get_client_ip(request)}')
             messages.error(request, 'Too many login attempts. Please wait a few minutes before trying again for security reasons.')
             return self.get(request, *args, **kwargs)
+        
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
@@ -45,17 +60,20 @@ class CustomLoginView(View):
             if user is not None:
                 login(request, user)
                 # Log successful login
-                import logging
-                logger = logging.getLogger('django.security')
-                logger.info(f'Successful login for user: {username} from IP: {self.get_client_ip(request)}')
+                logger.info(f'Successful login for user: {username} from IP: {get_client_ip(request)}')
                 return redirect('dashboard')
             else:
+                # Authentication failed - this will trigger the user_login_failed signal
+                # so we don't need to log it here to avoid duplication
                 messages.error(request, 'Invalid username or password.')
-                # Log failed login attempt
-                import logging
-                logger = logging.getLogger('django.security')
-                logger.warning(f'Failed login attempt for username: {username} from IP: {self.get_client_ip(request)}')
         else:
+            # Only log actual form validation errors, not authentication errors
+            # Authentication errors are handled by the user_login_failed signal
+            if form.errors and not form.errors.get('__all__'):
+                # This is a real form validation error (empty fields, etc.)
+                username_attempt = request.POST.get('username', 'unknown')
+                logger.warning(f'*** INVALID LOGIN FORM *** for username: {username_attempt} from IP: {get_client_ip(request)} - Form errors: {form.errors}')
+            
             messages.error(request, 'Invalid username or password.')
         
         return self.get(request, *args, **kwargs)
@@ -64,14 +82,7 @@ class CustomLoginView(View):
         form = AuthenticationForm()
         return render(request, self.template_name, {'form': form})
     
-    def get_client_ip(self, request):
-        """Get client IP for logging purposes only"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+
 
 
 @ratelimit(key='ip', rate='3/h', method='POST', block=False)
@@ -81,6 +92,7 @@ def register_view(request):
         # Check rate limiting and show messages instead of blocking
         was_limited = getattr(request, 'limited', False)
         if was_limited:
+            logger.warning(f'Registration rate limit exceeded from IP: {get_client_ip(request)}')
             messages.error(request, 'Too many registration attempts. Please wait a few minutes before trying again for security reasons.')
             form = UserRegistrationForm()
             return render(request, 'logbook/register.html', {'form': form})
@@ -89,8 +101,13 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            logger.info(f'Successful registration for user: {user.username} from IP: {get_client_ip(request)}')
             messages.success(request, 'Account created successfully!')
             return redirect('dashboard')
+        else:
+            # Log failed registration attempt
+            username_attempt = request.POST.get('username', 'unknown')
+            logger.warning(f'Failed registration attempt for username: {username_attempt} from IP: {get_client_ip(request)}')
     else:
         form = UserRegistrationForm()
     
