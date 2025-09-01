@@ -151,6 +151,22 @@ def dashboard(request):
     total_solo_hours = pilot_profile.total_solo_hours
     total_pic_hours = pilot_profile.total_pic_hours
     
+    # Calculate average flight time
+    avg_flight_time = 0
+    if total_flights > 0:
+        avg_flight_time = total_hours / total_flights
+    
+    # Get most used aircraft
+    most_used_aircraft = "N/A"
+    if total_flights > 0:
+        aircraft_usage = Flight.objects.filter(pilot=user).values('aircraft__registration').annotate(
+            total_hours=Sum('total_time'),
+            flight_count=Count('id')
+        ).order_by('-flight_count', '-total_hours').first()
+        
+        if aircraft_usage:
+            most_used_aircraft = aircraft_usage['aircraft__registration']
+    
     # Calculate landing statistics
     landing_stats = Flight.objects.filter(pilot=user).aggregate(
         total_day_landings=Sum('landings_day'),
@@ -220,6 +236,8 @@ def dashboard(request):
         'total_night_landings': total_night_landings,
         'monthly_hours': json.dumps(monthly_hours),
         'aircraft_usage': aircraft_usage,
+        'avg_flight_time': avg_flight_time,
+        'most_used_aircraft': most_used_aircraft,
     }
     
     return render(request, 'logbook/dashboard.html', context)
@@ -541,6 +559,12 @@ def export_pdf(request):
     title = Paragraph(f"Flight Logbook - {user.get_full_name()}", title_style)
     elements.append(title)
     
+    # Add compliance statement
+    compliance_text = "This logbook format is designed to be compatible with both EASA (European Aviation Safety Agency) and FAA (Federal Aviation Administration) requirements."
+    compliance_para = Paragraph(compliance_text, styles['Normal'])
+    elements.append(compliance_para)
+    elements.append(Spacer(1, 20))
+    
     # Pilot information
     pilot_info = [
         ['Pilot Name:', user.get_full_name()],
@@ -565,23 +589,32 @@ def export_pdf(request):
     elements.append(pilot_table)
     elements.append(Spacer(1, 20))
     
-    # Flight entries table
-    flight_data = [['Date', 'Aircraft', 'From', 'To', 'Total', 'Night', 'XC', 'Role', 'Conditions']]
+    # Flight entries table - EASA/FAA compliant format
+    flight_data = [['Date', 'Aircraft', 'Type', 'From', 'To', 'Total', 'Night', 'XC', 'Role', 'Conditions', 'Landings']]
     
     for flight in flights:
+        # Determine day/night condition
+        day_night = 'N' if flight.night_time > 0 else 'D'
+        
+        # Get instructor name if applicable
+        instructor_name = flight.instructor_name if flight.instructor_name else ''
+        
         flight_data.append([
             flight.date.strftime('%Y-%m-%d'),
             flight.aircraft.registration,
-            flight.departure_aerodrome,
-            flight.arrival_aerodrome,
+            flight.aircraft.type[:15],  # Truncate if too long
+            flight.departure_aerodrome[:12],  # Truncate for space
+            flight.arrival_aerodrome[:12],    # Truncate for space
             f"{flight.total_time:.1f}",
             f"{flight.night_time:.1f}",
             f"{flight.cross_country_time:.1f}",
-            flight.get_pilot_role_display(),
-            flight.get_conditions_display(),
+            flight.pilot_role,  # Use the code instead of display name
+            flight.conditions,  # Use the code instead of display name
+            f"{flight.landings_day + flight.landings_night}",
         ])
     
-    flight_table = Table(flight_data, colWidths=[0.8*inch, 0.8*inch, 1.2*inch, 1.2*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.8*inch, 0.8*inch])
+    # Optimized column widths for EASA/FAA compliance - reduced FROM/TO even more
+    flight_table = Table(flight_data, colWidths=[0.7*inch, 0.8*inch, 1.0*inch, 0.7*inch, 0.7*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.9*inch, 0.9*inch, 0.5*inch])
     flight_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -593,6 +626,57 @@ def export_pdf(request):
         ('GRID', (0, 0), (-1, -1), 1, colors.black)
     ]))
     elements.append(flight_table)
+    
+    # Add legend for abbreviations
+    elements.append(Spacer(1, 20))
+    
+    # Legend title
+    legend_title = Paragraph("Abbreviations Legend & Compliance Notes", styles['Heading2'])
+    elements.append(legend_title)
+    elements.append(Spacer(1, 10))
+    
+    # Legend content - clean, organized structure
+    legend_data = [
+        ['Abbreviation', 'Full Meaning'],
+        ['', ''],
+        ['PIC', 'Pilot in Command'],
+        ['SIC', 'Second in Command'],
+        ['SOLO', 'Solo Flight'],
+        ['DUAL', 'Dual Instruction Received'],
+        ['INSTR', 'Flight Instruction Given'],
+        ['SP', 'Safety Pilot'],
+        ['SIM', 'Simulator'],
+        ['', ''],
+        ['VFR', 'Visual Flight Rules'],
+        ['IFR', 'Instrument Flight Rules'],
+        ['SVFR', 'Special VFR'],
+        ['', ''],
+        ['XC', 'Cross-Country Time'],
+        ['N', 'Night Time'],
+        ['D', 'Day Time'],
+        ['', ''],
+        ['Landings', 'Total Day + Night Landings'],
+        ['Type', 'Aircraft Make and Model'],
+        ['Remarks', 'See individual flight entries'],
+    ]
+    
+    legend_table = Table(legend_data, colWidths=[1.5*inch, 4.5*inch])
+    legend_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('BACKGROUND', (1, 0), (1, 0), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('SPAN', (0, 1), (1, 1)),  # Merge empty row for spacing
+        ('SPAN', (0, 8), (1, 8)),  # Merge empty row for spacing
+        ('SPAN', (0, 12), (1, 12)), # Merge empty row for spacing
+        ('SPAN', (0, 16), (1, 16)), # Merge empty row for spacing
+    ]))
+    elements.append(legend_table)
     
     # Build PDF
     doc.build(elements)
