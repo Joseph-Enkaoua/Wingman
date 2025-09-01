@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.http import HttpResponse, JsonResponse
 from django.db.models import Sum, Count
 from django.utils import timezone
@@ -14,6 +14,13 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.views import View
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.contrib.auth.models import User
+from django.contrib.auth import update_session_auth_hash
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
@@ -22,7 +29,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 from .models import Flight, Aircraft, PilotProfile
-from .forms import FlightForm, AircraftForm, PilotProfileForm, UserRegistrationForm, FlightSearchForm
+from .forms import FlightForm, AircraftForm, PilotProfileForm, UserRegistrationForm, FlightSearchForm, PasswordResetRequestForm, SetPasswordForm
+from .decorators import adaptive_ratelimit, user_ratelimit
 
 # Set up logger for this module
 import logging
@@ -526,6 +534,80 @@ def api_flight_stats(request):
     }
     
     return JsonResponse(stats)
+
+
+@adaptive_ratelimit(rate='3/h', key='ip', method='POST')
+def password_reset_request(request):
+    """Handle password reset request"""
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            try:
+                user = User.objects.get(email=email, is_active=True)
+                # Generate token and send email
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                
+                # Create reset URL
+                reset_url = request.build_absolute_uri(
+                    reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+                )
+                
+                # Email content
+                subject = 'Password Reset Request - Wingman Flight Logbook'
+                message = render_to_string('logbook/password_reset_email.html', {
+                    'user': user,
+                    'reset_url': reset_url,
+                })
+                
+                # Send email
+                send_mail(
+                    subject,
+                    message,
+                    None,  # Use DEFAULT_FROM_EMAIL
+                    [email],
+                    fail_silently=False,
+                )
+                
+                messages.success(request, 'Password reset email has been sent. Please check your inbox.')
+                return redirect('login')
+                
+            except User.DoesNotExist:
+                # Don't reveal if email exists or not for security
+                pass
+            
+            messages.success(request, 'If an account with that email exists, a password reset email has been sent.')
+            return redirect('login')
+    else:
+        form = PasswordResetRequestForm()
+    
+    return render(request, 'logbook/password_reset_request.html', {'form': form})
+
+
+def password_reset_confirm(request, uidb64, token):
+    """Handle password reset confirmation"""
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid, is_active=True)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            form = SetPasswordForm(request.POST)
+            if form.is_valid():
+                user.set_password(form.cleaned_data['new_password1'])
+                user.save()
+                messages.success(request, 'Your password has been reset successfully. You can now log in with your new password.')
+                return redirect('login')
+        else:
+            form = SetPasswordForm()
+        
+        return render(request, 'logbook/password_reset_confirm.html', {'form': form})
+    else:
+        messages.error(request, 'The password reset link is invalid or has expired.')
+        return redirect('login')
 
 
 def privacy_policy(request):

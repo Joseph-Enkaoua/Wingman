@@ -8,6 +8,10 @@ urlpatterns = [
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('logout/', views.logout_view, name='logout'),
     
+    # Password Reset
+    path('password-reset/', views.password_reset_request, name='password_reset_request'),
+    path('password-reset/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
+    
     # Dashboard and main views
     path('', views.dashboard, name='dashboard'),
     path('charts/', views.charts_view, name='charts'),

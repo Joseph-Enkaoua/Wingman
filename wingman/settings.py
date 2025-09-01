@@ -56,6 +56,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'logbook.middleware.RateLimitMiddleware',
+    'logbook.middleware.LoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'wingman.urls'
@@ -99,6 +101,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 12,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -213,3 +218,28 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development - logs emails to console
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@wingman.com')
+
+# Rate Limiting Configuration
+RATELIMIT_ENABLE = True
+RATELIMIT_USE_CACHE = 'default'
+
+# Rate limits for different user types
+# Anonymous users: stricter limits
+# Logged-in users: reasonable limits per hour
+RATELIMIT_ANONYMOUS = '100/h'  # 100 requests per hour for anonymous users
+RATELIMIT_USER = '1000/h'      # 1000 requests per hour for logged-in users
+RATELIMIT_KEY_PREFIX = 'rl'
+
+# Specific rate limits for sensitive operations
+RATELIMIT_LOGIN_ATTEMPTS = '5/m'      # 5 login attempts per minute
+RATELIMIT_PASSWORD_RESET = '3/h'      # 3 password reset requests per hour
+RATELIMIT_REGISTRATION = '3/h'        # 3 registration attempts per hour

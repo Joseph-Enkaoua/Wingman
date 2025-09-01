@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from .models import Flight, Aircraft, PilotProfile
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Submit, HTML
+from django.contrib.auth.password_validation import password_validators_help_text_html, validate_password
 
 
 class FlightForm(forms.ModelForm):
@@ -209,16 +210,67 @@ class UserRegistrationForm(UserCreationForm):
 
 class FlightSearchForm(forms.Form):
     """Form for searching flights"""
-    date_from = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}))
-    date_to = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}))
-    aircraft = forms.ModelChoiceField(queryset=Aircraft.objects.all(), required=False, empty_label="All Aircraft")
-    pilot_role = forms.ChoiceField(choices=[('', 'All Roles')] + Flight.PILOT_ROLE_CHOICES, required=False)
-    conditions = forms.ChoiceField(choices=[('', 'All Conditions')] + Flight.CONDITIONS_CHOICES, required=False)
-    flight_type = forms.ChoiceField(choices=[('', 'All Types')] + Flight.FLIGHT_TYPE_CHOICES, required=False)
+    date_from = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    date_to = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    aircraft = forms.ModelChoiceField(queryset=Aircraft.objects.none(), required=False, empty_label="All Aircraft")
+    pilot_role = forms.ChoiceField(choices=[('', 'All Roles')] + list(Flight.PILOT_ROLE_CHOICES), required=False)
+    conditions = forms.ChoiceField(choices=[('', 'All Conditions')] + list(Flight.CONDITIONS_CHOICES), required=False)
+    flight_type = forms.ChoiceField(choices=[('', 'All Types')] + list(Flight.FLIGHT_TYPE_CHOICES), required=False)
     
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_method = 'get'
-        self.helper.form_class = 'form-inline'
-        self.helper.add_input(Submit('submit', 'Search', css_class='btn btn-primary'))
+        if user:
+            self.fields['aircraft'].queryset = Aircraft.objects.all()
+
+
+class PasswordResetRequestForm(forms.Form):
+    """Form for requesting password reset"""
+    email = forms.EmailField(
+        max_length=254,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your email address',
+            'autocomplete': 'email'
+        })
+    )
+    
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if not User.objects.filter(email=email, is_active=True).exists():
+            raise forms.ValidationError(
+                "No active account found with this email address."
+            )
+        return email
+
+
+class SetPasswordForm(forms.Form):
+    """Form for setting new password"""
+    new_password1 = forms.CharField(
+        label="New password",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter new password',
+            'autocomplete': 'new-password'
+        }),
+        strip=False,
+        help_text=password_validators_help_text_html(),
+    )
+    new_password2 = forms.CharField(
+        label="Confirm new password",
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirm new password',
+            'autocomplete': 'new-password'
+        }),
+    )
+    
+    def clean_new_password2(self):
+        password1 = self.cleaned_data.get("new_password1")
+        password2 = self.cleaned_data.get("new_password2")
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError("The two password fields didn't match.")
+        validate_password(password2)
+        return password2
