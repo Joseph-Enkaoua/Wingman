@@ -144,8 +144,7 @@ class PilotProfile(models.Model):
     flight_school = models.CharField(max_length=100, blank=True)
     instructor = models.CharField(max_length=100, blank=True)
     
-    # Profile picture
-    profile_picture = models.ImageField(upload_to='pilot_profiles/', blank=True, null=True)
+
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.license_type}"

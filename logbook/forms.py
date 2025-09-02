@@ -160,7 +160,7 @@ class PilotProfileForm(forms.ModelForm):
         model = PilotProfile
         fields = [
             'license_number', 'license_type', 'medical_class', 'medical_expiry',
-            'phone', 'address', 'flight_school', 'instructor', 'profile_picture'
+            'phone', 'address', 'flight_school', 'instructor'
         ]
         widgets = {
             'license_number': forms.TextInput(attrs={'class': 'form-control'}),
@@ -171,7 +171,7 @@ class PilotProfileForm(forms.ModelForm):
             'address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'flight_school': forms.TextInput(attrs={'class': 'form-control'}),
             'instructor': forms.TextInput(attrs={'class': 'form-control'}),
-            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+
         }
     
     def __init__(self, *args, **kwargs):

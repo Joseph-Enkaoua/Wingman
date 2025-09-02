@@ -86,9 +86,7 @@ class PilotProfileAdmin(admin.ModelAdmin):
         ('Flight School', {
             'fields': ('flight_school', 'instructor')
         }),
-        ('Profile Picture', {
-            'fields': ('profile_picture',)
-        }),
+
     )
     
     def pilot_name(self, obj):
