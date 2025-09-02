@@ -198,13 +198,19 @@ class UserRegistrationForm(UserCreationForm):
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Register', css_class='btn btn-primary'))
     
+    def clean_email(self):
+        """Ensure email uniqueness"""
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("A user with this email already exists.")
+        return email
+    
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         if commit:
             user.save()
-            # Create pilot profile
-            PilotProfile.objects.create(user=user)
+            # Pilot profile is now created automatically via signals
         return user
 
 

@@ -1,6 +1,8 @@
 import logging
 from django.contrib.auth.signals import user_login_failed, user_logged_in, user_logged_out
+from django.contrib.auth.models import User
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger('logbook')
 
@@ -34,3 +36,23 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+from django.db.models.signals import pre_save, post_save
+
+@receiver(pre_save, sender=User)
+def ensure_email_uniqueness(sender, instance, **kwargs):
+    """Ensure email uniqueness for users before saving"""
+    if instance.email:
+        # Check if another user has this email (excluding current user)
+        if User.objects.filter(email=instance.email).exclude(pk=instance.pk).exists():
+            raise ValidationError("A user with this email already exists.")
+
+@receiver(post_save, sender=User)
+def log_user_creation(sender, instance, created, **kwargs):
+    """Log when new users are created"""
+    if created:
+        logger.info(f'New user created: {instance.username} with email: {instance.email}')
+        # Create pilot profile automatically
+        from .models import PilotProfile
+        PilotProfile.objects.get_or_create(user=instance)

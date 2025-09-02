@@ -1,6 +1,6 @@
 from django.contrib import admin
-from django.utils.html import format_html
-from .models import Flight, Aircraft, PilotProfile
+from django.contrib.auth.admin import UserAdmin
+from .models import Flight, Aircraft, PilotProfile, CustomUser
 
 
 @admin.register(Aircraft)
@@ -96,3 +96,20 @@ class PilotProfileAdmin(admin.ModelAdmin):
     def total_hours(self, obj):
         return f"{obj.total_flight_hours:.1f}"
     total_hours.short_description = 'Total Hours'
+
+
+@admin.register(CustomUser)
+class CustomUserAdmin(UserAdmin):
+    """Admin configuration for CustomUser model"""
+    list_display = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active']
+    list_filter = ['is_staff', 'is_superuser', 'is_active', 'groups']
+    search_fields = ['username', 'first_name', 'last_name', 'email']
+    ordering = ['username']
+    
+    fieldsets = UserAdmin.fieldsets
+    add_fieldsets = UserAdmin.add_fieldsets
+    
+    def get_queryset(self, request):
+        """Return all users, not just the custom ones"""
+        from django.contrib.auth.models import User
+        return User.objects.all()

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from decimal import Decimal
 
 
@@ -186,3 +187,25 @@ class PilotProfile(models.Model):
         """Calculate total PIC hours"""
         return sum(flight.total_time for flight in self.user.flights.all() 
                   if flight.pilot_role == 'PIC')
+
+
+class CustomUser(User):
+    """Custom user model with email uniqueness constraint"""
+    
+    class Meta:
+        proxy = True
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+    
+    def clean(self):
+        """Validate email uniqueness"""
+        super().clean()
+        if self.email:
+            # Check if another user has this email (excluding current user)
+            if User.objects.filter(email=self.email).exclude(pk=self.pk).exists():
+                raise ValidationError("A user with this email already exists.")
+    
+    def save(self, *args, **kwargs):
+        """Ensure email uniqueness before saving"""
+        self.clean()
+        super().save(*args, **kwargs)
