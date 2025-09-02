@@ -39,7 +39,7 @@
         </h5>
       </div>
       <div class="card-body">
-        {% crispy form %}
+        {% include 'logbook/flight_form_custom.html' %}
       </div>
     </div>
   </div>
@@ -79,20 +79,19 @@
             </ul>
           </div>
           <div class="col-md-6">
-            <h6 class="text-primary">Pilot Roles</h6>
+            <h6 class="text-primary">New Time Structure</h6>
             <ul class="list-unstyled">
               <li>
-                <i class="fas fa-check text-success"></i> PIC: Pilot in Command
+                <i class="fas fa-check text-success"></i> Engine time auto-populates based on aircraft type
               </li>
               <li>
-                <i class="fas fa-check text-success"></i> SIC: Second in Command
+                <i class="fas fa-check text-success"></i> Use "Full" buttons to quickly fill time fields
               </li>
               <li>
-                <i class="fas fa-check text-success"></i> Dual: Instruction
-                received
+                <i class="fas fa-check text-success"></i> All times are validated against flight duration
               </li>
               <li>
-                <i class="fas fa-check text-success"></i> Solo: Flying alone
+                <i class="fas fa-check text-success"></i> Enter times in HH:MM format (e.g., 01:30)
               </li>
             </ul>
           </div>

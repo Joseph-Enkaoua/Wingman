@@ -1,0 +1,22 @@
+<div class="input-group">
+    {{ field }}
+    {% if total_time_minutes %}
+    <button type="button" class="btn btn-outline-secondary" 
+            onclick="fillFullTime('{{ field_id }}', {{ total_time_minutes }})"
+            title="Fill with full flight time">
+        <i class="fas fa-clock"></i> Full
+    </button>
+    {% endif %}
+</div>
+
+<script>
+function fillFullTime(fieldId, totalMinutes) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        field.value = timeString;
+    }
+}
+</script>

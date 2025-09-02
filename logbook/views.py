@@ -323,12 +323,8 @@ class FlightListView(LoginRequiredMixin, ListView):
                 queryset = queryset.filter(date__lte=form.cleaned_data['date_to'])
             if form.cleaned_data.get('aircraft'):
                 queryset = queryset.filter(aircraft=form.cleaned_data['aircraft'])
-            if form.cleaned_data.get('pilot_role'):
-                queryset = queryset.filter(pilot_role=form.cleaned_data['pilot_role'])
-            if form.cleaned_data.get('conditions'):
-                queryset = queryset.filter(conditions=form.cleaned_data['conditions'])
-            if form.cleaned_data.get('flight_type'):
-                queryset = queryset.filter(flight_type=form.cleaned_data['flight_type'])
+
+
         
         return queryset.order_by('-date', '-departure_time')
     
@@ -641,13 +637,13 @@ def charts_view(request):
         for item in aircraft_data
     ]
     
-    # Flight type distribution
-    flight_type_data = Flight.objects.filter(pilot=user).values('flight_type').annotate(
+    # Engine type distribution
+    engine_type_data = Flight.objects.filter(pilot=user).values('aircraft_engine_type').annotate(
         count=Count('id')
     )
     
-    # Conditions distribution
-    conditions_data = Flight.objects.filter(pilot=user).values('conditions').annotate(
+    # Pilot role distribution
+    pilot_role_data = Flight.objects.filter(pilot=user).values('pilot_role').annotate(
         count=Count('id')
     )
     
@@ -683,14 +679,14 @@ def charts_view(request):
             'departure_aerodrome': flight.departure_aerodrome,
             'arrival_aerodrome': flight.arrival_aerodrome,
             'total_time': float(flight.total_time or 0),
+            'single_engine_time': float(flight.single_engine_time or 0),
+            'multi_engine_time': float(flight.multi_engine_time or 0),
             'night_time': float(flight.night_time or 0),
-            'cross_country_time': float(flight.cross_country_time or 0),
-            'pilot_role': flight.pilot_role,
-            'conditions': flight.conditions,
-            'landings_day': int(flight.landings_day or 0),
-            'landings_night': int(flight.landings_night or 0),
-            'instructor_name': flight.instructor_name,
-            'flight_type': flight.flight_type,
+            'ifr_time': float(flight.ifr_time or 0),
+            'conditions': 'PIC' if flight.pic_time > 0 else 'Co-Pilot' if flight.copilot_time > 0 else 'Instructor' if flight.instructor_time > 0 else 'Multi-Pilot' if flight.multi_pilot_time > 0 else 'Simulator' if flight.simulator_time > 0 else 'Standard',
+            'day_landings': int(flight.day_landings or 0),
+            'night_landings': int(flight.night_landings or 0),
+            'ifr_approaches': int(flight.ifr_approaches or 0),
             'remarks': flight.remarks
         })
     
@@ -698,8 +694,8 @@ def charts_view(request):
         'pilot_profile': pilot_profile,
         'monthly_data': json.dumps(monthly_data),
         'aircraft_data': json.dumps(aircraft_data),
-        'flight_type_data': json.dumps(list(flight_type_data)),
-        'conditions_data': json.dumps(list(conditions_data)),
+        'engine_type_data': json.dumps(list(engine_type_data)),
+        'conditions_data': json.dumps(conditions_data),
         'flights_data': json.dumps(flights_for_csv),
         'total_flights': total_flights,
         'total_hours': float(total_hours),
@@ -801,13 +797,13 @@ def print_charts_view(request):
         for item in aircraft_data
     ]
     
-    # Flight type distribution
-    flight_type_data = Flight.objects.filter(pilot=user).values('flight_type').annotate(
+    # Engine type distribution
+    engine_type_data = Flight.objects.filter(pilot=user).values('aircraft_engine_type').annotate(
         count=Count('id')
     )
     
-    # Conditions distribution
-    conditions_data = Flight.objects.filter(pilot=user).values('conditions').annotate(
+    # Pilot role distribution
+    pilot_role_data = Flight.objects.filter(pilot=user).values('pilot_role').annotate(
         count=Count('id')
     )
     
@@ -832,8 +828,8 @@ def print_charts_view(request):
         'pilot_profile': pilot_profile,
         'monthly_data': json.dumps(monthly_data),
         'aircraft_data': json.dumps(aircraft_data),
-        'flight_type_data': json.dumps(list(flight_type_data)),
-        'conditions_data': json.dumps(list(conditions_data)),
+        'engine_type_data': json.dumps(list(engine_type_data)),
+        'conditions_data': json.dumps([]),
         'total_flights': total_flights,
         'total_hours': float(total_hours),
         'avg_flight_time': float(avg_flight_time),
@@ -904,14 +900,11 @@ def export_pdf(request):
     elements.append(Spacer(1, 20))
     
     # Flight entries table - EASA/FAA compliant format
-    flight_data = [['Date', 'Aircraft', 'Type', 'From', 'To', 'Total', 'Night', 'XC', 'Role', 'Conditions', 'Landings']]
+    flight_data = [['Date', 'Aircraft', 'Type', 'From', 'To', 'Total', 'Night', 'IFR', 'Role', 'Engine', 'Landings']]
     
     for flight in flights:
         # Determine day/night condition
         day_night = 'N' if flight.night_time > 0 else 'D'
-        
-        # Get instructor name if applicable
-        instructor_name = flight.instructor_name if flight.instructor_name else ''
         
         # Create aircraft type string with manufacturer
         if flight.aircraft:
@@ -925,6 +918,9 @@ def export_pdf(request):
                 aircraft_type = f"{flight.aircraft_manufacturer} {flight.aircraft_type}"
             aircraft_registration = flight.aircraft_registration
         
+        # Determine engine type
+        engine_type = 'SE' if flight.single_engine_time > 0 else 'ME' if flight.multi_engine_time > 0 else 'N/A'
+        
         flight_data.append([
             flight.date.strftime('%Y-%m-%d'),
             aircraft_registration,
@@ -933,10 +929,10 @@ def export_pdf(request):
             flight.arrival_aerodrome[:12],    # Truncate for space
             f"{flight.total_time:.1f}",
             f"{flight.night_time:.1f}",
-            f"{flight.cross_country_time:.1f}",
-            flight.pilot_role,  # Use the code instead of display name
-            flight.conditions,  # Use the code instead of display name
-            f"{flight.landings_day + flight.landings_night}",
+            f"{flight.ifr_time:.1f}",
+            'PIC' if flight.pic_time > 0 else 'Co-Pilot' if flight.copilot_time > 0 else 'Standard',
+            engine_type,
+            f"{flight.day_landings + flight.night_landings}",
         ])
     
     # Optimized column widths for EASA/FAA compliance - reduced FROM/TO even more
@@ -971,10 +967,9 @@ def export_pdf(request):
         ['INSTR', 'Flight Instruction Given'],
         ['SP', 'Safety Pilot'],
         ['SIM', 'Simulator'],
-        ['VFR', 'Visual Flight Rules'],
-        ['IFR', 'Instrument Flight Rules'],
-        ['SVFR', 'Special VFR'],
-        ['XC', 'Cross-Country Time'],
+        ['SE', 'Single Engine Time'],
+        ['ME', 'Multi Engine Time'],
+        ['IFR', 'Instrument Flight Rules Time'],
         ['N', 'Night Time'],
         ['D', 'Day Time'],
         ['Landings', 'Total Day + Night Landings'],
@@ -1033,29 +1028,26 @@ def export_csv(request):
         # Determine day/night condition
         day_night = 'N' if flight.night_time > 0 else 'D'
         
-        # Get instructor name if applicable
-        instructor_name = flight.instructor_name if flight.instructor_name else ''
-        
         # Create aircraft type string with manufacturer
         aircraft_type = flight.aircraft.type
         if flight.aircraft.manufacturer:
             aircraft_type = f"{flight.aircraft.manufacturer} {flight.aircraft.type}"
         
         # Calculate PIC/SIC time
-        pic_time = flight.total_time if flight.pilot_role == 'PIC' else 0
-        sic_time = flight.total_time if flight.pilot_role == 'SIC' else 0
+        pic_time = flight.pic_time / 60 if flight.pic_time else 0
+        sic_time = flight.copilot_time / 60 if flight.copilot_time else 0
         
-        # Calculate solo time (PIC without instructor)
-        solo_time = flight.total_time if flight.pilot_role == 'PIC' and not flight.instructor_name else 0
+        # Calculate solo time (PIC time)
+        solo_time = flight.pic_time / 60 if flight.pic_time else 0
         
         # Calculate day time (total time minus night time)
-        day_time = flight.total_time - flight.night_time
+        day_time = flight.total_time - (flight.night_time / 60 if flight.night_time else 0)
         
         # Calculate dual received time
-        dual_received_time = flight.total_time if flight.pilot_role == 'DUAL' else 0
+        dual_received_time = flight.instructor_time / 60 if flight.instructor_time else 0
         
         # Calculate instructor given time
-        instructor_given_time = flight.total_time if flight.instructor_name else 0
+        instructor_given_time = flight.instructor_time / 60 if flight.instructor_time else 0
         
         # Create route string
         route = f"{flight.departure_aerodrome} to {flight.arrival_aerodrome}"
@@ -1073,14 +1065,14 @@ def export_csv(request):
             f"{dual_received_time:.1f}",
             f"{instructor_given_time:.1f}",
             f"{solo_time:.1f}",
-            f"{flight.cross_country_time:.1f}",
+            f"{flight.single_engine_time / 60:.1f}" if flight.single_engine_time else "0.0",
             f"{day_time:.1f}",
-            f"{flight.night_time:.1f}",
-            f"{flight.instrument_time:.1f}" if flight.conditions == 'IFR' else "0.0",
-            f"{flight.instrument_time:.1f}" if flight.conditions == 'SIM' else "0.0",
-            f"{flight.total_time:.1f}" if flight.conditions == 'SIM' else "0.0",
-            flight.landings_day,
-            flight.landings_night,
+            f"{flight.night_time / 60:.1f}" if flight.night_time else "0.0",
+            f"{flight.ifr_time / 60:.1f}" if flight.ifr_time else "0.0",
+            f"{flight.simulator_time / 60:.1f}" if flight.simulator_time else "0.0",
+            f"{flight.total_time:.1f}" if flight.simulator_time else "0.0",
+            flight.day_landings,
+            flight.night_landings,
             flight.remarks or ''
         ])
     

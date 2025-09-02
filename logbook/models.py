@@ -31,31 +31,6 @@ class Aircraft(models.Model):
 class Flight(models.Model):
     """Model for individual flight entries"""
     
-    PILOT_ROLE_CHOICES = [
-        ('PIC', 'Pilot in Command'),
-        ('SIC', 'Second in Command'),
-        ('SOLO', 'Solo Flight'),
-        ('DUAL', 'Dual Instruction Received'),
-        ('INSTR', 'Flight Instruction Given'),
-        ('SP', 'Safety Pilot'),
-        ('SIM', 'Simulator'),
-    ]
-
-    CONDITIONS_CHOICES = [
-        ('VFR', 'Visual Flight Rules'),
-        ('IFR', 'Instrument Flight Rules'),
-        ('SVFR', 'Special VFR'),
-    ]
-    
-    FLIGHT_TYPE_CHOICES = [
-        ('LOCAL', 'Local Flight'),
-        ('CROSS_COUNTRY', 'Cross Country'),
-        ('NIGHT', 'Night Flight'),
-        ('INSTRUMENT', 'Instrument Flight'),
-        ('TOWER', 'Tower Controlled'),
-        ('UNCONTROLLED', 'Uncontrolled Airspace'),
-    ]
-    
     # Basic flight information
     pilot = models.ForeignKey(User, on_delete=models.CASCADE, related_name='flights')
     date = models.DateField()
@@ -68,28 +43,38 @@ class Flight(models.Model):
     # Flight details
     departure_aerodrome = models.CharField(max_length=100)
     arrival_aerodrome = models.CharField(max_length=100)
-    pilot_role = models.CharField(max_length=5, choices=PILOT_ROLE_CHOICES, default='PIC')
-    conditions = models.CharField(max_length=4, choices=CONDITIONS_CHOICES, default='VFR')
-    flight_type = models.CharField(max_length=15, choices=FLIGHT_TYPE_CHOICES, default='LOCAL')
     
     # Time tracking
     departure_time = models.TimeField()
     arrival_time = models.TimeField()
     total_time = models.DecimalField(max_digits=4, decimal_places=1, validators=[MinValueValidator(Decimal('0.1'))])
     
-    # Additional time breakdowns
+    # New time breakdowns for the refactored structure
+    single_engine_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Single engine time in minutes")
+    multi_engine_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Multi engine time in minutes")
+    multi_pilot_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Multi-pilot flight time in minutes")
+    day_landings = models.PositiveIntegerField(default=0, help_text="Number of day landings")
+    night_landings = models.PositiveIntegerField(default=0, help_text="Number of night landings")
+    ifr_approaches = models.PositiveIntegerField(default=0, help_text="Number of IFR approaches")
     night_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Night time in minutes")
-    instrument_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Instrument time in minutes")
-    cross_country_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Cross country time in minutes")
+    ifr_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="IFR time in minutes")
+    pic_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="PIC time in minutes")
+    copilot_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Co-pilot time in minutes")
+    double_command_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Double command time in minutes")
+    instructor_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Instructor time in minutes")
     
-    # Instructor information
-    instructor_name = models.CharField(max_length=100, blank=True)
-    instructor_rating = models.CharField(max_length=50, blank=True)
+    # Simulator fields
+    simulator_type = models.CharField(max_length=100, blank=True, help_text="Type of simulator used")
+    simulator_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Simulator time in minutes")
+    
+    # Legacy fields for backward compatibility (will be removed in future migration)
+    instrument_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Instrument time in minutes (legacy)")
+    cross_country_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Cross country time in minutes (legacy)")
+    landings_day = models.PositiveIntegerField(default=0)  # Legacy field
+    landings_night = models.PositiveIntegerField(default=0)  # Legacy field
     
     # Flight details
     remarks = models.TextField(blank=True)
-    landings_day = models.PositiveIntegerField(default=0)
-    landings_night = models.PositiveIntegerField(default=0)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -130,13 +115,23 @@ class Flight(models.Model):
                 self.aircraft_type = self.aircraft.type
             if not self.aircraft_engine_type:
                 self.aircraft_engine_type = self.aircraft.engine_type
+            
+            # Auto-populate engine time based on aircraft type
+            if self.aircraft.engine_type == 'SINGLE' and not self.single_engine_time:
+                self.single_engine_time = int(self.total_time * 60) if self.total_time else 0
+            elif self.aircraft.engine_type == 'MULTI' and not self.multi_engine_time:
+                self.multi_engine_time = int(self.total_time * 60) if self.total_time else 0
         
         super().save(*args, **kwargs)
     
     @property
     def is_cross_country(self):
         """Determine if flight is cross-country based on distance or time"""
-        return self.flight_type == 'CROSS_COUNTRY' or self.cross_country_time > 0
+        # For backward compatibility, check legacy field first
+        if hasattr(self, 'cross_country_time') and self.cross_country_time > 0:
+            return True
+        # New logic: consider it cross-country if departure and arrival are different
+        return self.departure_aerodrome != self.arrival_aerodrome
     
     @property
     def is_night_flight(self):
@@ -146,7 +141,7 @@ class Flight(models.Model):
     @property
     def is_dual_instruction(self):
         """Determine if flight was dual instruction"""
-        return self.pilot_role == 'DUAL' or bool(self.instructor_name)
+        return self.instructor_time > 0
     
     @property
     def engine_type(self):
@@ -219,20 +214,20 @@ class PilotProfile(models.Model):
     @property
     def total_dual_hours(self):
         """Calculate total dual instruction hours"""
-        return sum(flight.total_time for flight in self.user.flights.all() 
-                  if flight.pilot_role == 'DUAL' or flight.instructor_name)
+        return sum(flight.instructor_time / 60 for flight in self.user.flights.all() 
+                  if flight.instructor_time > 0)
     
     @property
     def total_solo_hours(self):
         """Calculate total solo hours"""
-        return sum(flight.total_time for flight in self.user.flights.all() 
-                  if flight.pilot_role == 'SOLO')
+        return sum(flight.pic_time / 60 for flight in self.user.flights.all() 
+                  if flight.pic_time > 0)
     
     @property
     def total_pic_hours(self):
         """Calculate total PIC hours"""
-        return sum(flight.total_time for flight in self.user.flights.all() 
-                  if flight.pilot_role == 'PIC')
+        return sum(flight.pic_time / 60 for flight in self.user.flights.all() 
+                  if flight.pic_time > 0)
 
 
 class CustomUser(User):

@@ -41,15 +41,8 @@
           </div>
           <div class="col-md-2">{{ search_form.date_to|as_crispy_field }}</div>
           <div class="col-md-2">{{ search_form.aircraft|as_crispy_field }}</div>
-          <div class="col-md-2">
-            {{ search_form.pilot_role|as_crispy_field }}
-          </div>
-          <div class="col-md-2">
-            {{ search_form.conditions|as_crispy_field }}
-          </div>
-          <div class="col-md-2">
-            {{ search_form.flight_type|as_crispy_field }}
-          </div>
+
+
           <div class="col-12">
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-search"></i> Search
@@ -113,8 +106,8 @@
                 <th>Engine Type</th>
                 <th>Route</th>
                 <th>Duration</th>
-                <th>Role</th>
                 <th>Conditions</th>
+                <th>Engine Time</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -155,23 +148,33 @@
                   >
                   {% endif %}
                 </td>
-                <td>
-                  <span class="badge bg-primary"
-                    >{{ flight.get_pilot_role_display }}</span
-                  >
-                  {% if flight.instructor_name %}
-                  <br /><small class="text-muted"
-                    >w/ {{ flight.instructor_name }}</small
-                  >
+                                <td>
+                  {% if flight.pic_time > 0 %}
+                  <span class="badge bg-primary me-1">PIC</span>
+                  {% endif %}
+                  {% if flight.copilot_time > 0 %}
+                  <span class="badge bg-info me-1">Co-Pilot</span>
+                  {% endif %}
+                  {% if flight.instructor_time > 0 %}
+                  <span class="badge bg-warning me-1">Instructor</span>
+                  {% endif %}
+                  {% if flight.double_command_time > 0 %}
+                  <span class="badge bg-secondary me-1">Double Command</span>
+                  {% endif %}
+                  {% if flight.multi_pilot_time > 0 %}
+                  <span class="badge bg-dark me-1">Multi-Pilot</span>
+                  {% endif %}
+                  {% if flight.simulator_time > 0 %}
+                  <span class="badge bg-success me-1">Simulator</span>
                   {% endif %}
                 </td>
                 <td>
-                  <span class="badge bg-secondary"
-                    >{{ flight.get_conditions_display }}</span
-                  ><br />
-                  <span class="badge bg-info"
-                    >{{ flight.get_flight_type_display }}</span
-                  >
+                  {% if flight.single_engine_time > 0 %}
+                  <span class="badge bg-success">{{ flight.single_engine_time|minutes_to_time }} SE</span><br />
+                  {% endif %}
+                  {% if flight.multi_engine_time > 0 %}
+                  <span class="badge bg-info">{{ flight.multi_engine_time|minutes_to_time }} ME</span>
+                  {% endif %}
                 </td>
                 <td>
                   <div class="btn-group" role="group">
@@ -212,7 +215,7 @@
             <li class="page-item">
               <a
                 class="page-link"
-                href="?page=1{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}{% if request.GET.conditions %}&conditions={{ request.GET.conditions }}{% endif %}{% if request.GET.flight_type %}&flight_type={{ request.GET.flight_type }}{% endif %}"
+                href="?page=1{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}"
               >
                 <i class="fas fa-angle-double-left"></i>
               </a>
@@ -220,7 +223,7 @@
             <li class="page-item">
               <a
                 class="page-link"
-                href="?page={{ page_obj.previous_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}{% if request.GET.conditions %}&conditions={{ request.GET.conditions }}{% endif %}{% if request.GET.flight_type %}&flight_type={{ request.GET.flight_type }}{% endif %}"
+                href="?page={{ page_obj.previous_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}"
               >
                 <i class="fas fa-angle-left"></i>
               </a>
@@ -237,7 +240,7 @@
             <li class="page-item">
               <a
                 class="page-link"
-                href="?page={{ page_obj.next_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}{% if request.GET.conditions %}&conditions={{ request.GET.conditions }}{% endif %}{% if request.GET.flight_type %}&flight_type={{ request.GET.flight_type }}{% endif %}"
+                href="?page={{ page_obj.next_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}"
               >
                 <i class="fas fa-angle-right"></i>
               </a>
@@ -245,7 +248,7 @@
             <li class="page-item">
               <a
                 class="page-link"
-                href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}{% if request.GET.conditions %}&conditions={{ request.GET.conditions }}{% endif %}{% if request.GET.flight_type %}&flight_type={{ request.GET.flight_type }}{% endif %}"
+                href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}"
               >
                 <i class="fas fa-angle-double-right"></i>
               </a>

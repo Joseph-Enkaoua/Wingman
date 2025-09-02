@@ -15,10 +15,10 @@ class AircraftAdmin(admin.ModelAdmin):
 class FlightAdmin(admin.ModelAdmin):
     list_display = [
         'date', 'pilot_name', 'aircraft_registration', 'engine_type', 'departure_aerodrome', 
-        'arrival_aerodrome', 'total_time', 'pilot_role', 'conditions'
+        'arrival_aerodrome', 'total_time'
     ]
     list_filter = [
-        'date', 'pilot_role', 'conditions', 'flight_type', 'aircraft'
+        'date', 'aircraft'
     ]
     search_fields = [
         'pilot__username', 'pilot__first_name', 'pilot__last_name',
@@ -34,17 +34,20 @@ class FlightAdmin(admin.ModelAdmin):
         ('Time Details', {
             'fields': ('departure_time', 'arrival_time', 'total_time')
         }),
+        ('Pilot Role', {
+            'fields': ('pilot_role',)
+        }),
+        ('Engine Time', {
+            'fields': ('single_engine_time', 'multi_engine_time', 'multi_pilot_time')
+        }),
+        ('Landings and Approaches', {
+            'fields': ('day_landings', 'night_landings', 'ifr_approaches')
+        }),
         ('Flight Conditions', {
-            'fields': ('pilot_role', 'conditions', 'flight_type')
+            'fields': ('night_time', 'ifr_time', 'pic_time', 'copilot_time', 'double_command_time', 'instructor_time')
         }),
-        ('Time Breakdown', {
-            'fields': ('night_time', 'instrument_time', 'cross_country_time')
-        }),
-        ('Instructor Information', {
-            'fields': ('instructor_name', 'instructor_rating')
-        }),
-        ('Landings', {
-            'fields': ('landings_day', 'landings_night')
+        ('Simulator', {
+            'fields': ('simulator_type', 'simulator_time')
         }),
         ('Additional Information', {
             'fields': ('remarks',)

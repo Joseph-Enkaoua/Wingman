@@ -126,53 +126,32 @@
             >
           </div>
           <div class="col-md-6 mb-3">
-            <strong>Conditions:</strong><br />
-            <span class="badge bg-secondary"
-              >{{ flight.get_conditions_display }}</span
-            >
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>Flight Type:</strong><br />
-            <span class="badge bg-info"
-              >{{ flight.get_flight_type_display }}</span
-            >
+            <strong>Engine Time:</strong><br />
+            {% if flight.single_engine_time > 0 %}
+            <span class="badge bg-success">{{ flight.single_engine_time|minutes_to_time }} SE</span>
+            {% endif %}
+            {% if flight.multi_engine_time > 0 %}
+            <span class="badge bg-info">{{ flight.multi_engine_time|minutes_to_time }} ME</span>
+            {% endif %}
           </div>
           <div class="col-md-6 mb-3">
             <strong>Landings:</strong><br />
-            <span class="badge bg-success">{{ flight.landings_day }} day</span>
-            {% if flight.landings_night > 0 %}
-            <span class="badge bg-dark">{{ flight.landings_night }} night</span>
+            <span class="badge bg-success">{{ flight.day_landings }} day</span>
+            {% if flight.night_landings > 0 %}
+            <span class="badge bg-dark">{{ flight.night_landings }} night</span>
+            {% endif %}
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>IFR Approaches:</strong><br />
+            {% if flight.ifr_approaches > 0 %}
+            <span class="badge bg-warning">{{ flight.ifr_approaches }} approaches</span>
             {% endif %}
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Instructor Information -->
-    {% if flight.instructor_name %}
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-user-graduate aviation-icon"></i>
-          Instructor Information
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <strong>Instructor:</strong><br />
-            <span class="text-primary">{{ flight.instructor_name }}</span>
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>Rating:</strong><br />
-            <span class="text-muted"
-              >{{ flight.instructor_rating|default:"Not specified" }}</span
-            >
-          </div>
-        </div>
-      </div>
-    </div>
-    {% endif %}
+
 
     <!-- Remarks -->
     {% if flight.remarks %}
@@ -235,16 +214,34 @@
           <span class="text-primary">{{ flight.total_time }} hours</span>
         </div>
         <div class="mb-3">
-          <strong>Pilot Role:</strong><br />
-          <span class="badge bg-primary"
-            >{{ flight.get_pilot_role_display }}</span
-          >
+          <strong>Flight Conditions:</strong><br />
+          {% if flight.pic_time > 0 %}
+          <span class="badge bg-primary me-1">PIC</span>
+          {% endif %}
+          {% if flight.copilot_time > 0 %}
+          <span class="badge bg-info me-1">Co-Pilot</span>
+          {% endif %}
+          {% if flight.instructor_time > 0 %}
+          <span class="badge bg-warning me-1">Instructor</span>
+          {% endif %}
+          {% if flight.double_command_time > 0 %}
+          <span class="badge bg-secondary me-1">Double Command</span>
+          {% endif %}
+          {% if flight.multi_pilot_time > 0 %}
+          <span class="badge bg-dark me-1">Multi-Pilot</span>
+          {% endif %}
+          {% if flight.simulator_time > 0 %}
+          <span class="badge bg-success me-1">Simulator</span>
+          {% endif %}
         </div>
         <div class="mb-3">
-          <strong>Conditions:</strong><br />
-          <span class="badge bg-secondary"
-            >{{ flight.get_conditions_display }}</span
-          >
+          <strong>Engine Time:</strong><br />
+          {% if flight.single_engine_time > 0 %}
+          <span class="badge bg-success">{{ flight.single_engine_time|minutes_to_time }} SE</span>
+          {% endif %}
+          {% if flight.multi_engine_time > 0 %}
+          <span class="badge bg-info">{{ flight.multi_engine_time|minutes_to_time }} ME</span>
+          {% endif %}
         </div>
         {% if flight.is_cross_country %}
         <div class="mb-3">

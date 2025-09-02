@@ -1,0 +1,209 @@
+{% load crispy_forms_tags %}
+{% load time_filters %}
+
+<form method="post" class="form">
+    {% csrf_token %}
+    
+    <!-- Basic Flight Information -->
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form.date|as_crispy_field }}
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Aircraft</label>
+            <div class="text-muted small">Select an aircraft or enter registration manually</div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form.aircraft|as_crispy_field }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form.manual_aircraft_registration|as_crispy_field }}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form.departure_aerodrome|as_crispy_field }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form.arrival_aerodrome|as_crispy_field }}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form.departure_time|as_crispy_field }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form.arrival_time|as_crispy_field }}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            {{ form.pic_name|as_crispy_field }}
+        </div>
+    </div>
+    
+    <!-- Engine Time -->
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.single_engine_time.label }}</label>
+            {% time_input_with_button form.single_engine_time total_time_minutes %}
+            {% if form.single_engine_time.help_text %}
+                <small class="form-text text-muted">{{ form.single_engine_time.help_text }}</small>
+            {% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.multi_engine_time.label }}</label>
+            {% time_input_with_button form.multi_engine_time total_time_minutes %}
+            {% if form.multi_engine_time.help_text %}
+                <small class="form-text text-muted">{{ form.multi_engine_time.help_text }}</small>
+            {% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.multi_pilot_time.label }}</label>
+            {% time_input_with_button form.multi_pilot_time total_time_minutes %}
+            {% if form.multi_pilot_time.help_text %}
+                <small class="form-text text-muted">{{ form.multi_pilot_time.help_text }}</small>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Landings and Approaches -->
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            {{ form.day_landings|as_crispy_field }}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{ form.night_landings|as_crispy_field }}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{ form.ifr_approaches|as_crispy_field }}
+        </div>
+    </div>
+    
+    <!-- Flight Conditions -->
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.night_time.label }}</label>
+            {% time_input_with_button form.night_time total_time_minutes %}
+            {% if form.night_time.help_text %}
+                <small class="form-text text-muted">{{ form.night_time.help_text }}</small>
+            {% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.ifr_time.label }}</label>
+            {% time_input_with_button form.ifr_time total_time_minutes %}
+            {% if form.ifr_time.help_text %}
+                <small class="form-text text-muted">{{ form.ifr_time.help_text }}</small>
+            {% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.pic_time.label }}</label>
+            {% time_input_with_button form.pic_time total_time_minutes %}
+            {% if form.pic_time.help_text %}
+                <small class="form-text text-muted">{{ form.pic_time.help_text }}</small>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.copilot_time.label }}</label>
+            {% time_input_with_button form.copilot_time total_time_minutes %}
+            {% if form.copilot_time.help_text %}
+                <small class="form-text text-muted">{{ form.copilot_time.help_text }}</small>
+            {% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.double_command_time.label }}</label>
+            {% time_input_with_button form.double_command_time total_time_minutes %}
+            {% if form.double_command_time.help_text %}
+                <small class="form-text text-muted">{{ form.double_command_time.help_text }}</small>
+            {% endif %}
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">{{ form.instructor_time.label }}</label>
+            {% time_input_with_button form.instructor_time total_time_minutes %}
+            {% if form.instructor_time.help_text %}
+                <small class="form-text text-muted">{{ form.instructor_time.help_text }}</small>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Simulator -->
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form.simulator_type|as_crispy_field }}
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">{{ form.simulator_time.label }}</label>
+            {% time_input_with_button form.simulator_time total_time_minutes %}
+            {% if form.simulator_time.help_text %}
+                <small class="form-text text-muted">{{ form.simulator_time.help_text }}</small>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Remarks -->
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            {{ form.remarks|as_crispy_field }}
+        </div>
+    </div>
+    
+    <!-- Submit Buttons -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'flight-list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    {% if form.instance.pk %}Update Flight{% else %}Log Flight{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+// Update total time when departure/arrival times change
+document.addEventListener('DOMContentLoaded', function() {
+    const departureTime = document.getElementById('id_departure_time');
+    const arrivalTime = document.getElementById('id_arrival_time');
+    const dateField = document.getElementById('id_date');
+    
+    function updateTotalTime() {
+        if (departureTime.value && arrivalTime.value && dateField.value) {
+            const departure = new Date(dateField.value + 'T' + departureTime.value);
+            const arrival = new Date(dateField.value + 'T' + arrivalTime.value);
+            
+            if (arrival < departure) {
+                arrival.setDate(arrival.getDate() + 1);
+            }
+            
+            const diffMs = arrival - departure;
+            const diffMins = Math.round(diffMs / 60000);
+            
+            // Update the total time for fill buttons
+            window.totalTimeMinutes = diffMins;
+            
+            // Update all fill buttons
+            const fillButtons = document.querySelectorAll('[onclick*="fillFullTime"]');
+            fillButtons.forEach(button => {
+                const onclick = button.getAttribute('onclick');
+                button.setAttribute('onclick', onclick.replace(/\d+/, diffMins));
+            });
+        }
+    }
+    
+    departureTime.addEventListener('change', updateTotalTime);
+    arrivalTime.addEventListener('change', updateTotalTime);
+    dateField.addEventListener('change', updateTotalTime);
+});
+</script>
