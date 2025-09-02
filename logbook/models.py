@@ -7,10 +7,17 @@ from decimal import Decimal
 
 class Aircraft(models.Model):
     """Model for aircraft registration and details"""
+    
+    ENGINE_TYPE_CHOICES = [
+        ('SINGLE', 'Single Engine'),
+        ('MULTI', 'Multi Engine'),
+    ]
+    
     registration = models.CharField(max_length=10, unique=True, help_text="Aircraft registration (e.g., F-GABC)")
     type = models.CharField(max_length=50, help_text="Aircraft type (e.g., Cessna 152)")
     manufacturer = models.CharField(max_length=50, blank=True)
     year_manufactured = models.IntegerField(blank=True, null=True)
+    engine_type = models.CharField(max_length=6, choices=ENGINE_TYPE_CHOICES, default='SINGLE', help_text="Number of engines")
     total_time = models.DecimalField(max_digits=8, decimal_places=1, default=0, help_text="Total aircraft time in hours")
     
     class Meta:
@@ -125,6 +132,21 @@ class Flight(models.Model):
     def is_dual_instruction(self):
         """Determine if flight was dual instruction"""
         return self.pilot_role == 'DUAL' or bool(self.instructor_name)
+    
+    @property
+    def engine_type(self):
+        """Get the engine type from the associated aircraft"""
+        return self.aircraft.engine_type
+    
+    @property
+    def is_single_engine(self):
+        """Determine if the aircraft used is single engine"""
+        return self.aircraft.engine_type == 'SINGLE'
+    
+    @property
+    def is_multi_engine(self):
+        """Determine if the aircraft used is multi-engine"""
+        return self.aircraft.engine_type == 'MULTI'
 
 
 class PilotProfile(models.Model):

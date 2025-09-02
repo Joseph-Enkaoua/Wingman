@@ -382,8 +382,14 @@ class AircraftCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('aircraft-list')
     
     def form_valid(self, form):
+        print(f"Form is valid. Data: {form.cleaned_data}")
         messages.success(self.request, 'Aircraft added successfully!')
         return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        print(f"Form is invalid. Errors: {form.errors}")
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
 
 
 class AircraftUpdateView(LoginRequiredMixin, UpdateView):

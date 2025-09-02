@@ -277,6 +277,12 @@
           <strong>Type:</strong><br />
           <span class="text-muted">{{ flight.aircraft.type }}</span>
         </div>
+        <div class="mb-3">
+          <strong>Engine Type:</strong><br />
+          <span class="badge {% if flight.aircraft.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}">
+            {{ flight.aircraft.get_engine_type_display }}
+          </span>
+        </div>
         {% if flight.aircraft.manufacturer %}
         <div class="mb-3">
           <strong>Manufacturer:</strong><br />

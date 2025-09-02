@@ -108,6 +108,7 @@
               <tr>
                 <th>Date</th>
                 <th>Aircraft</th>
+                <th>Engine Type</th>
                 <th>Route</th>
                 <th>Duration</th>
                 <th>Role</th>
@@ -129,6 +130,11 @@
                     >{{ flight.aircraft.registration }}</span
                   ><br />
                   <small class="text-muted">{{ flight.aircraft.type }}</small>
+                </td>
+                <td>
+                  <span class="badge {% if flight.aircraft.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}"
+                    >{{ flight.aircraft.get_engine_type_display }}</span
+                  >
                 </td>
                 <td>
                   <strong>{{ flight.departure_aerodrome }}</strong>

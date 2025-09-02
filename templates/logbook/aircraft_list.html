@@ -69,6 +69,7 @@
                 <th>Type</th>
                 <th>Manufacturer</th>
                 <th>Year</th>
+                <th>Engine Type</th>
                 <th>Total Time</th>
                 <th>Actions</th>
               </tr>
@@ -92,6 +93,11 @@
                 <td>
                   <span class="text-muted"
                     >{{ aircraft_item.year_manufactured|default:"N/A" }}</span
+                  >
+                </td>
+                <td>
+                  <span class="badge {% if aircraft_item.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}"
+                    >{{ aircraft_item.get_engine_type_display }}</span
                   >
                 </td>
                 <td>

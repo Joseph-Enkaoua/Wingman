@@ -38,6 +38,14 @@
       <div class="card-body">
         <form method="post" class="needs-validation" novalidate>
           {% csrf_token %}
+          
+          <!-- Display form errors -->
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            <h6>Please correct the following errors:</h6>
+            {{ form.errors }}
+          </div>
+          {% endif %}
 
           <!-- Basic Information -->
           <div class="row mb-4">
@@ -56,14 +64,8 @@
             <div class="col-md-6 mb-3">
               {{ form.year_manufactured|as_crispy_field }}
             </div>
-          </div>
-
-          <!-- Time Information -->
-          <div class="row mb-4">
-            <div class="col-12">
-              <h6 class="text-primary mb-3">
-                <i class="fas fa-clock"></i> Time Information
-              </h6>
+            <div class="col-md-6 mb-3">
+              {{ form.engine_type|as_crispy_field }}
             </div>
             <div class="col-md-6 mb-3">
               {{ form.total_time|as_crispy_field }}

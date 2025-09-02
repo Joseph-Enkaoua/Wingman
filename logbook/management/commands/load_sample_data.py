@@ -13,9 +13,9 @@ class Command(BaseCommand):
 
         # Create sample aircraft
         aircraft_data = [
-            {'registration': 'F-GABC', 'type': 'Cessna 152', 'manufacturer': 'Cessna', 'year_manufactured': 1978},
-            {'registration': 'F-GDEF', 'type': 'Piper PA-28', 'manufacturer': 'Piper', 'year_manufactured': 1982},
-            {'registration': 'F-GHIJ', 'type': 'Diamond DA40', 'manufacturer': 'Diamond', 'year_manufactured': 2005},
+            {'registration': 'F-GABC', 'type': 'Cessna 152', 'manufacturer': 'Cessna', 'year_manufactured': 1978, 'engine_type': 'SINGLE'},
+            {'registration': 'F-GDEF', 'type': 'Piper PA-28', 'manufacturer': 'Piper', 'year_manufactured': 1982, 'engine_type': 'SINGLE'},
+            {'registration': 'F-GHIJ', 'type': 'Diamond DA40', 'manufacturer': 'Diamond', 'year_manufactured': 2005, 'engine_type': 'SINGLE'},
         ]
 
         aircraft_list = []

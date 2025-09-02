@@ -5,8 +5,8 @@ from .models import Flight, Aircraft, PilotProfile, CustomUser
 
 @admin.register(Aircraft)
 class AircraftAdmin(admin.ModelAdmin):
-    list_display = ['registration', 'type', 'manufacturer', 'year_manufactured', 'total_time']
-    list_filter = ['manufacturer', 'year_manufactured']
+    list_display = ['registration', 'type', 'manufacturer', 'year_manufactured', 'engine_type', 'total_time']
+    list_filter = ['manufacturer', 'year_manufactured', 'engine_type']
     search_fields = ['registration', 'type', 'manufacturer']
     ordering = ['registration']
 
@@ -14,7 +14,7 @@ class AircraftAdmin(admin.ModelAdmin):
 @admin.register(Flight)
 class FlightAdmin(admin.ModelAdmin):
     list_display = [
-        'date', 'pilot_name', 'aircraft_registration', 'departure_aerodrome', 
+        'date', 'pilot_name', 'aircraft_registration', 'engine_type', 'departure_aerodrome', 
         'arrival_aerodrome', 'total_time', 'pilot_role', 'conditions'
     ]
     list_filter = [
@@ -58,6 +58,10 @@ class FlightAdmin(admin.ModelAdmin):
     def aircraft_registration(self, obj):
         return obj.aircraft.registration
     aircraft_registration.short_description = 'Aircraft'
+    
+    def engine_type(self, obj):
+        return obj.aircraft.engine_type
+    engine_type.short_description = 'Engine Type'
 
 
 @admin.register(PilotProfile)

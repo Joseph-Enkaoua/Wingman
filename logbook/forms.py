@@ -131,12 +131,13 @@ class AircraftForm(forms.ModelForm):
     
     class Meta:
         model = Aircraft
-        fields = ['registration', 'type', 'manufacturer', 'year_manufactured', 'total_time']
+        fields = ['registration', 'type', 'manufacturer', 'year_manufactured', 'engine_type', 'total_time']
         widgets = {
             'registration': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'F-GABC'}),
             'type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cessna 152'}),
             'manufacturer': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cessna'}),
             'year_manufactured': forms.NumberInput(attrs={'class': 'form-control', 'min': '1900', 'max': '2030'}),
+            'engine_type': forms.Select(attrs={'class': 'form-control'}),
             'total_time': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'min': '0'}),
         }
     
@@ -145,6 +146,8 @@ class AircraftForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Save Aircraft', css_class='btn btn-primary'))
+        
+
     
     def clean_registration(self):
         registration = self.cleaned_data['registration']
