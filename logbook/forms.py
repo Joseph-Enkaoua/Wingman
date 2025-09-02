@@ -312,14 +312,13 @@ class AircraftForm(forms.ModelForm):
     
     class Meta:
         model = Aircraft
-        fields = ['registration', 'type', 'manufacturer', 'year_manufactured', 'engine_type', 'total_time']
+        fields = ['registration', 'type', 'manufacturer', 'year_manufactured', 'engine_type']
         widgets = {
             'registration': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'F-GABC'}),
             'type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cessna 152'}),
             'manufacturer': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cessna'}),
             'year_manufactured': forms.NumberInput(attrs={'class': 'form-control', 'min': '1900', 'max': '2030'}),
-            'engine_type': forms.Select(attrs={'class': 'form-control'}),
-            'total_time': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'min': '0'}),
+            'engine_type': forms.Select(attrs={'class': 'form-control'})
         }
     
     def __init__(self, *args, **kwargs):

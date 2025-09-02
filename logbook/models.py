@@ -18,7 +18,6 @@ class Aircraft(models.Model):
     manufacturer = models.CharField(max_length=50, blank=True)
     year_manufactured = models.IntegerField(blank=True, null=True)
     engine_type = models.CharField(max_length=6, choices=ENGINE_TYPE_CHOICES, default='SINGLE', help_text="Number of engines")
-    total_time = models.DecimalField(max_digits=8, decimal_places=1, default=0, help_text="Total aircraft time in hours")
     
     class Meta:
         ordering = ['registration']

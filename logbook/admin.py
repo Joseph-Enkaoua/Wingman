@@ -5,7 +5,7 @@ from .models import Flight, Aircraft, PilotProfile, CustomUser
 
 @admin.register(Aircraft)
 class AircraftAdmin(admin.ModelAdmin):
-    list_display = ['registration', 'type', 'manufacturer', 'year_manufactured', 'engine_type', 'total_time']
+    list_display = ['registration', 'type', 'manufacturer', 'year_manufactured', 'engine_type']
     list_filter = ['manufacturer', 'year_manufactured', 'engine_type']
     search_fields = ['registration', 'type', 'manufacturer']
     ordering = ['registration']

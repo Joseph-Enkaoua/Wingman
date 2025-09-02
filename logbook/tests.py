@@ -21,8 +21,7 @@ class AircraftEngineTypeTest(TestCase):
             type='Cessna 152',
             manufacturer='Cessna',
             year_manufactured=1978,
-            engine_type='SINGLE',
-            total_time=1000.0
+            engine_type='SINGLE'
         )
         
         self.multi_engine_aircraft = Aircraft.objects.create(
@@ -30,8 +29,7 @@ class AircraftEngineTypeTest(TestCase):
             type='Piper PA-34',
             manufacturer='Piper',
             year_manufactured=1985,
-            engine_type='MULTI',
-            total_time=1500.0
+            engine_type='MULTI'
         )
     
     def test_aircraft_engine_type_choices(self):

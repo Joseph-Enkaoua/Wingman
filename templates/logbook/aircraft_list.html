@@ -73,7 +73,6 @@
                     <th>Manufacturer</th>
                     <th>Year</th>
                     <th>Engine Type</th>
-                    <th>Total Time</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -101,11 +100,6 @@
                     <td>
                       <span class="badge {% if aircraft_item.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}"
                         >{{ aircraft_item.get_engine_type_display }}</span
-                      >
-                    </td>
-                    <td>
-                      <span class="badge bg-success"
-                        >{{ aircraft_item.total_time }}h</span
                       >
                     </td>
                     <td>
