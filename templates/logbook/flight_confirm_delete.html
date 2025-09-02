@@ -48,7 +48,7 @@
           </div>
         </div>
 
-        <form method="post">
+        <form id="delete-form" method="post">
           {% csrf_token %}
           <div class="d-grid gap-2">
             <button type="submit" class="btn btn-danger" style="color: white; font-weight: bold;">
@@ -63,6 +63,67 @@
             </a>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('delete-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const form = this;
+  const submitButton = form.querySelector('button[type="submit"]');
+  const originalText = submitButton.innerHTML;
+  
+  // Disable button and show loading state
+  submitButton.disabled = true;
+  submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp;Deleting...';
+  
+  // Get CSRF token
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  
+  fetch('', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      'csrfmiddlewaretoken': csrfToken
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Redirect immediately - the notification will appear on the destination page
+      window.location.href = data.redirect_url;
+    } else {
+      // Show error notification
+      if (window.notificationSystem) {
+        window.notificationSystem.show('An error occurred while deleting the flight.', 'error');
+      }
+      
+      // Re-enable button
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalText;
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    
+    // Show error notification
+    if (window.notificationSystem) {
+      window.notificationSystem.show('An error occurred while deleting the flight.', 'error');
+    }
+    
+    // Re-enable button
+    submitButton.disabled = false;
+    submitButton.innerHTML = originalText;
+  });
+});
+</script>
       </div>
     </div>
   </div>

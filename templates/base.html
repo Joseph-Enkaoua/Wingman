@@ -655,25 +655,21 @@
     <!-- Notification Container for Authenticated Users -->
     {% if user.is_authenticated %}
     <div id="notification-container" class="notification-container"></div>
+    
+    <!-- Hidden Django Messages Container (for JavaScript processing only) -->
+    {% if messages %}
+    <div id="django-messages" style="display: none;">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" data-message="{{ message }}" data-type="{{ message.tags }}"></div>
+      {% endfor %}
+    </div>
+    {% endif %}
     {% endif %}
 
     <!-- Main Content -->
     <div class="container-fluid">
       <div class="main-content">
-        <!-- Django Messages (will be converted to notifications) -->
-        {% if messages %}
-        <div class="row mb-4" id="django-messages" style="display: none;">
-          <div class="col-12">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-              <i class="fas fa-{% if message.tags == 'success' %}check-circle text-success{% elif message.tags == 'error' %}exclamation-circle text-danger{% elif message.tags == 'warning' %}exclamation-triangle text-warning{% else %}info-circle text-info{% endif %}"></i>
-              {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
-          </div>
-        </div>
-        {% endif %}
+
         
         <!-- Page Content -->
         {% block content %}{% endblock %}
@@ -803,62 +799,21 @@
 
         // Method to show Django messages as notifications
         showDjangoMessages() {
-          const messages = document.querySelectorAll('#django-messages .alert');
+          const messages = document.querySelectorAll('#django-messages .alert:not([data-processed])');
           messages.forEach(message => {
-            // Extract only the message text, excluding icons and buttons
-            // Clone the message to work with a clean version
-            const messageClone = message.cloneNode(true);
+            // Mark this message as processed to prevent duplicates
+            message.setAttribute('data-processed', 'true');
             
-            // Remove icon and close button to get clean text
-            const icon = messageClone.querySelector('i');
-            const closeButton = messageClone.querySelector('.btn-close');
-            if (icon) icon.remove();
-            if (closeButton) closeButton.remove();
-            
-            let messageText = messageClone.textContent.trim();
-            
-            // Clean up the message text if it contains extra whitespace or newlines
-            messageText = messageText.replace(/\s+/g, ' ').trim();
-            
-            const messageType = this.getDjangoMessageType(message);
-            
-            console.log(`Processing Django message: "${messageText}" with type: ${messageType}`);
+            // Get message text and type from data attributes
+            const messageText = message.getAttribute('data-message');
+            const messageType = message.getAttribute('data-type');
             
             // Show as notification
             this.show(messageText, messageType);
-            
-            // Remove the original message after a short delay for smooth transition
-            setTimeout(() => {
-              if (message.parentNode) {
-                message.remove();
-              }
-            }, 100);
           });
         }
 
-        getDjangoMessageType(messageElement) {
-          console.log('Checking message element classes:', messageElement.classList.toString());
-          
-          if (messageElement.classList.contains('alert-success')) {
-            console.log('Message type: success');
-            return 'success';
-          }
-          if (messageElement.classList.contains('alert-danger')) {
-            console.log('Message type: error');
-            return 'error';
-          }
-          if (messageElement.classList.contains('alert-warning')) {
-            console.log('Message type: warning');
-            return 'warning';
-          }
-          if (messageElement.classList.contains('alert-info')) {
-            console.log('Message type: info');
-            return 'info';
-          }
-          
-          console.log('Message type: defaulting to info');
-          return 'info';
-        }
+
 
         // Clear all notifications
         clearAll() {
@@ -875,30 +830,14 @@
 
       // Show Django messages as notifications when page loads (only for authenticated users)
       document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, checking for notification system and Django messages');
-        
         if (window.notificationSystem && document.getElementById('notification-container')) {
-          console.log('Notification system found and container exists');
-          
           // Check if there are any Django messages in the django-messages container
           const djangoMessages = document.querySelectorAll('#django-messages .alert');
-          console.log(`Found ${djangoMessages.length} Django messages`);
-          
-          // Also check for any messages in the document
-          const allAlerts = document.querySelectorAll('.alert');
-          console.log(`Total alerts found in document: ${allAlerts.length}`);
           
           if (djangoMessages.length > 0) {
-            // Small delay to ensure smooth transition
-            setTimeout(() => {
-              console.log('Processing Django messages...');
-              window.notificationSystem.showDjangoMessages();
-            }, 300);
-          } else {
-            console.log('No Django messages found in #django-messages container');
+            // Process messages once - the data-processed attribute prevents duplicates
+            window.notificationSystem.showDjangoMessages();
           }
-        } else {
-          console.log('Notification system or container not found');
         }
       });
 
@@ -908,6 +847,8 @@
           window.notificationSystem.clearAll();
         }
       });
+      
+
     </script>
     {% block extra_js %}{% endblock %}
   </body>

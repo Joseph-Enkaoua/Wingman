@@ -379,18 +379,26 @@ class FlightDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         flight = self.get_object()
         return flight.pilot == self.request.user
     
-    def delete(self, request, *args, **kwargs):
-        # Get the flight before deletion for the message
-        flight = self.get_object()
-        success_message = f'Flight from {flight.departure_aerodrome} to {flight.arrival_aerodrome} on {flight.date.strftime("%B %d, %Y")} has been deleted successfully.'
+    def post(self, request, *args, **kwargs):
+        """Handle POST request for deletion"""
+        success_message = 'Flight deleted successfully.'
         
-        # Delete the flight
-        super().delete(request, *args, **kwargs)
+        # Delete the flight first
+        self.object = self.get_object()
+        self.object.delete()
         
-        # Add the success message
+        # Add the success message to Django messages (will persist across redirect)
         messages.success(request, success_message)
         
-        # Use get_success_url instead of redirect to preserve messages
+        # Check if this is an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': success_message,
+                'redirect_url': self.get_success_url()
+            })
+        
+        # Regular form submission - redirect with message
         return HttpResponseRedirect(self.get_success_url())
     
     def get_success_url(self):
@@ -432,12 +440,10 @@ class AircraftCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('aircraft-list')
     
     def form_valid(self, form):
-        print(f"Form is valid. Data: {form.cleaned_data}")
         messages.success(self.request, 'Aircraft added successfully!')
         return super().form_valid(form)
     
     def form_invalid(self, form):
-        print(f"Form is invalid. Errors: {form.errors}")
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
 
@@ -460,7 +466,8 @@ class AircraftDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'logbook/aircraft_confirm_delete.html'
     success_url = reverse_lazy('aircraft-list')
     
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        """Handle POST request for deletion"""
         # Get the aircraft before deletion
         aircraft = self.get_object()
         
@@ -476,12 +483,13 @@ class AircraftDeleteView(LoginRequiredMixin, DeleteView):
             flight.aircraft = None
             flight.save()
         
-        success_message = f'Aircraft {aircraft.registration} ({aircraft.manufacturer} {aircraft.type}) has been deleted successfully. All associated flights have been preserved with the aircraft details.'
+        success_message = 'Aircraft deleted successfully.'
         
-        # Delete the aircraft
-        super().delete(request, *args, **kwargs)
+        # Delete the aircraft first
+        self.object = self.get_object()
+        self.object.delete()
         
-        # Add the success message
+        # Add the success message to Django messages (will persist across redirect)
         messages.success(request, success_message)
         
         # Check if this is an AJAX request
@@ -492,7 +500,7 @@ class AircraftDeleteView(LoginRequiredMixin, DeleteView):
                 'redirect_url': self.get_success_url()
             })
         
-        # Use get_success_url instead of redirect to preserve messages
+        # Regular form submission - redirect with message
         return HttpResponseRedirect(self.get_success_url())
     
     def get_success_url(self):
