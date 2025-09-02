@@ -4,8 +4,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
-from django.http import HttpResponse, JsonResponse
-from django.db.models import Sum, Count
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.db.models import Sum, Count, Case, When, Value, CharField
 from django.utils import timezone
 from datetime import datetime
 import json
@@ -132,6 +132,10 @@ def logout_view(request):
     storage = messages.get_messages(request)
     storage.used = True
     
+    # Also clear any existing messages in the session
+    if hasattr(request, 'session'):
+        request.session['_messages'] = []
+    
     logout(request)
     return redirect('/login/')
 
@@ -165,13 +169,20 @@ def dashboard(request):
     # Get most used aircraft
     most_used_aircraft = "N/A"
     if total_flights > 0:
-        aircraft_usage = Flight.objects.filter(pilot=user).values('aircraft__registration').annotate(
+        # Use COALESCE to handle both aircraft.registration and aircraft_registration fields
+        aircraft_usage = Flight.objects.filter(pilot=user).annotate(
+            registration=Case(
+                When(aircraft__isnull=False, then='aircraft__registration'),
+                default='aircraft_registration',
+                output_field=CharField(),
+            )
+        ).values('registration').annotate(
             total_hours=Sum('total_time'),
             flight_count=Count('id')
         ).order_by('-flight_count', '-total_hours').first()
         
         if aircraft_usage:
-            most_used_aircraft = aircraft_usage['aircraft__registration']
+            most_used_aircraft = aircraft_usage['registration']
     
     # Calculate landing statistics
     landing_stats = Flight.objects.filter(pilot=user).aggregate(
@@ -222,7 +233,23 @@ def dashboard(request):
     monthly_hours.reverse()
     
     # Aircraft usage
-    aircraft_usage = Flight.objects.filter(pilot=user).values('aircraft__registration').annotate(
+    aircraft_usage = Flight.objects.filter(pilot=user).annotate(
+        registration=Case(
+            When(aircraft__isnull=False, then='aircraft__registration'),
+            default='aircraft_registration',
+            output_field=CharField(),
+        ),
+        manufacturer=Case(
+            When(aircraft__isnull=False, then='aircraft__manufacturer'),
+            default='aircraft_manufacturer',
+            output_field=CharField(),
+        ),
+        type=Case(
+            When(aircraft__isnull=False, then='aircraft__type'),
+            default='aircraft_type',
+            output_field=CharField(),
+        )
+    ).values('registration', 'manufacturer', 'type').annotate(
         total_hours=Sum('total_time'),
         flight_count=Count('id')
     ).order_by('-total_hours')[:5]
@@ -241,7 +268,16 @@ def dashboard(request):
         'total_day_landings': total_day_landings,
         'total_night_landings': total_night_landings,
         'monthly_hours': json.dumps(monthly_hours),
-        'aircraft_usage': aircraft_usage,
+        'aircraft_usage': [
+            {
+                'registration': item['registration'],
+                'manufacturer': item['manufacturer'],
+                'type': item['type'],
+                'total_hours': item['total_hours'],
+                'flight_count': item['flight_count']
+            }
+            for item in aircraft_usage
+        ],
         'avg_flight_time': avg_flight_time,
         'most_used_aircraft': most_used_aircraft,
     }
@@ -344,8 +380,22 @@ class FlightDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return flight.pilot == self.request.user
     
     def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Flight deleted successfully!')
-        return super().delete(request, *args, **kwargs)
+        # Get the flight before deletion for the message
+        flight = self.get_object()
+        success_message = f'Flight from {flight.departure_aerodrome} to {flight.arrival_aerodrome} on {flight.date.strftime("%B %d, %Y")} has been deleted successfully.'
+        
+        # Delete the flight
+        super().delete(request, *args, **kwargs)
+        
+        # Add the success message
+        messages.success(request, success_message)
+        
+        # Use get_success_url instead of redirect to preserve messages
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def get_success_url(self):
+        """Return the URL to redirect to after successful deletion"""
+        return reverse('flight-list')
 
 
 class AircraftListView(LoginRequiredMixin, ListView):
@@ -411,8 +461,35 @@ class AircraftDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('aircraft-list')
     
     def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Aircraft deleted successfully!')
-        return super().delete(request, *args, **kwargs)
+        # Get the aircraft before deletion
+        aircraft = self.get_object()
+        
+        # Update all flights associated with this aircraft to preserve all aircraft details
+        from .models import Flight
+        flights_to_update = Flight.objects.filter(aircraft=aircraft)
+        
+        for flight in flights_to_update:
+            flight.aircraft_registration = aircraft.registration
+            flight.aircraft_manufacturer = aircraft.manufacturer
+            flight.aircraft_type = aircraft.type
+            flight.aircraft_engine_type = aircraft.engine_type
+            flight.aircraft = None
+            flight.save()
+        
+        success_message = f'Aircraft {aircraft.registration} ({aircraft.manufacturer} {aircraft.type}) has been deleted successfully. All associated flights have been preserved with the aircraft details.'
+        
+        # Delete the aircraft
+        super().delete(request, *args, **kwargs)
+        
+        # Add the success message
+        messages.success(request, success_message)
+        
+        # Use get_success_url instead of redirect to preserve messages
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def get_success_url(self):
+        """Return the URL to redirect to after successful deletion"""
+        return reverse('aircraft-list')
 
 
 @login_required
@@ -490,10 +567,26 @@ def charts_view(request):
     monthly_data.reverse()
     
     # Aircraft usage
-    aircraft_data = Flight.objects.filter(pilot=user).values(
-        'aircraft__registration', 
-        'aircraft__manufacturer', 
-        'aircraft__type'
+    aircraft_data = Flight.objects.filter(pilot=user).annotate(
+        registration=Case(
+            When(aircraft__isnull=False, then='aircraft__registration'),
+            default='aircraft_registration',
+            output_field=CharField(),
+        ),
+        manufacturer=Case(
+            When(aircraft__isnull=False, then='aircraft__manufacturer'),
+            default=Value(''),
+            output_field=CharField(),
+        ),
+        type=Case(
+            When(aircraft__isnull=False, then='aircraft__type'),
+            default=Value(''),
+            output_field=CharField(),
+        )
+    ).values(
+        'registration', 
+        'manufacturer', 
+        'type'
     ).annotate(
         total_hours=Sum('total_time'),
         flight_count=Count('id')
@@ -502,9 +595,9 @@ def charts_view(request):
     # Convert Decimal values to float for JSON serialization
     aircraft_data = [
         {
-            'aircraft__registration': item['aircraft__registration'],
-            'aircraft__manufacturer': item['aircraft__manufacturer'] or '',
-            'aircraft__type': item['aircraft__type'] or '',
+            'aircraft__registration': item['registration'],
+            'aircraft__manufacturer': item['manufacturer'] or '',
+            'aircraft__type': item['type'] or '',
             'total_hours': float(item['total_hours'] or 0),
             'flight_count': item['flight_count']
         }
@@ -528,7 +621,13 @@ def charts_view(request):
     avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
     
     # Get most used aircraft
-    most_used_aircraft = user_flights.values('aircraft__registration').annotate(
+    most_used_aircraft = user_flights.annotate(
+        registration=Case(
+            When(aircraft__isnull=False, then='aircraft__registration'),
+            default='aircraft_registration',
+            output_field=CharField(),
+        )
+    ).values('registration').annotate(
         count=Count('id')
     ).order_by('-count').first()
     
@@ -540,9 +639,9 @@ def charts_view(request):
         flights_for_csv.append({
             'date': flight.date.strftime('%Y-%m-%d'),
             'aircraft': {
-                'registration': flight.aircraft.registration,
-                'manufacturer': flight.aircraft.manufacturer,
-                'type': flight.aircraft.type
+                'registration': flight.aircraft.registration if flight.aircraft else flight.aircraft_registration,
+                'manufacturer': flight.aircraft.manufacturer if flight.aircraft else flight.aircraft_manufacturer,
+                'type': flight.aircraft.type if flight.aircraft else flight.aircraft_type
             },
             'departure_aerodrome': flight.departure_aerodrome,
             'arrival_aerodrome': flight.arrival_aerodrome,
@@ -568,7 +667,7 @@ def charts_view(request):
         'total_flights': total_flights,
         'total_hours': float(total_hours),
         'avg_flight_time': float(avg_flight_time),
-        'most_used_aircraft': most_used_aircraft['aircraft__registration'] if most_used_aircraft else 'N/A',
+        'most_used_aircraft': most_used_aircraft['registration'] if most_used_aircraft else 'N/A',
     }
     
     return render(request, 'logbook/charts.html', context)
@@ -628,10 +727,26 @@ def print_charts_view(request):
     monthly_data.reverse()
     
     # Aircraft usage
-    aircraft_data = Flight.objects.filter(pilot=user).values(
-        'aircraft__registration', 
-        'aircraft__manufacturer', 
-        'aircraft__type'
+    aircraft_data = Flight.objects.filter(pilot=user).annotate(
+        registration=Case(
+            When(aircraft__isnull=False, then='aircraft__registration'),
+            default='aircraft_registration',
+            output_field=CharField(),
+        ),
+        manufacturer=Case(
+            When(aircraft__isnull=False, then='aircraft__manufacturer'),
+            default=Value(''),
+            output_field=CharField(),
+        ),
+        type=Case(
+            When(aircraft__isnull=False, then='aircraft__type'),
+            default=Value(''),
+            output_field=CharField(),
+        )
+    ).values(
+        'registration', 
+        'manufacturer', 
+        'type'
     ).annotate(
         total_hours=Sum('total_time'),
         flight_count=Count('id')
@@ -640,9 +755,9 @@ def print_charts_view(request):
     # Convert Decimal values to float for JSON serialization
     aircraft_data = [
         {
-            'aircraft__registration': item['aircraft__registration'],
-            'aircraft__manufacturer': item['aircraft__manufacturer'] or '',
-            'aircraft__type': item['aircraft__type'] or '',
+            'aircraft__registration': item['registration'],
+            'aircraft__manufacturer': item['manufacturer'] or '',
+            'aircraft__type': item['type'] or '',
             'total_hours': float(item['total_hours'] or 0),
             'flight_count': item['flight_count']
         }
@@ -679,7 +794,7 @@ def print_charts_view(request):
         'total_flights': total_flights,
         'total_hours': float(total_hours),
         'avg_flight_time': float(avg_flight_time),
-        'most_used_aircraft': most_used_aircraft['aircraft__registration'] if most_used_aircraft else 'N/A',
+        'most_used_aircraft': most_used_aircraft['registration'] if most_used_aircraft else 'N/A',
     }
     
     return render(request, 'logbook/print_charts.html', context)
@@ -756,13 +871,20 @@ def export_pdf(request):
         instructor_name = flight.instructor_name if flight.instructor_name else ''
         
         # Create aircraft type string with manufacturer
-        aircraft_type = flight.aircraft.type
-        if flight.aircraft.manufacturer:
-            aircraft_type = f"{flight.aircraft.manufacturer} {flight.aircraft.type}"
+        if flight.aircraft:
+            aircraft_type = flight.aircraft.type
+            if flight.aircraft.manufacturer:
+                aircraft_type = f"{flight.aircraft.manufacturer} {flight.aircraft.type}"
+            aircraft_registration = flight.aircraft.registration
+        else:
+            aircraft_type = flight.aircraft_type
+            if flight.aircraft_manufacturer:
+                aircraft_type = f"{flight.aircraft_manufacturer} {flight.aircraft_type}"
+            aircraft_registration = flight.aircraft_registration
         
         flight_data.append([
             flight.date.strftime('%Y-%m-%d'),
-            flight.aircraft.registration,
+            aircraft_registration,
             aircraft_type[:20],  # Increased length to accommodate manufacturer + type
             flight.departure_aerodrome[:12],  # Truncate for space
             flight.arrival_aerodrome[:12],    # Truncate for space
@@ -1038,3 +1160,6 @@ def terms_of_service(request):
         'last_updated': timezone.now().strftime('%B %d, %Y')
     }
     return render(request, 'terms_of_service.html', context)
+
+
+

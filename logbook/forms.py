@@ -7,29 +7,87 @@ from crispy_forms.layout import Layout, Row, Column, Submit, HTML
 from django.contrib.auth.password_validation import password_validators_help_text_html, validate_password
 
 
+class TimeToDecimalField(forms.CharField):
+    """Custom field that accepts time input (HH:MM) and converts to decimal hours"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget = forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control',
+            'placeholder': 'HH:MM'
+        })
+    
+    def prepare_value(self, value):
+        """Convert decimal hours back to time format for initial value display"""
+        if value is not None and value != '':
+            try:
+                # Convert decimal hours to hours and minutes
+                value = float(value)
+                hours = int(value)
+                minutes = int((value - hours) * 60)
+                # Return time string in HH:MM format
+                return f"{hours:02d}:{minutes:02d}"
+            except (ValueError, TypeError):
+                return value
+        return value
+    
+    def clean(self, value):
+        """Convert time input to decimal hours"""
+        if not value:
+            return 0.0
+        
+        try:
+            # Parse HH:MM format
+            if ':' in str(value):
+                hours, minutes = map(int, str(value).split(':'))
+                # Convert to decimal hours
+                total_hours = hours + (minutes / 60)
+                return round(total_hours, 1)
+            else:
+                # Try to convert directly to float
+                return round(float(value), 1)
+        except (ValueError, TypeError):
+            raise forms.ValidationError("Please enter time in HH:MM format (e.g., 02:30)")
+
+
 class FlightForm(forms.ModelForm):
     """Form for creating and editing flight entries"""
+    
+    # Custom fields for time inputs
+    night_time = TimeToDecimalField(required=False, label="Night Time")
+    instrument_time = TimeToDecimalField(required=False, label="Instrument Time")
+    cross_country_time = TimeToDecimalField(required=False, label="Cross Country Time")
     
     class Meta:
         model = Flight
         fields = [
             'date', 'aircraft', 'departure_aerodrome', 'arrival_aerodrome',
             'departure_time', 'arrival_time', 'pilot_role', 'conditions',
-            'flight_type', 'night_time', 'instrument_time', 'cross_country_time',
-            'instructor_name', 'instructor_rating', 'landings_day', 'landings_night',
-            'remarks'
+            'flight_type', 'instructor_name', 'instructor_rating', 'landings_day', 'landings_night',
+            'remarks', 'night_time', 'instrument_time', 'cross_country_time'
         ]
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'departure_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'arrival_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
-            'night_time': forms.NumberInput(attrs={'step': '0.1', 'min': '0', 'class': 'form-control'}),
-            'instrument_time': forms.NumberInput(attrs={'step': '0.1', 'min': '0', 'class': 'form-control'}),
-            'cross_country_time': forms.NumberInput(attrs={'step': '0.1', 'min': '0', 'class': 'form-control'}),
             'landings_day': forms.NumberInput(attrs={'min': '0', 'class': 'form-control'}),
             'landings_night': forms.NumberInput(attrs={'min': '0', 'class': 'form-control'}),
             'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
+    
+    def save(self, commit=True):
+        """Override save to handle custom time fields"""
+        flight = super().save(commit=False)
+        
+        # Set the time values from our custom fields
+        flight.night_time = self.cleaned_data.get('night_time', 0.0)
+        flight.instrument_time = self.cleaned_data.get('instrument_time', 0.0)
+        flight.cross_country_time = self.cleaned_data.get('cross_country_time', 0.0)
+        
+        if commit:
+            flight.save()
+        return flight
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,6 +99,16 @@ class FlightForm(forms.ModelForm):
         
         # Determine button text based on whether this is an update or create
         button_text = 'Update Flight' if self.instance and self.instance.pk else 'Log Flight'
+        
+        # Set initial values for custom time fields when editing
+        if self.instance and self.instance.pk:
+            # Convert decimal hours to time format for display
+            if self.instance.night_time:
+                self.fields['night_time'].initial = self._decimal_to_time(self.instance.night_time)
+            if self.instance.instrument_time:
+                self.fields['instrument_time'].initial = self._decimal_to_time(self.instance.instrument_time)
+            if self.instance.cross_country_time:
+                self.fields['cross_country_time'].initial = self._decimal_to_time(self.instance.cross_country_time)
         
         self.helper.layout = Layout(
             Row(
@@ -98,6 +166,9 @@ class FlightForm(forms.ModelForm):
         departure_time = cleaned_data.get('departure_time')
         arrival_time = cleaned_data.get('arrival_time')
         date = cleaned_data.get('date')
+        night_time = cleaned_data.get('night_time')
+        instrument_time = cleaned_data.get('instrument_time')
+        cross_country_time = cleaned_data.get('cross_country_time')
         
         if departure_time and arrival_time and date:
             from datetime import datetime
@@ -122,8 +193,30 @@ class FlightForm(forms.ModelForm):
             
             # Auto-calculate total time
             cleaned_data['total_time'] = round(total_hours, 1)
+            
+            # Validate that time components don't exceed total flight time
+            if night_time and night_time > total_hours:
+                raise forms.ValidationError(f"Night time ({night_time:.1f}h) cannot exceed total flight time ({total_hours:.1f}h)")
+            
+            if instrument_time and instrument_time > total_hours:
+                raise forms.ValidationError(f"Instrument time ({instrument_time:.1f}h) cannot exceed total flight time ({total_hours:.1f}h)")
+            
+            if cross_country_time and cross_country_time > total_hours:
+                raise forms.ValidationError(f"Cross country time ({cross_country_time:.1f}h) cannot exceed total flight time ({total_hours:.1f}h)")
         
         return cleaned_data
+    
+    def _decimal_to_time(self, decimal_hours):
+        """Convert decimal hours to time string format (HH:MM)"""
+        if decimal_hours is None or decimal_hours == 0:
+            return "00:00"
+        
+        try:
+            hours = int(decimal_hours)
+            minutes = int((decimal_hours - hours) * 60)
+            return f"{hours:02d}:{minutes:02d}"
+        except (ValueError, TypeError):
+            return "00:00"
 
 
 class AircraftForm(forms.ModelForm):

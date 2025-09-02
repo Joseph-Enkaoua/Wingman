@@ -464,7 +464,7 @@
               remarks = remarks.trim() || 'N/A';
               
               // Build CSV row
-              csvContent += `${flight.date},${flight.aircraft.registration},${aircraftType},${flight.departure_aerodrome},${flight.arrival_aerodrome},${route},${flight.total_time.toFixed(1)},${picTime.toFixed(1)},${sicTime.toFixed(1)},${dualTime.toFixed(1)},${instructorTime.toFixed(1)},${soloTime.toFixed(1)},${flight.cross_country_time.toFixed(1)},${dayTime.toFixed(1)},${flight.night_time.toFixed(1)},${ifrTime.toFixed(1)},${simulatedInstrumentTime.toFixed(1)},0.0,${flight.landings_day},${flight.landings_night},${remarks}\n`;
+              csvContent += `${flight.date},${flight.aircraft ? flight.aircraft.registration : flight.aircraft_registration},${aircraftType},${flight.departure_aerodrome},${flight.arrival_aerodrome},${route},${flight.total_time.toFixed(1)},${picTime.toFixed(1)},${sicTime.toFixed(1)},${dualTime.toFixed(1)},${instructorTime.toFixed(1)},${soloTime.toFixed(1)},${flight.cross_country_time.toFixed(1)},${dayTime.toFixed(1)},${flight.night_time.toFixed(1)},${ifrTime.toFixed(1)},${simulatedInstrumentTime.toFixed(1)},0.0,${flight.landings_day},${flight.landings_night},${remarks}\n`;
           });
           
           // Footer

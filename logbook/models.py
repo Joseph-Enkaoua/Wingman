@@ -60,7 +60,11 @@ class Flight(models.Model):
     # Basic flight information
     pilot = models.ForeignKey(User, on_delete=models.CASCADE, related_name='flights')
     date = models.DateField()
-    aircraft = models.ForeignKey(Aircraft, on_delete=models.CASCADE)
+    aircraft = models.ForeignKey(Aircraft, on_delete=models.SET_NULL, null=True, blank=True)
+    aircraft_registration = models.CharField(max_length=10, blank=True, help_text="Aircraft registration (preserved when aircraft is deleted)")
+    aircraft_manufacturer = models.CharField(max_length=50, blank=True, help_text="Aircraft manufacturer (preserved when aircraft is deleted)")
+    aircraft_type = models.CharField(max_length=50, blank=True, help_text="Aircraft type (preserved when aircraft is deleted)")
+    aircraft_engine_type = models.CharField(max_length=6, choices=[('SINGLE', 'Single Engine'), ('MULTI', 'Multi Engine')], blank=True, help_text="Aircraft engine type (preserved when aircraft is deleted)")
     
     # Flight details
     departure_aerodrome = models.CharField(max_length=100)
@@ -98,7 +102,8 @@ class Flight(models.Model):
         verbose_name_plural = "Flights"
     
     def __str__(self):
-        return f"{self.date} - {self.aircraft.registration} - {self.departure_aerodrome} to {self.arrival_aerodrome}"
+        aircraft_info = self.aircraft.registration if self.aircraft else self.aircraft_registration
+        return f"{self.date} - {aircraft_info} - {self.departure_aerodrome} to {self.arrival_aerodrome}"
     
     def save(self, *args, **kwargs):
         # Auto-calculate total time if not provided
@@ -115,6 +120,17 @@ class Flight(models.Model):
                 
                 time_diff = arrival_dt - departure_dt
                 self.total_time = Decimal(str(time_diff.total_seconds() / 3600)).quantize(Decimal('0.1'))
+        
+        # Auto-populate aircraft details from aircraft reference
+        if self.aircraft:
+            if not self.aircraft_registration:
+                self.aircraft_registration = self.aircraft.registration
+            if not self.aircraft_manufacturer:
+                self.aircraft_manufacturer = self.aircraft.manufacturer
+            if not self.aircraft_type:
+                self.aircraft_type = self.aircraft.type
+            if not self.aircraft_engine_type:
+                self.aircraft_engine_type = self.aircraft.engine_type
         
         super().save(*args, **kwargs)
     
@@ -136,17 +152,23 @@ class Flight(models.Model):
     @property
     def engine_type(self):
         """Get the engine type from the associated aircraft"""
-        return self.aircraft.engine_type
+        if self.aircraft:
+            return self.aircraft.engine_type
+        return self.aircraft_engine_type
     
     @property
     def is_single_engine(self):
         """Determine if the aircraft used is single engine"""
-        return self.aircraft.engine_type == 'SINGLE'
+        if self.aircraft:
+            return self.aircraft.engine_type == 'SINGLE'
+        return self.aircraft_engine_type == 'SINGLE'
     
     @property
     def is_multi_engine(self):
         """Determine if the aircraft used is multi-engine"""
-        return self.aircraft.engine_type == 'MULTI'
+        if self.aircraft:
+            return self.aircraft.engine_type == 'MULTI'
+        return self.aircraft_engine_type == 'MULTI'
 
 
 class PilotProfile(models.Model):

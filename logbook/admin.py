@@ -22,7 +22,7 @@ class FlightAdmin(admin.ModelAdmin):
     ]
     search_fields = [
         'pilot__username', 'pilot__first_name', 'pilot__last_name',
-        'aircraft__registration', 'departure_aerodrome', 'arrival_aerodrome'
+        'aircraft__registration', 'aircraft_registration', 'departure_aerodrome', 'arrival_aerodrome'
     ]
     date_hierarchy = 'date'
     ordering = ['-date', '-departure_time']
@@ -56,11 +56,15 @@ class FlightAdmin(admin.ModelAdmin):
     pilot_name.short_description = 'Pilot'
     
     def aircraft_registration(self, obj):
-        return obj.aircraft.registration
+        if obj.aircraft:
+            return obj.aircraft.registration
+        return f"{obj.aircraft_registration} (deleted)"
     aircraft_registration.short_description = 'Aircraft'
     
     def engine_type(self, obj):
-        return obj.aircraft.engine_type
+        if obj.aircraft:
+            return obj.aircraft.engine_type
+        return 'N/A'
     engine_type.short_description = 'Engine Type'
 
 

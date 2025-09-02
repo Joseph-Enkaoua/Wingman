@@ -65,12 +65,16 @@
                 auto-calculated from departure/arrival times
               </li>
               <li>
-                <i class="fas fa-check text-success"></i> Night time: from 1
-                hour after sunset to 1 hour before sunrise
+                <i class="fas fa-check text-success"></i> Night time: enter in HH:MM format (e.g., 01:30 for 1.5 hours)
               </li>
               <li>
-                <i class="fas fa-check text-success"></i> Cross-country: flights
-                &gt;50nm from departure point
+                <i class="fas fa-check text-success"></i> Instrument time: enter in HH:MM format (e.g., 00:45 for 0.75 hours)
+              </li>
+              <li>
+                <i class="fas fa-check text-success"></i> Cross-country time: enter in HH:MM format (e.g., 02:00 for 2.0 hours)
+              </li>
+              <li>
+                <i class="fas fa-check text-success"></i> All time components are validated against total flight time
               </li>
             </ul>
           </div>
@@ -101,7 +105,6 @@
 
 {% block extra_js %}
 <script>
-  // Auto-calculate total time when departure/arrival times change
   document.addEventListener("DOMContentLoaded", function () {
     const departureTime = document.getElementById("id_departure_time");
     const arrivalTime = document.getElementById("id_arrival_time");
@@ -113,7 +116,7 @@
         const arrival = new Date(dateField.value + "T" + arrivalTime.value);
 
         // Handle overnight flights
-        if (arrival &lt; departure) {
+        if (arrival < departure) {
           arrival.setDate(arrival.getDate() + 1);
         }
 
@@ -136,6 +139,88 @@
     if (!dateField.value) {
       const today = new Date().toISOString().split("T")[0];
       dateField.value = today;
+    }
+
+    // Auto-format time inputs to HH:MM and add validation
+    const timeInputs = document.querySelectorAll('input[type="time"]');
+    
+    timeInputs.forEach(input => {
+      // Set default value to 00:00 for time breakdown fields
+      if (input.name.includes('night_time') || input.name.includes('instrument_time') || input.name.includes('cross_country_time')) {
+        input.value = '00:00';
+        
+        // Add validation feedback
+        input.addEventListener('change', function() {
+          const timeValue = this.value;
+          if (timeValue) {
+            const [hours, minutes] = timeValue.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes;
+            
+            // Show time in hours format for user reference
+            const hoursDecimal = (totalMinutes / 60).toFixed(1);
+            this.title = `${hoursDecimal} hours`;
+          }
+        });
+      }
+    });
+    
+    // Add form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const departureTime = document.querySelector('input[name="departure_time"]').value;
+        const arrivalTime = document.querySelector('input[name="arrival_time"]').value;
+        const nightTime = document.querySelector('input[name="night_time"]').value;
+        const instrumentTime = document.querySelector('input[name="instrument_time"]').value;
+        const crossCountryTime = document.querySelector('input[name="cross_country_time"]').value;
+        
+        if (departureTime && arrivalTime) {
+          // Calculate total flight time
+          const [depHour, depMin] = departureTime.split(':').map(Number);
+          const [arrHour, arrMin] = arrivalTime.split(':').map(Number);
+          
+          let totalMinutes = (arrHour * 60 + arrMin) - (depHour * 60 + depMin);
+          if (totalMinutes < 0) totalMinutes += 24 * 60; // Handle overnight flights
+          
+          const totalHours = totalMinutes / 60;
+          
+          // Validate individual time components
+          let isValid = true;
+          let errorMessage = '';
+          
+          if (nightTime && nightTime !== '00:00') {
+            const [nightHour, nightMin] = nightTime.split(':').map(Number);
+            const nightHours = (nightHour * 60 + nightMin) / 60;
+            if (nightHours > totalHours) {
+              isValid = false;
+              errorMessage += `Night time (${nightHours.toFixed(1)}h) exceeds total flight time (${totalHours.toFixed(1)}h). `;
+            }
+          }
+          
+          if (instrumentTime && instrumentTime !== '00:00') {
+            const [instHour, instMin] = instrumentTime.split(':').map(Number);
+            const instHours = (instHour * 60 + instMin) / 60;
+            if (instHours > totalHours) {
+              isValid = false;
+              errorMessage += `Instrument time (${instHour.toFixed(1)}h) exceeds total flight time (${totalHours.toFixed(1)}h). `;
+            }
+          }
+          
+          if (crossCountryTime && crossCountryTime !== '00:00') {
+            const [xcHour, xcMin] = crossCountryTime.split(':').map(Number);
+            const xcHours = (xcHour * 60 + xcMin) / 60;
+            if (xcHours > totalHours) {
+              isValid = false;
+              errorMessage += `Cross country time (${xcHours.toFixed(1)}h) exceeds total flight time (${totalHours.toFixed(1)}h). `;
+            }
+          }
+          
+          if (!isValid) {
+            e.preventDefault();
+            alert('Validation Error: ' + errorMessage);
+          }
+        }
+      });
     }
   });
 </script>

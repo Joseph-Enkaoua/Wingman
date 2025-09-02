@@ -4,6 +4,21 @@
 {% block title %}Flight Details - Wingman{% endblock %}
 
 {% block content %}
+<!-- Django Messages (will be converted to notifications) -->
+{% if messages %}
+<div class="row mb-4" id="django-messages" style="display: none;">
+  <div class="col-12">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      <i class="fas fa-{% if message.tags == 'success' %}check-circle text-success{% elif message.tags == 'error' %}exclamation-circle text-danger{% elif message.tags == 'warning' %}exclamation-triangle text-warning{% else %}info-circle text-info{% endif %}"></i>
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <div class="row">
   <div class="col-12">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -13,7 +28,7 @@
           Flight Details
         </h1>
         <p class="text-muted">
-          {{ flight.date|date:"F d, Y" }} - {{ flight.aircraft.registration }}
+          {{ flight.date|date:"F d, Y" }} - {% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}
         </p>
       </div>
       <div>
@@ -47,9 +62,9 @@
           <div class="col-md-6 mb-3">
             <strong>Aircraft:</strong><br />
             <span class="badge bg-info"
-              >{{ flight.aircraft.registration }}</span
+                              >{% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}</span
             >
-            <small class="text-muted d-block">{{ flight.aircraft.type }}</small>
+                          <small class="text-muted d-block">{% if flight.aircraft %}{{ flight.aircraft.type }}{% else %}{{ flight.aircraft_type }}{% endif %}</small>
           </div>
           <div class="col-md-6 mb-3">
             <strong>Departure:</strong><br />
@@ -271,24 +286,24 @@
       <div class="card-body">
         <div class="mb-3">
           <strong>Registration:</strong><br />
-          <span class="badge bg-info">{{ flight.aircraft.registration }}</span>
+          <span class="badge bg-info">{% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}</span>
         </div>
         <div class="mb-3">
           <strong>Type:</strong><br />
-          <span class="text-muted">{{ flight.aircraft.type }}</span>
+          <span class="text-muted">{% if flight.aircraft %}{{ flight.aircraft.type }}{% else %}{{ flight.aircraft_type }}{% endif %}</span>
         </div>
         <div class="mb-3">
           <strong>Engine Type:</strong><br />
-          <span class="badge {% if flight.aircraft.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}">
-            {{ flight.aircraft.get_engine_type_display }}
+          <span class="badge {% if flight.aircraft %}{% if flight.aircraft.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}{% else %}{% if flight.aircraft_engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}{% endif %}">
+            {% if flight.aircraft %}{{ flight.aircraft.get_engine_type_display }}{% else %}{% if flight.aircraft_engine_type == 'SINGLE' %}Single Engine{% else %}Multi Engine{% endif %}{% endif %}
           </span>
         </div>
-        {% if flight.aircraft.manufacturer %}
+        {% if flight.aircraft and flight.aircraft.manufacturer or flight.aircraft_manufacturer %}
         <div class="mb-3">
           <strong>Manufacturer:</strong><br />
-          <span class="text-muted">{{ flight.aircraft.manufacturer }}</span>
+          <span class="text-muted">{% if flight.aircraft %}{{ flight.aircraft.manufacturer }}{% else %}{{ flight.aircraft_manufacturer }}{% endif %}</span>
         </div>
-        {% endif %} {% if flight.aircraft.year_manufactured %}
+        {% endif %} {% if flight.aircraft and flight.aircraft.year_manufactured %}
         <div class="mb-3">
           <strong>Year:</strong><br />
           <span class="text-muted"
