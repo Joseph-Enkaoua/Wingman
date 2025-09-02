@@ -800,7 +800,13 @@ def print_charts_view(request):
     avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
     
     # Get most used aircraft
-    most_used_aircraft = user_flights.values('aircraft__registration').annotate(
+    most_used_aircraft = user_flights.annotate(
+        registration=Case(
+            When(aircraft__isnull=False, then='aircraft__registration'),
+            default='aircraft_registration',
+            output_field=CharField(),
+        )
+    ).values('registration').annotate(
         count=Count('id')
     ).order_by('-count').first()
     

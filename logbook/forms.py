@@ -205,12 +205,13 @@ class FlightForm(forms.ModelForm):
         self.helper.field_class = ''
         
         # Update aircraft field to include a "None" option
-        self.fields['aircraft'].empty_label = "Select an aircraft from the list"
-        self.fields['aircraft'].help_text = "Choose an aircraft from your registered aircraft, or leave blank to enter manually"
+        self.fields['aircraft'].label = "Select Aircraft"
+        self.fields['aircraft'].empty_label = "Choose from list..."
+        self.fields['aircraft'].help_text = "Select an aircraft from your registered aircraft"
         
         # Update manual aircraft registration field label and help text
-        self.fields['manual_aircraft_registration'].label = "Manual Aircraft Registration"
-        self.fields['manual_aircraft_registration'].help_text = "Enter the aircraft registration (e.g., F-GABC) if not selecting from the list above"
+        self.fields['manual_aircraft_registration'].label = "Or Enter Registration"
+        self.fields['manual_aircraft_registration'].help_text = "Type aircraft registration (e.g., F-GABC)"
         
         # Determine button text based on whether this is an update or create
         button_text = 'Update Flight' if self.instance and self.instance.pk else 'Log Flight'
@@ -237,7 +238,7 @@ class FlightForm(forms.ModelForm):
         self.helper.layout = Layout(
             Row(
                 Column('date', css_class='form-group col-md-6'),
-                Column(HTML('<div class="form-group col-md-6"><label class="form-label">Aircraft Information</label><div class="text-muted small">Choose one of the options below</div></div>'), css_class='form-group col-md-6'),
+                Column(HTML('<div class="form-group col-md-6"><label class="form-label">Aircraft</label><div class="text-muted small">Select an aircraft or enter registration manually</div></div>'), css_class='form-group col-md-6'),
                 css_class='form-row'
             ),
             Row(
@@ -245,10 +246,7 @@ class FlightForm(forms.ModelForm):
                 Column('manual_aircraft_registration', css_class='form-group col-md-6'),
                 css_class='form-row'
             ),
-            Row(
-                Column(HTML('<div class="form-group col-md-12"><div id="aircraft-info" class="text-muted small">Select an aircraft or enter registration manually</div></div>'), css_class='form-group col-md-12'),
-                css_class='form-row'
-            ),
+
             Row(
                 Column('departure_aerodrome', css_class='form-group col-md-6'),
                 Column('arrival_aerodrome', css_class='form-group col-md-6'),
