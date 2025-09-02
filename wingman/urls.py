@@ -23,14 +23,25 @@ from django.http import HttpResponse
 import os
 
 def serve_verification_file(request, filename):
-    """Serve Google verification files from the root directory"""
-    file_path = os.path.join(settings.BASE_DIR, filename)
+    """Serve Google verification files from a dedicated secure directory"""
+    # Only allow HTML files
+    if not filename.endswith('.html'):
+        return HttpResponse('Not found', status=404)
+    
+    # Only allow files from the verification directory
+    verification_dir = os.path.join(settings.BASE_DIR, 'static', 'verification')
+    file_path = os.path.join(verification_dir, filename)
+    
+    # Security: ensure file is actually in the verification directory (prevent path traversal)
+    if not os.path.abspath(file_path).startswith(os.path.abspath(verification_dir)):
+        return HttpResponse('Not found', status=404)
+    
     try:
         with open(file_path, 'r') as f:
             content = f.read()
         return HttpResponse(content, content_type='text/html')
     except FileNotFoundError:
-        return HttpResponse('File not found', status=404)
+        return HttpResponse('Not found', status=404)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -41,7 +52,7 @@ urlpatterns = [
     path('sitemap.xml', TemplateView.as_view(template_name='sitemap.xml', content_type='application/xml')),
     
     # Google verification files (e.g., google123abc.html)
-    path('<str:filename>', serve_verification_file, name='verification_file'),
+    path('verification/<str:filename>', serve_verification_file, name='verification_file'),
 ]
 
 # Serve media files during development
