@@ -484,6 +484,14 @@ class AircraftDeleteView(LoginRequiredMixin, DeleteView):
         # Add the success message
         messages.success(request, success_message)
         
+        # Check if this is an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': success_message,
+                'redirect_url': self.get_success_url()
+            })
+        
         # Use get_success_url instead of redirect to preserve messages
         return HttpResponseRedirect(self.get_success_url())
     

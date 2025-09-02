@@ -660,6 +660,21 @@
     <!-- Main Content -->
     <div class="container-fluid">
       <div class="main-content">
+        <!-- Django Messages (will be converted to notifications) -->
+        {% if messages %}
+        <div class="row mb-4" id="django-messages" style="display: none;">
+          <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+              <i class="fas fa-{% if message.tags == 'success' %}check-circle text-success{% elif message.tags == 'error' %}exclamation-circle text-danger{% elif message.tags == 'warning' %}exclamation-triangle text-warning{% else %}info-circle text-info{% endif %}"></i>
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        
         <!-- Page Content -->
         {% block content %}{% endblock %}
       </div>
@@ -790,8 +805,24 @@
         showDjangoMessages() {
           const messages = document.querySelectorAll('#django-messages .alert');
           messages.forEach(message => {
-            const messageText = message.textContent.trim();
+            // Extract only the message text, excluding icons and buttons
+            // Clone the message to work with a clean version
+            const messageClone = message.cloneNode(true);
+            
+            // Remove icon and close button to get clean text
+            const icon = messageClone.querySelector('i');
+            const closeButton = messageClone.querySelector('.btn-close');
+            if (icon) icon.remove();
+            if (closeButton) closeButton.remove();
+            
+            let messageText = messageClone.textContent.trim();
+            
+            // Clean up the message text if it contains extra whitespace or newlines
+            messageText = messageText.replace(/\s+/g, ' ').trim();
+            
             const messageType = this.getDjangoMessageType(message);
+            
+            console.log(`Processing Django message: "${messageText}" with type: ${messageType}`);
             
             // Show as notification
             this.show(messageText, messageType);
@@ -806,10 +837,26 @@
         }
 
         getDjangoMessageType(messageElement) {
-          if (messageElement.classList.contains('alert-success')) return 'success';
-          if (messageElement.classList.contains('alert-danger')) return 'error';
-          if (messageElement.classList.contains('alert-warning')) return 'warning';
-          if (messageElement.classList.contains('alert-info')) return 'info';
+          console.log('Checking message element classes:', messageElement.classList.toString());
+          
+          if (messageElement.classList.contains('alert-success')) {
+            console.log('Message type: success');
+            return 'success';
+          }
+          if (messageElement.classList.contains('alert-danger')) {
+            console.log('Message type: error');
+            return 'error';
+          }
+          if (messageElement.classList.contains('alert-warning')) {
+            console.log('Message type: warning');
+            return 'warning';
+          }
+          if (messageElement.classList.contains('alert-info')) {
+            console.log('Message type: info');
+            return 'info';
+          }
+          
+          console.log('Message type: defaulting to info');
           return 'info';
         }
 
@@ -837,12 +884,18 @@
           const djangoMessages = document.querySelectorAll('#django-messages .alert');
           console.log(`Found ${djangoMessages.length} Django messages`);
           
+          // Also check for any messages in the document
+          const allAlerts = document.querySelectorAll('.alert');
+          console.log(`Total alerts found in document: ${allAlerts.length}`);
+          
           if (djangoMessages.length > 0) {
             // Small delay to ensure smooth transition
             setTimeout(() => {
               console.log('Processing Django messages...');
               window.notificationSystem.showDjangoMessages();
             }, 300);
+          } else {
+            console.log('No Django messages found in #django-messages container');
           }
         } else {
           console.log('Notification system or container not found');
