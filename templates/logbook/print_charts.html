@@ -6,203 +6,10 @@
     <title>Flight Analytics Report - {{ pilot_profile.user.get_full_name|default:pilot_profile.user.username }}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @media print {
-            body { 
-                margin: 0; 
-                padding: 10px;
-                font-size: 10pt;
-                line-height: 1.2;
-            }
-            .no-print { display: none !important; }
-            .page-break { page-break-before: always; }
-            .chart-container { 
-                page-break-inside: avoid; 
-                margin-bottom: 10px;
-            }
-            .header {
-                margin-bottom: 10px;
-                padding-bottom: 8px;
-            }
-            .header h1 {
-                font-size: 18pt;
-                margin-bottom: 5px;
-            }
-            .header .pilot-info {
-                font-size: 10pt;
-            }
-            .stats-summary {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 8px;
-                margin-bottom: 10px;
-            }
-            .stat-card {
-                background: white !important;
-                border: 1px solid #000 !important;
-                padding: 8px;
-            }
-            .stat-card h3 {
-                font-size: 10pt;
-                margin-bottom: 4px;
-            }
-            .stat-card .value {
-                font-size: 14pt;
-            }
-            .chart-section {
-                margin-bottom: 12px;
-            }
-            .chart-section h2 {
-                font-size: 12pt;
-                margin-bottom: 8px;
-            }
-            .chart-container {
-                background: white !important;
-                border: 1px solid #000 !important;
-                padding: 8px;
-                box-shadow: none !important;
-            }
-            .chart-title {
-                font-size: 10pt;
-                margin-bottom: 5px;
-            }
-            .chart-wrapper {
-                height: 120px !important;
-                margin: 0 auto;
-                width: 100% !important;
-            }
-            canvas {
-                max-width: 100% !important;
-                height: auto !important;
-            }
-            .footer {
-                margin-top: 10px;
-                padding-top: 8px;
-                font-size: 8pt;
-            }
-        }
-        
-        @media screen {
-            body { 
-                max-width: 1200px; 
-                margin: 0 auto; 
-                padding: 20px;
-                font-family: Arial, sans-serif;
-            }
-            .print-button {
-                padding: 10px 20px;
-                background: #007bff;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 16px;
-            }
-            .print-button:hover {
-                background: #0056b3;
-            }
-            .content-container {
-                width: 100%;
-                max-width: 1000px;
-                display: grid;
-                grid-template-columns: 1fr;
-                align-items: center;
-                box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
-                border-radius: 10px;
-                padding: 20px;
-                margin: 0;
-                background-color: #fff;
-            }
-        }
-        
-        /* Print preview styles */
-        @media print {
-            * {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            
-            /* Force compact layout in print */
-            body {
-                font-size: 9pt !important;
-                line-height: 1.1 !important;
-            }
-            
-            .header h1 {
-                font-size: 16pt !important;
-                margin-bottom: 3px !important;
-            }
-            
-            .header .pilot-info {
-                font-size: 9pt !important;
-            }
-            
-            .stats-summary {
-                grid-template-columns: repeat(4, 1fr) !important;
-                gap: 5px !important;
-                margin-bottom: 8px !important;
-            }
-            
-            .stat-card {
-                padding: 5px !important;
-            }
-            
-            .stat-card h3 {
-                font-size: 8pt !important;
-                margin-bottom: 2px !important;
-            }
-            
-            .stat-card .value {
-                font-size: 12pt !important;
-            }
-            
-            .chart-section {
-                margin-bottom: 8px !important;
-            }
-            
-            .chart-section h2 {
-                font-size: 10pt !important;
-                margin-bottom: 5px !important;
-            }
-            
-            .chart-container {
-                padding: 8px !important;
-                margin-bottom: 8px !important;
-                overflow: visible !important;
-            }
-            
-            /* Ensure side-by-side layout works in print */
-            .side-by-side-charts {
-                display: flex !important;
-                gap: 10px !important;
-                flex-direction: row !important;
-            }
-            
-            /* Force charts to be side by side in print */
-            .chart-half {
-                flex: 1 !important;
-                width: 50% !important;
-                max-width: 50% !important;
-            }
-            
-
-            
-            .chart-wrapper {
-                height: 120px !important;
-                overflow: visible !important;
-                padding-bottom: 10px !important;
-                margin-bottom: 5px !important;
-            }
-            
-            /* Ensure charts don't break the side-by-side layout in print */
-            .chart-section:last-child .chart-container {
-                margin-bottom: 0 !important;
-            }
-            
-            .footer {
-                margin-top: 8px !important;
-                padding-top: 5px !important;
-                font-size: 7pt !important;
-            }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         
         body {
@@ -210,563 +17,793 @@
             line-height: 1.6;
             color: #333;
             margin: 0;
-            padding: 20px;
-            height: 100vh;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f5f5;
             overflow: hidden;
         }
         
-        .header {
-            text-align: center;
-            margin-bottom: 2vh;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 1vh;
-            height: 8vh;
+        /* A4 page ratio container - maintains 1:1.414 aspect ratio */
+        .a4-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .a4-page {
+            /* Dynamic sizing handled by CSS above */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            /* Ensure content scales down proportionally */
+            min-width: 0;
+            min-height: 0;
+        }
+        
+        /* Dynamic sizing - maximize available space while maintaining A4 ratio */
+        .a4-page {
+            /* Use viewport units to maximize space */
+            width: min(95vw, calc(95vh / 1.414));
+            height: min(95vh, calc(95vw * 1.414));
+            /* Ensure minimum usable size */
+            min-width: 300px;
+            min-height: 424px; /* 300 * 1.414 */
+            /* Smooth transitions */
+            transition: all 0.3s ease-out;
+        }
+        
+        /* Main content container - fits within A4 page ratio */
+        .content-container {
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* A4 page ratio ensures consistent proportions across all screen sizes */
+        
+        /* Header section - compact design */
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding: 8px 12px;
+            flex-shrink: 0;
         }
         
         .header h1 {
             color: #007bff;
-            margin: 0;
-            font-size: 2.5vh;
+            margin: 0 0 6px 0;
+            font-size: clamp(0.8em, 1.5vh, 1.2em);
             font-weight: bold;
         }
         
         .header .pilot-info {
-            margin-top: 0.5vh;
-            font-size: 1.5vh;
+            font-size: clamp(0.6em, 1vh, 0.8em);
             color: #666;
         }
         
+        /* Stats summary - compact design */
         .stats-summary {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 1vh;
-            margin-bottom: 2vh;
-            page-break-inside: avoid;
-            height: 12vh;
+            gap: 8px;
+            padding: 8px 12px;
+            flex-shrink: 0;
         }
         
         .stat-card {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
             border-radius: 6px;
-            padding: 1vh;
+            padding: 6px 8px;
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
         
         .stat-card h3 {
-            margin: 0 0 0.5vh 0;
+            margin: 0 0 3px 0;
             color: #007bff;
-            font-size: 1.5vh;
+            font-size: clamp(0.6em, 2vh, 0.75em);
         }
         
         .stat-card .value {
-            font-size: 2vh;
+            font-size: clamp(0.8em, 2.5vh, 1em);
             font-weight: bold;
             color: #333;
         }
         
+        /* Charts section - flexible container */
+        .charts-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 8px 12px;
+            gap: 8px;
+            overflow: visible;
+        }
+        
         .chart-section {
-            margin-bottom: 2vh;
-            page-break-inside: avoid;
-            padding-bottom: 0.5vh;
-            height: 18vh;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         
         .chart-section h2 {
             color: #007bff;
             border-bottom: 1px solid #e9ecef;
-            padding-bottom: 0.5vh;
-            margin-bottom: 1vh;
-            font-size: 2vh;
-            height: 3vh;
-            display: flex;
-            align-items: center;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            font-size: clamp(0.9em, 2.5vh, 1.1em);
+            flex-shrink: 0;
         }
         
         .chart-container {
             background: white;
             border: 1px solid #dee2e6;
             border-radius: 6px;
-            padding: 1vh;
-            margin-bottom: 2vh;
+            padding: 6px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            overflow: visible;
-            height: 12vh;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
-        
-
         
         .chart-wrapper {
+            flex: 1;
             position: relative;
-            height: 12vh;
-            margin: 0 auto;
-            width: 100%;
-            overflow: visible;
+            min-height: 0;
         }
         
-        /* Compact layout for single page printing */
-        .single-page .chart-wrapper {
-            height: 10vh;
-        }
-        
-        .single-page .chart-section {
-            margin-bottom: 1vh;
-        }
-        
-        .single-page .stats-summary {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1vh;
-            margin-bottom: 1vh;
-        }
-        
-        /* Side-by-side chart layout */
-        .chart-section .chart-container {
-            margin-bottom: 0;
-        }
-        
-        /* Side-by-side charts layout */
+        /* Side-by-side charts */
         .side-by-side-charts {
-            display: flex !important;
-            gap: 2vh;
-            width: 100%;
-            height: 14vh;
+            display: flex;
+            gap: 15px;
+            flex: 1;
         }
         
         .chart-half {
             flex: 1;
-            min-width: 0;
+            display: flex;
+            flex-direction: column;
         }
         
-        /* Ensure charts maintain proper sizing */
-        .chart-half .chart-wrapper {
-            width: 100%;
-            height: 12vh;
-        }
-        
-        /* Responsive layout for smaller screens */
-        @media (max-width: 768px) {
-            .side-by-side-charts {
-                flex-direction: column !important;
-            }
-        }
-        
-        /* Ensure the page always fits viewport height */
-        @media (max-height: 600px) {
-            .header { height: 6vh; }
-            .header h1 { font-size: 2vh; }
-            .header .pilot-info { font-size: 1.2vh; }
-            .stats-summary { height: 10vh; }
-            .chart-section { height: 16vh; }
-            .chart-container { height: 12vh; }
-            .chart-wrapper { height: 10vh; }
-            .footer { height: 3vh; }
-        }
-        
-        @media (max-height: 500px) {
-            .header { height: 5vh; }
-            .header h1 { font-size: 1.8vh; }
-            .header .pilot-info { font-size: 1vh; }
-            .stats-summary { height: 8vh; }
-            .chart-section { height: 14vh; }
-            .chart-container { height: 10vh; }
-            .chart-wrapper { height: 8vh; }
-            .footer { height: 2vh; }
-        }
-        
+        /* Footer */
         .footer {
-            margin-top: 2vh;
-            padding-top: 1vh;
             border-top: 1px solid #dee2e6;
             text-align: center;
             color: #666;
-            font-size: 1.5vh;
-            height: 4vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            padding: 10px 15px;
+            flex-shrink: 0;
         }
         
         .generated-date {
             font-style: italic;
             color: #999;
+            margin-bottom: 5px;
+            font-size: clamp(0.6em, 1.5vh, 0.8em);
         }
         
-        @media print {
-            .chart-wrapper {
-                height: 300px;
+        /* Print button and navigation */
+        .no-print {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .print-button, .back-button {
+            padding: 10px 20px;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .back-button {
+            background: #6c757d;
+        }
+        
+        .print-button {
+            background: #28a745;
+        }
+        
+        .print-button:hover {
+            background: #218838;
+        }
+        
+        .back-button:hover {
+            background: #5a6268;
+        }
+        
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
             }
+            
+            .header .pilot-info {
+                font-size: 1em;
+            }
+            
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .stat-card {
+                padding: 10px;
+            }
+            
+            .stat-card h3 {
+                font-size: 0.9em;
+            }
+            
+            .stat-card .value {
+                font-size: 1.2em;
+            }
+            
+            .chart-section h2 {
+                font-size: 1.1em;
+            }
+            
+            .side-by-side-charts {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+        
+        /* Ensure charts are always visible and properly sized */
+        .chart-wrapper {
+            height: 8vh !important;
+            min-height: 50px !important;
+            max-height: 18vh !important;
+            position: relative;
+            /* Auto-scale content to fit */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* First two charts - extra small height */
+        .chart-small .chart-wrapper {
+            height: 6vh !important;
+            min-height: 40px !important;
+            max-height: 14vh !important;
+        }
+        
+        /* Make charts responsive and fit available space */
+        .chart-wrapper canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            height: 100% !important;
+            width: 100% !important;
+            object-fit: contain;
+        }
+        
+        /* Force chart containers to respect height */
+        .chart-container {
+            height: auto !important;
+            min-height: 0 !important;
+        }
+        
+        /* Adjust chart container padding for smaller screens */
+        @media (max-width: 800px) {
+            .chart-container {
+                padding: 10px;
+            }
+            
+            .charts-container {
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .stats-summary {
+                padding: 15px;
+                gap: 10px;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            
+            .a4-container {
+                padding: 0;
+            }
+            
+            .a4-page {
+                aspect-ratio: auto;
+                max-width: none;
+                max-height: none;
+            }
+            
+            .content-container {
+                box-shadow: none;
+                border: 1px solid #000;
+                margin: 0;
+                width: 100%;
+                height: auto;
+                page-break-inside: avoid;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .chart-wrapper {
+                height: 300px !important;
+            }
+            
             .stat-card {
                 background: white !important;
                 border: 1px solid #000 !important;
+            }
+            
+            .chart-container {
+                border: 1px solid #000 !important;
+                box-shadow: none !important;
+            }
+            
+            /* Force compact layout in print */
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 18pt;
+            }
+            
+            .header .pilot-info {
+                font-size: 10pt;
+            }
+            
+            .stats-summary {
+                padding: 15px;
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 10px;
+            }
+            
+            .stat-card h3 {
+                font-size: 8pt;
+            }
+            
+            .stat-card .value {
+                font-size: 12pt;
+            }
+            
+            .charts-container {
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .chart-section h2 {
+                font-size: 10pt;
+                margin-bottom: 10px;
+            }
+            
+            .chart-container {
+                padding: 10px;
+            }
+            
+            .footer {
+                padding: 10px 15px;
+                font-size: 8pt;
             }
         }
     </style>
 </head>
 <body>
-            <div class="no-print" style="position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; gap: 10px;">
-            <a href="{% url 'charts' %}" style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-size: 16px;">
-                ← Back to Charts
-            </a>
-            <button onclick="printSinglePage()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;">
-                🖨️ Print
-            </button>
-        </div>
-    
-    <div class="content-container">
-        <div class="header">
-            <h1>Flight Analytics Report</h1>
-            <div class="pilot-info">
-                <strong>{{ pilot_profile.user.get_full_name|default:pilot_profile.user.username }}</strong>
-                {% if pilot_profile.license_number %}
-                    <br>License: {{ pilot_profile.license_number }}
-                {% endif %}
-                {% if pilot_profile.medical_class %}
-                    <br>Medical Class: {{ pilot_profile.medical_class }}
-                {% endif %}
-            </div>
-        </div>
-        
-        <div class="stats-summary">
-            <div class="stat-card">
-                <h3>Total Flights</h3>
-                <div class="value">{{ total_flights }}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Total Hours</h3>
-                <div class="value">{{ total_hours|floatformat:1 }}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Average Flight Time</h3>
-                <div class="value">{{ avg_flight_time|floatformat:1 }}h</div>
-            </div>
-            <div class="stat-card">
-                <h3>Most Used Aircraft</h3>
-                <div class="value">{{ most_used_aircraft }}</div>
-            </div>
-        </div>
-        
-        <div class="chart-section">
-            <h2>Monthly Flight Hours Progress</h2>
-            <div class="chart-container">
+    <div class="no-print">
+        <a href="{% url 'charts' %}" class="back-button">
+            ← Back to Charts
+        </a>
+        <button onclick="printSinglePage()" class="print-button">
+            🖨️ Print
+        </button>
+    </div>
 
-                <div class="chart-wrapper">
-                    <canvas id="monthlyProgressChart"></canvas>
+    <div class="a4-container">
+        <div class="a4-page">
+            <div class="content-container">
+                <div class="header">
+                    <h1>Flight Analytics Report</h1>
+                    <div class="pilot-info">
+                        <strong>{{ pilot_profile.user.get_full_name|default:pilot_profile.user.username }}</strong>
+                        {% if pilot_profile.license_number %}
+                            <br>License: {{ pilot_profile.license_number }}
+                        {% endif %}
+                        {% if pilot_profile.medical_class %}
+                            <br>Medical Class: {{ pilot_profile.medical_class }}
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="chart-section">
-            <h2>Aircraft Usage Analysis</h2>
-            <div class="chart-container">
-
-                <div class="chart-wrapper">
-                    <canvas id="aircraftChart"></canvas>
+                
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <h3>Total Flights</h3>
+                        <div class="value">{{ total_flights }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Hours</h3>
+                        <div class="value">{{ total_hours|floatformat:1 }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Flight Time</h3>
+                        <div class="value">{{ avg_flight_time|floatformat:1 }}h</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Most Used Aircraft</h3>
+                        <div class="value">{{ most_used_aircraft }}</div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="chart-section">
-            <h2>Flight Distribution & Conditions</h2>
-            <div class="side-by-side-charts">
-                <div class="chart-half">
-                    <div class="chart-container">
-                        <div class="chart-wrapper">
-                            <canvas id="flightTypeChart"></canvas>
+                
+                <div class="charts-container">
+                    <div class="chart-section chart-small">
+                        <h2>Monthly Flight Hours Progress</h2>
+                        <div class="chart-container">
+                            <div class="chart-wrapper">
+                                <canvas id="monthlyProgressChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-section chart-small">
+                        <h2>Aircraft Usage Analysis</h2>
+                        <div class="chart-container">
+                            <div class="chart-wrapper">
+                                <canvas id="aircraftChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h2>Flight Distribution & Conditions</h2>
+                        <div class="side-by-side-charts">
+                            <div class="chart-half">
+                                <div class="chart-container">
+                                    <div class="chart-wrapper">
+                                        <canvas id="flightTypeChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-half">
+                                <div class="chart-container">
+                                    <div class="chart-wrapper">
+                                        <canvas id="conditionsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="chart-half">
-                    <div class="chart-container">
-                        <div class="chart-wrapper">
-                            <canvas id="conditionsChart"></canvas>
-                        </div>
+                
+                <div class="footer">
+                    <div class="generated-date">
+                        Report generated on {{ "now"|date:"F j, Y \a\t g:i A" }}
                     </div>
+                    <div>Wingman Flight Logbook - Professional Flight Analytics</div>
                 </div>
             </div>
-        </div>
-        
-        <div class="footer">
-            <div class="generated-date">
-                Report generated on {{ "now"|date:"F j, Y \a\t g:i A" }}
-            </div>
-            <div>Wingman Flight Logbook - Professional Flight Analytics</div>
         </div>
     </div>
     
     <script>
-        // Chart.js configuration for print
+        // Chart.js configuration for responsive design
         Chart.defaults.font.family = "Arial, sans-serif";
         Chart.defaults.font.size = 12;
         Chart.defaults.color = '#333';
-        
-        // Ensure charts are print-friendly
         Chart.defaults.responsive = true;
         Chart.defaults.maintainAspectRatio = false;
+        Chart.defaults.layout = {
+            padding: {
+                top: 5,
+                bottom: 5,
+                left: 5,
+                right: 5
+            }
+        };
         
         // Store chart references
         let monthlyChart, aircraftChart, flightTypeChart, conditionsChart;
         
-        // Monthly Progress Chart
-        const monthlyData = {{ monthly_data|safe }};
-        const monthlyCtx = document.getElementById('monthlyProgressChart').getContext('2d');
-        
-        monthlyChart = new Chart(monthlyCtx, {
-            type: 'line',
-            data: {
-                labels: monthlyData.map(item => item.month),
-                datasets: [
-                    {
+        // Function to create responsive charts
+        function createCharts() {
+            // Monthly Progress Chart
+            const monthlyData = {{ monthly_data|safe }};
+            const monthlyCtx = document.getElementById('monthlyProgressChart').getContext('2d');
+            
+            monthlyChart = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(item => item.month),
+                    datasets: [
+                        {
+                            label: 'Total Hours',
+                            data: monthlyData.map(item => item.total_hours),
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Night Hours',
+                            data: monthlyData.map(item => item.night_hours),
+                            borderColor: '#343a40',
+                            backgroundColor: 'rgba(52, 58, 64, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Cross-Country Hours',
+                            data: monthlyData.map(item => item.cross_country_hours),
+                            borderColor: '#fd7e14',
+                            backgroundColor: 'rgba(253, 126, 20, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Flight Hours',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Aircraft Usage Chart
+            const aircraftData = {{ aircraft_data|safe }};
+            const aircraftCtx = document.getElementById('aircraftChart').getContext('2d');
+            
+            aircraftChart = new Chart(aircraftCtx, {
+                type: 'bar',
+                data: {
+                    labels: aircraftData.map(item => item.aircraft__registration),
+                    datasets: [{
                         label: 'Total Hours',
-                        data: monthlyData.map(item => item.total_hours),
+                        data: aircraftData.map(item => item.total_hours),
+                        backgroundColor: 'rgba(0, 123, 255, 0.8)',
                         borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: 'Night Hours',
-                        data: monthlyData.map(item => item.night_hours),
-                        borderColor: '#343a40',
-                        backgroundColor: 'rgba(52, 58, 64, 0.1)',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.4,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: 'Cross-Country Hours',
-                        data: monthlyData.map(item => item.cross_country_hours),
-                        borderColor: '#fd7e14',
-                        backgroundColor: 'rgba(253, 126, 20, 0.1)',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.4,
-                        yAxisID: 'y'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
+                        borderWidth: 1
+                    }]
                 },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            font: {
-                                size: 12
-                            }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
                         }
                     },
-                    title: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: 'Flight Hours',
-                            font: {
-                                size: 12
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
                             }
                         },
-                        ticks: {
-                            font: {
-                                size: 10
-                            }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: {
-                                size: 10
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
-        
-        // Aircraft Usage Chart
-        const aircraftData = {{ aircraft_data|safe }};
-        const aircraftCtx = document.getElementById('aircraftChart').getContext('2d');
-        
-        aircraftChart = new Chart(aircraftCtx, {
-            type: 'bar',
-            data: {
-                labels: aircraftData.map(item => item.aircraft__registration),
-                datasets: [{
-                    label: 'Total Hours',
-                    data: aircraftData.map(item => item.total_hours),
-                    backgroundColor: 'rgba(0, 123, 255, 0.8)',
-                    borderColor: '#007bff',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+            });
+            
+            // Flight Type Distribution Chart
+            const flightTypeData = {{ flight_type_data|safe }};
+            const flightTypeCtx = document.getElementById('flightTypeChart').getContext('2d');
+            
+            flightTypeChart = new Chart(flightTypeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: flightTypeData.map(item => item.flight_type || 'Unknown'),
+                    datasets: [{
+                        data: flightTypeData.map(item => item.count),
+                        backgroundColor: [
+                            '#007bff',
+                            '#28a745',
+                            '#ffc107',
+                            '#dc3545',
+                            '#6f42c1',
+                            '#fd7e14',
+                            '#20c997',
+                            '#6c757d'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Hours',
-                            font: {
-                                size: 12
-                            }
-                        },
-                        ticks: {
-                            font: {
-                                size: 10
-                            }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: {
-                                size: 10
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: {
+                                    size: 11
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
-        
-        // Flight Type Distribution Chart
-        const flightTypeData = {{ flight_type_data|safe }};
-        const flightTypeCtx = document.getElementById('flightTypeChart').getContext('2d');
-        
-        flightTypeChart = new Chart(flightTypeCtx, {
-            type: 'doughnut',
-            data: {
-                labels: flightTypeData.map(item => item.flight_type || 'Unknown'),
-                datasets: [{
-                    data: flightTypeData.map(item => item.count),
-                    backgroundColor: [
-                        '#007bff',
-                        '#28a745',
-                        '#ffc107',
-                        '#dc3545',
-                        '#6f42c1',
-                        '#fd7e14',
-                        '#20c997',
-                        '#6c757d'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            font: {
-                                size: 11
+            });
+            
+            // Conditions Chart
+            const conditionsData = {{ conditions_data|safe }};
+            const conditionsCtx = document.getElementById('conditionsChart').getContext('2d');
+            
+            conditionsChart = new Chart(conditionsCtx, {
+                type: 'pie',
+                data: {
+                    labels: conditionsData.map(item => item.conditions || 'Unknown'),
+                    datasets: [{
+                        data: conditionsData.map(item => item.count),
+                        backgroundColor: [
+                            '#28a745',
+                            '#007bff',
+                            '#ffc107',
+                            '#dc3545',
+                            '#6f42c1',
+                            '#fd7e14'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: {
+                                    size: 11
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
         
-        // Conditions Chart
-        const conditionsData = {{ conditions_data|safe }};
-        const conditionsCtx = document.getElementById('conditionsChart').getContext('2d');
-        
-        conditionsChart = new Chart(conditionsCtx, {
-            type: 'pie',
-            data: {
-                labels: conditionsData.map(item => item.conditions || 'Unknown'),
-                datasets: [{
-                    data: conditionsData.map(item => item.count),
-                    backgroundColor: [
-                        '#28a745',
-                        '#007bff',
-                        '#ffc107',
-                        '#dc3545',
-                        '#6f42c1',
-                        '#fd7e14'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            font: {
-                                size: 11
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Function to resize charts for print
-        function resizeChartsForPrint() {
-            // Force all charts to resize
+        // Function to resize charts
+        function resizeCharts() {
             if (monthlyChart && monthlyChart.resize) monthlyChart.resize();
             if (aircraftChart && aircraftChart.resize) aircraftChart.resize();
             if (flightTypeChart && flightTypeChart.resize) flightTypeChart.resize();
             if (conditionsChart && conditionsChart.resize) conditionsChart.resize();
         }
         
-        // Function to print in single page mode
-        function printSinglePage() {
-            // Switch to compact layout
-            document.body.classList.add('single-page');
-            
-            // Resize charts for compact layout
-            setTimeout(() => {
-                resizeChartsForPrint();
-                
-                // Wait a moment then print
-                setTimeout(() => {
-                    window.print();
-                    
-                    // Switch back to normal layout after printing
-                    setTimeout(() => {
-                        document.body.classList.remove('single-page');
-                        resizeChartsForPrint();
-                    }, 1000);
-                }, 500);
-            }, 200);
+        // Function to force chart heights
+        function forceChartHeights() {
+            const chartWrappers = document.querySelectorAll('.chart-wrapper');
+            chartWrappers.forEach(wrapper => {
+                if (wrapper.closest('.chart-small')) {
+                    wrapper.style.height = '6vh';
+                    wrapper.style.minHeight = '40px';
+                    wrapper.style.maxHeight = '6vh';
+                } else {
+                    wrapper.style.height = '8vh';
+                    wrapper.style.minHeight = '50px';
+                    wrapper.style.maxHeight = '8vh';
+                }
+            });
         }
         
-        // Resize charts when page loads
-        window.addEventListener('load', resizeChartsForPrint);
+        // Function to print
+        function printSinglePage() {
+            window.print();
+        }
         
-        // Ensure charts are properly sized
-        setTimeout(resizeChartsForPrint, 1000);
+        // Initialize charts when page loads
+        window.addEventListener('load', function() {
+            createCharts();
+            resizeCharts();
+            forceChartHeights();
+        });
+        
+        // Resize charts on window resize
+        window.addEventListener('resize', function() {
+            resizeCharts();
+            forceChartHeights();
+        });
+        
+        // Initial resize after a short delay to ensure proper sizing
+        setTimeout(function() {
+            resizeCharts();
+            forceChartHeights();
+        }, 1000);
     </script>
 </body>
 </html>
