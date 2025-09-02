@@ -31,7 +31,7 @@ help:
 	@echo "  setup          - Initial project setup"
 
 # Start development environment
-dev: redis-start
+dev: redis-start migrate
 	@echo "Starting development environment..."
 	@echo "Redis: Starting..."
 	@sleep 2
@@ -41,7 +41,7 @@ dev: redis-start
 	@source venv/bin/activate && python manage.py runserver
 
 # Start Django server (assumes Redis is running)
-start:
+start: migrate
 	@echo "Starting Django development server..."
 	@echo "Server will be available at: http://127.0.0.1:8000/"
 	@echo "Press Ctrl+C to stop"
