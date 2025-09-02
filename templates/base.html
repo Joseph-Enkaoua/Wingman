@@ -361,6 +361,39 @@
         border-bottom: 1px solid #fecaca;
       }
 
+      /* Authenticated messages styling - positioned on the right side */
+      .authenticated-messages {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+        min-width: 300px;
+      }
+
+      .authenticated-messages .alert {
+        margin-bottom: 10px;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        animation: slideInRight 0.3s ease-out;
+      }
+
+      .authenticated-messages .alert:last-child {
+        margin-bottom: 0;
+      }
+
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
       @media (max-width: 768px) {
         .main-content {
           margin: 10px;
@@ -468,11 +501,32 @@
       </div>
     </nav>
 
+    <!-- Authenticated User Messages (Right Side) -->
+    {% if user.is_authenticated and messages %}
+      <div class="authenticated-messages">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+              {% if message.tags == 'error' %}
+                <i class="fas fa-exclamation-circle me-2"></i>
+              {% elif message.tags == 'success' %}
+                <i class="fas fa-check-circle me-2"></i>
+              {% elif message.tags == 'warning' %}
+                <i class="fas fa-exclamation-triangle me-2"></i>
+              {% elif message.tags == 'info' %}
+                <i class="fas fa-info-circle me-2"></i>
+              {% endif %}
+              <span>{{ message }}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <!-- Main Content -->
     <div class="container-fluid">
       <div class="main-content">
-        <!-- Messages will be displayed in individual templates -->
-
         <!-- Page Content -->
         {% block content %}{% endblock %}
       </div>
@@ -510,7 +564,36 @@
             message.classList.add('rate-limit');
           }
         });
+
+        // Auto-hide authenticated messages after 5 seconds
+        const authenticatedMessages = document.querySelectorAll('.authenticated-messages .alert');
+        authenticatedMessages.forEach(function(message) {
+          setTimeout(function() {
+            message.style.animation = 'slideOutRight 0.3s ease-in forwards';
+            setTimeout(function() {
+              if (message.parentNode) {
+                message.parentNode.removeChild(message);
+              }
+            }, 300);
+          }, 5000);
+        });
       });
+
+      // Add slideOutRight animation for message removal
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideOutRight {
+          from {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
     </script>
     {% block extra_js %}{% endblock %}
   </body>

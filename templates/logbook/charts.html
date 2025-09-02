@@ -484,12 +484,8 @@
           // Clean up
           URL.revokeObjectURL(link.href);
           
-          // Show success message
-          showMessage('CSV data exported successfully!', 'success');
-          
       } catch (error) {
           console.error('Error exporting CSV:', error);
-          showMessage('Error exporting data. Please try again.', 'error');
       }
       
       // Restore button state
@@ -497,30 +493,7 @@
       downloadBtn.disabled = false;
   }
 
-  // Show message function
-  function showMessage(message, type = 'info') {
-      const alertDiv = document.createElement('div');
-      alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'info'} alert-dismissible fade show`;
-      alertDiv.style.position = 'fixed';
-      alertDiv.style.top = '20px';
-      alertDiv.style.right = '20px';
-      alertDiv.style.zIndex = '9999';
-      alertDiv.style.minWidth = '300px';
-      
-      alertDiv.innerHTML = `
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      `;
-      
-      document.body.appendChild(alertDiv);
-      
-      // Auto-remove after 5 seconds
-      setTimeout(() => {
-          if (alertDiv.parentNode) {
-              alertDiv.parentNode.removeChild(alertDiv);
-          }
-      }, 5000);
-  }
+
   
 
 

@@ -126,6 +126,12 @@ def register_view(request):
 def logout_view(request):
     """Simple logout view that clears session and redirects to login"""
     from django.contrib.auth import logout
+    from django.contrib import messages
+    
+    # Clear all messages before logout to prevent them from appearing on login page
+    storage = messages.get_messages(request)
+    storage.used = True
+    
     logout(request)
     return redirect('/login/')
 
