@@ -466,7 +466,6 @@ class AircraftCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
     
     def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
 
 
