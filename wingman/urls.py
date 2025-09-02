@@ -24,13 +24,12 @@ import os
 
 def serve_verification_file(request, filename):
     """Serve Google verification files from a dedicated secure directory"""
-    # Only allow HTML files
-    if not filename.endswith('.html'):
-        return HttpResponse('Not found', status=404)
+    # Construct the full filename
+    full_filename = f"google{filename}.html"
     
     # Only allow files from the verification directory
     verification_dir = os.path.join(settings.BASE_DIR, 'static', 'verification')
-    file_path = os.path.join(verification_dir, filename)
+    file_path = os.path.join(verification_dir, full_filename)
     
     # Security: ensure file is actually in the verification directory (prevent path traversal)
     if not os.path.abspath(file_path).startswith(os.path.abspath(verification_dir)):
@@ -51,8 +50,8 @@ urlpatterns = [
     path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     path('sitemap.xml', TemplateView.as_view(template_name='sitemap.xml', content_type='application/xml')),
     
-    # Google verification files (e.g., google123abc.html)
-    path('verification/<str:filename>', serve_verification_file, name='verification_file'),
+    # Google verification files (e.g., googleec06e69f186856f7.html)
+    path('google<str:filename>.html', serve_verification_file, name='verification_file'),
 ]
 
 # Serve media files during development
