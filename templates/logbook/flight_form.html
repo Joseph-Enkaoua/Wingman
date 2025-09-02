@@ -111,43 +111,23 @@
     const dateField = document.getElementById("id_date");
     const aircraftSelect = document.getElementById("id_aircraft");
     const manualAircraftField = document.getElementById("id_manual_aircraft_registration");
-    const aircraftInfo = document.getElementById("aircraft-info");
-
     // Aircraft selection handling
     function handleAircraftSelection() {
       const selectedAircraft = aircraftSelect.value;
-      const aircraftInstruction = aircraftInfo.querySelector('.text-muted.small');
       
-      if (selectedAircraft) {
+      if (selectedAircraft && manualAircraftField) {
         // Aircraft selected - clear manual field
         manualAircraftField.value = '';
-        
-        // Get selected aircraft option text for display
-        const selectedOption = aircraftSelect.options[aircraftSelect.selectedIndex];
-        if (selectedOption) {
-          aircraftInstruction.innerHTML = `<strong>✓ Aircraft Selected:</strong> ${selectedOption.text}`;
-          aircraftInfo.className = 'text-success small';
-        }
-      } else {
-        // No aircraft selected
-        aircraftInstruction.innerHTML = 'Enter aircraft registration manually below';
-        aircraftInfo.className = 'text-muted small';
       }
     }
 
     // Manual aircraft registration handling
     function handleManualAircraftInput() {
-      const manualValue = manualAircraftField.value.trim();
-      const aircraftInstruction = aircraftInfo.querySelector('.text-muted.small');
+      const manualValue = manualAircraftField ? manualAircraftField.value.trim() : '';
       
-      if (manualValue) {
+      if (manualValue && aircraftSelect) {
         // Clear aircraft selection when manual registration is entered
         aircraftSelect.value = '';
-        aircraftInstruction.innerHTML = `<strong>✏ Manual Registration:</strong> ${manualValue.toUpperCase()}`;
-        aircraftInfo.className = 'text-info small';
-      } else {
-        aircraftInstruction.innerHTML = 'Select an aircraft or enter registration manually';
-        aircraftInfo.className = 'text-muted small';
       }
     }
 
@@ -165,7 +145,7 @@
     }
 
     function calculateTotalTime() {
-      if (departureTime.value && arrivalTime.value && dateField.value) {
+      if (departureTime && arrivalTime && dateField && departureTime.value && arrivalTime.value && dateField.value) {
         const departure = new Date(dateField.value + "T" + departureTime.value);
         const arrival = new Date(dateField.value + "T" + arrivalTime.value);
 
@@ -185,12 +165,19 @@
       }
     }
 
-    departureTime.addEventListener("change", calculateTotalTime);
-    arrivalTime.addEventListener("change", calculateTotalTime);
-    dateField.addEventListener("change", calculateTotalTime);
+    // Add event listeners only if elements exist
+    if (departureTime) {
+      departureTime.addEventListener("change", calculateTotalTime);
+    }
+    if (arrivalTime) {
+      arrivalTime.addEventListener("change", calculateTotalTime);
+    }
+    if (dateField) {
+      dateField.addEventListener("change", calculateTotalTime);
+    }
 
     // Set default date to today if not set
-    if (!dateField.value) {
+    if (dateField && !dateField.value) {
       const today = new Date().toISOString().split("T")[0];
       dateField.value = today;
     }
@@ -222,11 +209,22 @@
     const form = document.querySelector('form');
     if (form) {
       form.addEventListener('submit', function(e) {
-        const departureTime = document.querySelector('input[name="departure_time"]').value;
-        const arrivalTime = document.querySelector('input[name="arrival_time"]').value;
-        const nightTime = document.querySelector('input[name="night_time"]').value;
-        const instrumentTime = document.querySelector('input[name="instrument_time"]').value;
-        const crossCountryTime = document.querySelector('input[name="cross_country_time"]').value;
+        const departureTimeInput = document.querySelector('input[name="departure_time"]');
+        const arrivalTimeInput = document.querySelector('input[name="arrival_time"]');
+        const nightTimeInput = document.querySelector('input[name="night_time"]');
+        const instrumentTimeInput = document.querySelector('input[name="instrument_time"]');
+        const crossCountryTimeInput = document.querySelector('input[name="cross_country_time"]');
+        
+        // Only proceed with validation if required fields exist
+        if (!departureTimeInput || !arrivalTimeInput) {
+          return;
+        }
+        
+        const departureTime = departureTimeInput.value;
+        const arrivalTime = arrivalTimeInput.value;
+        const nightTime = nightTimeInput ? nightTimeInput.value : '';
+        const instrumentTime = instrumentTimeInput ? instrumentTimeInput.value : '';
+        const crossCountryTime = crossCountryTimeInput ? crossCountryTimeInput.value : '';
         
         if (departureTime && arrivalTime) {
           // Calculate total flight time
