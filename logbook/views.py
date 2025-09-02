@@ -323,8 +323,11 @@ class FlightListView(LoginRequiredMixin, ListView):
         # Calculate statistics for the filtered flights
         context['total_flights'] = filtered_queryset.count()
         context['total_hours'] = filtered_queryset.aggregate(total=Sum('total_time'))['total'] or 0
-        context['total_night_hours'] = filtered_queryset.aggregate(total=Sum('night_time'))['total'] or 0
-        context['total_cross_country_hours'] = filtered_queryset.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        # Convert minutes to hours for display
+        total_night_minutes = filtered_queryset.aggregate(total=Sum('night_time'))['total'] or 0
+        total_cross_country_minutes = filtered_queryset.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        context['total_night_hours'] = total_night_minutes / 60
+        context['total_cross_country_hours'] = total_cross_country_minutes / 60
         
         return context
 
@@ -570,14 +573,14 @@ def charts_view(request):
         )
         
         total_hours = month_flights.aggregate(total=Sum('total_time'))['total'] or 0
-        night_hours = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
-        cross_country_hours = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        night_minutes = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
+        cross_country_minutes = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
         
         monthly_data.append({
             'month': month_start.strftime('%b %Y'),
             'total_hours': float(total_hours),
-            'night_hours': float(night_hours),
-            'cross_country_hours': float(cross_country_hours),
+            'night_hours': float(night_minutes / 60),
+            'cross_country_hours': float(cross_country_minutes / 60),
         })
     
     monthly_data.reverse()
@@ -730,14 +733,14 @@ def print_charts_view(request):
         )
         
         total_hours = month_flights.aggregate(total=Sum('total_time'))['total'] or 0
-        night_hours = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
-        cross_country_hours = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        night_minutes = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
+        cross_country_minutes = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
         
         monthly_data.append({
             'month': month_start.strftime('%b %Y'),
             'total_hours': float(total_hours),
-            'night_hours': float(night_hours),
-            'cross_country_hours': float(cross_country_hours),
+            'night_hours': float(night_minutes / 60),
+            'cross_country_hours': float(cross_country_minutes / 60),
         })
     
     monthly_data.reverse()

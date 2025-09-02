@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load time_filters %}
 
 {% block title %}Flight Details - Wingman{% endblock %}
 
@@ -88,19 +89,19 @@
           </div>
           <div class="col-md-3 mb-3 text-center">
             <div class="stats-card">
-              <h3>{{ flight.night_time }}</h3>
+              <h3>{{ flight.night_time|minutes_to_time }}</h3>
               <p><i class="fas fa-moon"></i> Night Time</p>
             </div>
           </div>
           <div class="col-md-3 mb-3 text-center">
             <div class="stats-card">
-              <h3>{{ flight.instrument_time }}</h3>
+              <h3>{{ flight.instrument_time|minutes_to_time }}</h3>
               <p><i class="fas fa-tachometer-alt"></i> Instrument</p>
             </div>
           </div>
           <div class="col-md-3 mb-3 text-center">
             <div class="stats-card">
-              <h3>{{ flight.cross_country_time }}</h3>
+              <h3>{{ flight.cross_country_time|minutes_to_time }}</h3>
               <p><i class="fas fa-route"></i> Cross-Country</p>
             </div>
           </div>

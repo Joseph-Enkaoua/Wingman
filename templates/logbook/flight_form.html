@@ -109,6 +109,57 @@
     const departureTime = document.getElementById("id_departure_time");
     const arrivalTime = document.getElementById("id_arrival_time");
     const dateField = document.getElementById("id_date");
+    const aircraftSelect = document.getElementById("id_aircraft");
+    const manualAircraftField = document.getElementById("id_manual_aircraft_registration");
+    const aircraftInfo = document.getElementById("aircraft-info");
+
+    // Aircraft selection handling
+    function handleAircraftSelection() {
+      const selectedAircraft = aircraftSelect.value;
+      
+      if (selectedAircraft) {
+        // Aircraft selected - clear manual field
+        manualAircraftField.value = '';
+        
+        // Get selected aircraft option text for display
+        const selectedOption = aircraftSelect.options[aircraftSelect.selectedIndex];
+        if (selectedOption) {
+          aircraftInfo.innerHTML = `<strong>Selected:</strong> ${selectedOption.text}`;
+          aircraftInfo.className = 'text-success small';
+        }
+      } else {
+        // No aircraft selected
+        aircraftInfo.innerHTML = 'Enter aircraft registration manually below';
+        aircraftInfo.className = 'text-muted small';
+      }
+    }
+
+    // Manual aircraft registration handling
+    function handleManualAircraftInput() {
+      const manualValue = manualAircraftField.value.trim();
+      if (manualValue) {
+        // Clear aircraft selection when manual registration is entered
+        aircraftSelect.value = '';
+        aircraftInfo.innerHTML = `<strong>Manual:</strong> ${manualValue.toUpperCase()}`;
+        aircraftInfo.className = 'text-info small';
+      } else {
+        aircraftInfo.innerHTML = 'Select an aircraft or enter registration manually';
+        aircraftInfo.className = 'text-muted small';
+      }
+    }
+
+    // Add event listeners for aircraft fields
+    if (aircraftSelect) {
+      aircraftSelect.addEventListener('change', handleAircraftSelection);
+      // Initialize on page load
+      handleAircraftSelection();
+    }
+
+    if (manualAircraftField) {
+      manualAircraftField.addEventListener('input', handleManualAircraftInput);
+      // Initialize on page load
+      handleManualAircraftInput();
+    }
 
     function calculateTotalTime() {
       if (departureTime.value && arrivalTime.value && dateField.value) {

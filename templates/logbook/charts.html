@@ -431,8 +431,9 @@
                   soloTime = flight.total_time;
               }
               
-              // Calculate day/night split
-              const dayTime = flight.total_time - flight.night_time;
+              // Calculate day/night split (convert minutes to hours)
+              const nightTimeHours = flight.night_time / 60;
+              const dayTime = flight.total_time - nightTimeHours;
               
               // Determine if IFR or simulated instrument
               let ifrTime = 0.0, simulatedInstrumentTime = 0.0;
@@ -464,7 +465,7 @@
               remarks = remarks.trim() || 'N/A';
               
               // Build CSV row
-              csvContent += `${flight.date},${flight.aircraft ? flight.aircraft.registration : flight.aircraft_registration},${aircraftType},${flight.departure_aerodrome},${flight.arrival_aerodrome},${route},${flight.total_time.toFixed(1)},${picTime.toFixed(1)},${sicTime.toFixed(1)},${dualTime.toFixed(1)},${instructorTime.toFixed(1)},${soloTime.toFixed(1)},${flight.cross_country_time.toFixed(1)},${dayTime.toFixed(1)},${flight.night_time.toFixed(1)},${ifrTime.toFixed(1)},${simulatedInstrumentTime.toFixed(1)},0.0,${flight.landings_day},${flight.landings_night},${remarks}\n`;
+              csvContent += `${flight.date},${flight.aircraft ? flight.aircraft.registration : flight.aircraft_registration},${aircraftType},${flight.departure_aerodrome},${flight.arrival_aerodrome},${route},${flight.total_time.toFixed(1)},${picTime.toFixed(1)},${sicTime.toFixed(1)},${dualTime.toFixed(1)},${instructorTime.toFixed(1)},${soloTime.toFixed(1)},${(flight.cross_country_time / 60).toFixed(1)},${dayTime.toFixed(1)},${(flight.night_time / 60).toFixed(1)},${ifrTime.toFixed(1)},${simulatedInstrumentTime.toFixed(1)},0.0,${flight.landings_day},${flight.landings_night},${remarks}\n`;
           });
           
           // Footer

@@ -79,9 +79,9 @@ class Flight(models.Model):
     total_time = models.DecimalField(max_digits=4, decimal_places=1, validators=[MinValueValidator(Decimal('0.1'))])
     
     # Additional time breakdowns
-    night_time = models.DecimalField(max_digits=4, decimal_places=1, default=0, validators=[MinValueValidator(Decimal('0.0'))])
-    instrument_time = models.DecimalField(max_digits=4, decimal_places=1, default=0, validators=[MinValueValidator(Decimal('0.0'))])
-    cross_country_time = models.DecimalField(max_digits=4, decimal_places=1, default=0, validators=[MinValueValidator(Decimal('0.0'))])
+    night_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Night time in minutes")
+    instrument_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Instrument time in minutes")
+    cross_country_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Cross country time in minutes")
     
     # Instructor information
     instructor_name = models.CharField(max_length=100, blank=True)
@@ -201,18 +201,21 @@ class PilotProfile(models.Model):
     
     @property
     def total_night_hours(self):
-        """Calculate total night hours"""
-        return sum(flight.night_time for flight in self.user.flights.all())
+        """Calculate total night hours (convert minutes to hours)"""
+        total_minutes = sum(flight.night_time for flight in self.user.flights.all())
+        return total_minutes / 60
     
     @property
     def total_cross_country_hours(self):
-        """Calculate total cross-country hours"""
-        return sum(flight.cross_country_time for flight in self.user.flights.all())
+        """Calculate total cross-country hours (convert minutes to hours)"""
+        total_minutes = sum(flight.cross_country_time for flight in self.user.flights.all())
+        return total_minutes / 60
     
     @property
     def total_instrument_hours(self):
-        """Calculate total instrument hours"""
-        return sum(flight.instrument_time for flight in self.user.flights.all())
+        """Calculate total instrument hours (convert minutes to hours)"""
+        total_minutes = sum(flight.instrument_time for flight in self.user.flights.all())
+        return total_minutes / 60
     
     @property
     def total_dual_hours(self):
