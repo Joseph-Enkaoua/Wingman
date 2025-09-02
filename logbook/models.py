@@ -55,7 +55,7 @@ class Flight(models.Model):
     multi_pilot_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Multi-pilot flight time in minutes")
     day_landings = models.PositiveIntegerField(default=0, help_text="Number of day landings")
     night_landings = models.PositiveIntegerField(default=0, help_text="Number of night landings")
-    ifr_approaches = models.PositiveIntegerField(default=0, help_text="Number of IFR approaches")
+    ifr_approaches = models.PositiveIntegerField(default=0, verbose_name="IFR Approaches", help_text="Number of IFR approaches")
     night_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Night time in minutes")
     ifr_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="IFR time in minutes")
     pic_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="PIC time in minutes")
