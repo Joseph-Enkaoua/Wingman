@@ -20,6 +20,17 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.http import HttpResponse
+import os
+
+def serve_verification_file(request, filename):
+    """Serve Google verification files from the root directory"""
+    file_path = os.path.join(settings.BASE_DIR, filename)
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/html')
+    except FileNotFoundError:
+        return HttpResponse('File not found', status=404)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,6 +39,9 @@ urlpatterns = [
     # SEO URLs
     path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     path('sitemap.xml', TemplateView.as_view(template_name='sitemap.xml', content_type='application/xml')),
+    
+    # Google verification files (e.g., google123abc.html)
+    path('<str:filename>', serve_verification_file, name='verification_file'),
 ]
 
 # Serve media files during development
