@@ -331,10 +331,6 @@ class AircraftForm(forms.ModelForm):
         # Update aircraft field to include a "None" option
         self.fields['registration'].empty_label = "Select an aircraft from the list"
         self.fields['registration'].help_text = "Choose an aircraft from your registered aircraft, or leave blank to enter manually"
-        
-        # Update manual aircraft registration field label and help text
-        self.fields['manual_aircraft_registration'].label = "Or enter aircraft registration manually"
-        self.fields['manual_aircraft_registration'].help_text = "Enter the aircraft registration (e.g., F-GABC) if not in the list above"
 
 
     
