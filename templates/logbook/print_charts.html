@@ -9,63 +9,63 @@
         @media print {
             body { 
                 margin: 0; 
-                padding: 15px;
-                font-size: 12pt;
-                line-height: 1.4;
+                padding: 10px;
+                font-size: 10pt;
+                line-height: 1.2;
             }
             .no-print { display: none !important; }
             .page-break { page-break-before: always; }
             .chart-container { 
                 page-break-inside: avoid; 
-                margin-bottom: 20px;
-            }
-            .header {
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-            }
-            .header h1 {
-                font-size: 24pt;
                 margin-bottom: 10px;
             }
+            .header {
+                margin-bottom: 10px;
+                padding-bottom: 8px;
+            }
+            .header h1 {
+                font-size: 18pt;
+                margin-bottom: 5px;
+            }
             .header .pilot-info {
-                font-size: 12pt;
+                font-size: 10pt;
             }
             .stats-summary {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-                margin-bottom: 20px;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                margin-bottom: 10px;
             }
             .stat-card {
                 background: white !important;
-                border: 2px solid #000 !important;
-                padding: 15px;
+                border: 1px solid #000 !important;
+                padding: 8px;
             }
             .stat-card h3 {
-                font-size: 14pt;
-                margin-bottom: 8px;
+                font-size: 10pt;
+                margin-bottom: 4px;
             }
             .stat-card .value {
-                font-size: 18pt;
+                font-size: 14pt;
             }
             .chart-section {
-                margin-bottom: 25px;
+                margin-bottom: 12px;
             }
             .chart-section h2 {
-                font-size: 16pt;
-                margin-bottom: 15px;
+                font-size: 12pt;
+                margin-bottom: 8px;
             }
             .chart-container {
                 background: white !important;
-                border: 2px solid #000 !important;
-                padding: 15px;
+                border: 1px solid #000 !important;
+                padding: 8px;
                 box-shadow: none !important;
             }
             .chart-title {
-                font-size: 14pt;
-                margin-bottom: 10px;
+                font-size: 10pt;
+                margin-bottom: 5px;
             }
             .chart-wrapper {
-                height: 250px !important;
+                height: 120px !important;
                 margin: 0 auto;
                 width: 100% !important;
             }
@@ -74,9 +74,9 @@
                 height: auto !important;
             }
             .footer {
-                margin-top: 25px;
-                padding-top: 15px;
-                font-size: 10pt;
+                margin-top: 10px;
+                padding-top: 8px;
+                font-size: 8pt;
             }
         }
         
@@ -108,6 +108,89 @@
                 color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
+            
+            /* Force compact layout in print */
+            body {
+                font-size: 9pt !important;
+                line-height: 1.1 !important;
+            }
+            
+            .header h1 {
+                font-size: 16pt !important;
+                margin-bottom: 3px !important;
+            }
+            
+            .header .pilot-info {
+                font-size: 9pt !important;
+            }
+            
+            .stats-summary {
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 5px !important;
+                margin-bottom: 8px !important;
+            }
+            
+            .stat-card {
+                padding: 5px !important;
+            }
+            
+            .stat-card h3 {
+                font-size: 8pt !important;
+                margin-bottom: 2px !important;
+            }
+            
+            .stat-card .value {
+                font-size: 12pt !important;
+            }
+            
+            .chart-section {
+                margin-bottom: 8px !important;
+            }
+            
+            .chart-section h2 {
+                font-size: 10pt !important;
+                margin-bottom: 5px !important;
+            }
+            
+            .chart-container {
+                padding: 8px !important;
+                margin-bottom: 8px !important;
+                overflow: visible !important;
+            }
+            
+            /* Ensure side-by-side layout works in print */
+            .side-by-side-charts {
+                display: flex !important;
+                gap: 10px !important;
+                flex-direction: row !important;
+            }
+            
+            /* Force charts to be side by side in print */
+            .chart-half {
+                flex: 1 !important;
+                width: 50% !important;
+                max-width: 50% !important;
+            }
+            
+
+            
+            .chart-wrapper {
+                height: 120px !important;
+                overflow: visible !important;
+                padding-bottom: 10px !important;
+                margin-bottom: 5px !important;
+            }
+            
+            /* Ensure charts don't break the side-by-side layout in print */
+            .chart-section:last-child .chart-container {
+                margin-bottom: 0 !important;
+            }
+            
+            .footer {
+                margin-top: 8px !important;
+                padding-top: 5px !important;
+                font-size: 7pt !important;
+            }
         }
         
         body {
@@ -116,101 +199,186 @@
             color: #333;
             margin: 0;
             padding: 20px;
+            height: 100vh;
+            overflow: hidden;
         }
         
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #007bff;
-            padding-bottom: 20px;
+            margin-bottom: 2vh;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 1vh;
+            height: 8vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
         .header h1 {
             color: #007bff;
             margin: 0;
-            font-size: 28px;
+            font-size: 2.5vh;
             font-weight: bold;
         }
         
         .header .pilot-info {
-            margin-top: 10px;
-            font-size: 16px;
+            margin-top: 0.5vh;
+            font-size: 1.5vh;
             color: #666;
         }
         
         .stats-summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1vh;
+            margin-bottom: 2vh;
             page-break-inside: avoid;
+            height: 12vh;
         }
         
         .stat-card {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 20px;
+            border-radius: 6px;
+            padding: 1vh;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
         .stat-card h3 {
-            margin: 0 0 10px 0;
+            margin: 0 0 0.5vh 0;
             color: #007bff;
-            font-size: 18px;
+            font-size: 1.5vh;
         }
         
         .stat-card .value {
-            font-size: 24px;
+            font-size: 2vh;
             font-weight: bold;
             color: #333;
         }
         
         .chart-section {
-            margin-bottom: 40px;
+            margin-bottom: 2vh;
             page-break-inside: avoid;
+            padding-bottom: 0.5vh;
+            height: 18vh;
         }
         
         .chart-section h2 {
             color: #007bff;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            font-size: 22px;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 0.5vh;
+            margin-bottom: 1vh;
+            font-size: 2vh;
+            height: 3vh;
+            display: flex;
+            align-items: center;
         }
         
         .chart-container {
             background: white;
             border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow: hidden;
+            border-radius: 6px;
+            padding: 1vh;
+            margin-bottom: 1vh;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: visible;
+            height: 14vh;
         }
         
-        .chart-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #495057;
-            text-align: center;
-        }
+
         
         .chart-wrapper {
             position: relative;
-            height: 400px;
+            height: 12vh;
             margin: 0 auto;
             width: 100%;
+            overflow: visible;
+            padding-bottom: 1vh;
+        }
+        
+        /* Compact layout for single page printing */
+        .single-page .chart-wrapper {
+            height: 10vh;
+        }
+        
+        .single-page .chart-section {
+            margin-bottom: 1vh;
+        }
+        
+        .single-page .stats-summary {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1vh;
+            margin-bottom: 1vh;
+        }
+        
+        /* Side-by-side chart layout */
+        .chart-section .chart-container {
+            margin-bottom: 0;
+        }
+        
+        /* Side-by-side charts layout */
+        .side-by-side-charts {
+            display: flex !important;
+            gap: 2vh;
+            width: 100%;
+            height: 14vh;
+        }
+        
+        .chart-half {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        /* Ensure charts maintain proper sizing */
+        .chart-half .chart-wrapper {
+            width: 100%;
+            height: 12vh;
+        }
+        
+        /* Responsive layout for smaller screens */
+        @media (max-width: 768px) {
+            .side-by-side-charts {
+                flex-direction: column !important;
+            }
+        }
+        
+        /* Ensure the page always fits viewport height */
+        @media (max-height: 600px) {
+            .header { height: 6vh; }
+            .header h1 { font-size: 2vh; }
+            .header .pilot-info { font-size: 1.2vh; }
+            .stats-summary { height: 10vh; }
+            .chart-section { height: 16vh; }
+            .chart-container { height: 12vh; }
+            .chart-wrapper { height: 10vh; }
+            .footer { height: 3vh; }
+        }
+        
+        @media (max-height: 500px) {
+            .header { height: 5vh; }
+            .header h1 { font-size: 1.8vh; }
+            .header .pilot-info { font-size: 1vh; }
+            .stats-summary { height: 8vh; }
+            .chart-section { height: 14vh; }
+            .chart-container { height: 10vh; }
+            .chart-wrapper { height: 8vh; }
+            .footer { height: 2vh; }
         }
         
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
+            margin-top: 2vh;
+            padding-top: 1vh;
             border-top: 1px solid #dee2e6;
             text-align: center;
             color: #666;
-            font-size: 14px;
+            font-size: 1.5vh;
+            height: 4vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
         .generated-date {
@@ -234,11 +402,8 @@
             <a href="{% url 'charts' %}" style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; font-size: 16px;">
                 ← Back to Charts
             </a>
-            <button class="print-button" onclick="prepareAndPrint()">
-                🖨️ Print Report
-            </button>
-            <button onclick="window.print()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
-                🖨️ Direct Print
+            <button onclick="printSinglePage()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                🖨️ Print
             </button>
         </div>
     
@@ -282,7 +447,7 @@
     <div class="chart-section">
         <h2>Monthly Flight Hours Progress</h2>
         <div class="chart-container">
-            <div class="chart-title">12-Month Flight Hours Trend</div>
+
             <div class="chart-wrapper">
                 <canvas id="monthlyProgressChart"></canvas>
             </div>
@@ -292,7 +457,7 @@
     <div class="chart-section">
         <h2>Aircraft Usage Analysis</h2>
         <div class="chart-container">
-            <div class="chart-title">Hours by Aircraft Type</div>
+
             <div class="chart-wrapper">
                 <canvas id="aircraftChart"></canvas>
             </div>
@@ -300,21 +465,21 @@
     </div>
     
     <div class="chart-section">
-        <h2>Flight Distribution</h2>
-        <div class="chart-container">
-            <div class="chart-title">Flight Type Distribution</div>
-            <div class="chart-wrapper">
-                <canvas id="flightTypeChart"></canvas>
+        <h2>Flight Distribution & Conditions</h2>
+        <div class="side-by-side-charts">
+            <div class="chart-half">
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="flightTypeChart"></canvas>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="chart-section">
-        <h2>Flight Conditions</h2>
-        <div class="chart-container">
-            <div class="chart-title">Weather Conditions Distribution</div>
-            <div class="chart-wrapper">
-                <canvas id="conditionsChart"></canvas>
+            <div class="chart-half">
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="conditionsChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -567,30 +732,32 @@
             if (conditionsChart && conditionsChart.resize) conditionsChart.resize();
         }
         
-        // Function to prepare charts before printing
-        function prepareAndPrint() {
-            console.log('Print function called');
-            try {
-                // Force chart resize and redraw
+        // Function to print in single page mode
+        function printSinglePage() {
+            // Switch to compact layout
+            document.body.classList.add('single-page');
+            
+            // Resize charts for compact layout
+            setTimeout(() => {
                 resizeChartsForPrint();
                 
-                // Wait a moment for charts to settle, then print
+                // Wait a moment then print
                 setTimeout(() => {
-                    console.log('Printing now...');
                     window.print();
+                    
+                    // Switch back to normal layout after printing
+                    setTimeout(() => {
+                        document.body.classList.remove('single-page');
+                        resizeChartsForPrint();
+                    }, 1000);
                 }, 500);
-            } catch (error) {
-                console.log('Chart preparation failed, printing directly:', error);
-                // Fallback: print directly
-                window.print();
-            }
+            }, 200);
         }
         
-        // Resize charts when page loads and before printing
+        // Resize charts when page loads
         window.addEventListener('load', resizeChartsForPrint);
-        window.addEventListener('beforeprint', resizeChartsForPrint);
         
-        // Ensure charts are properly sized for print
+        // Ensure charts are properly sized
         setTimeout(resizeChartsForPrint, 1000);
     </script>
 </body>
