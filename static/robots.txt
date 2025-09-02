@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /login/
+Disallow: /register/
+Disallow: /password-reset/
+Disallow: /media/
+
+# Allow important pages
+Allow: /
+Allow: /dashboard/
+Allow: /flights/
+Allow: /aircraft/
+Allow: /charts/
+Allow: /privacy-policy/
+Allow: /terms-of-service/
+
+# Sitemap location
+Sitemap: https://wingman.cyou/sitemap.xml
+
+# Crawl delay (optional - helps with server load)
+Crawl-delay: 1
