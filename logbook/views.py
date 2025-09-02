@@ -254,6 +254,25 @@ def dashboard(request):
         flight_count=Count('id')
     ).order_by('-total_hours')[:5]
     
+    # Clean up aircraft usage data to ensure we have meaningful information
+    cleaned_aircraft_usage = []
+    for item in aircraft_usage:
+        # If manufacturer or type is empty, try to get it from the Aircraft model
+        if not item['manufacturer'] or not item['type']:
+            # Look for an Aircraft with this registration
+            try:
+                aircraft = Aircraft.objects.get(registration=item['registration'])
+                item['manufacturer'] = item['manufacturer'] or aircraft.manufacturer
+                item['type'] = item['type'] or aircraft.type
+            except Aircraft.DoesNotExist:
+                # If no Aircraft found, use default values
+                item['manufacturer'] = item['manufacturer'] or 'Unknown'
+                item['type'] = item['type'] or 'Unknown'
+        
+        cleaned_aircraft_usage.append(item)
+    
+    aircraft_usage = cleaned_aircraft_usage
+    
     context = {
         'pilot_profile': pilot_profile,
         'recent_flights': recent_flights,
