@@ -77,7 +77,7 @@
       <div class="card-header">
         <h5 class="card-title mb-0">
           <i class="fas fa-cloud-sun aviation-icon"></i>
-          Flight Conditions
+          Flight Conditions (Hours)
         </h5>
       </div>
       <div class="card-body">
@@ -148,9 +148,9 @@
             </a>
           </div>
           <div class="col-md-3 mb-2">
-            <button class="btn btn-primary w-100" onclick="exportChartsData()" style="background-color: #0d6efd; border-color: #0d6efd; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+            <a href="{% url 'export-csv' %}" class="btn btn-primary w-100" style="background-color: #0d6efd; border-color: #0d6efd; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
               <i class="fas fa-file-csv"></i>&nbsp;Export Flight Log (FAA/EASA)
-            </button>
+            </a>
           </div>
           <div class="col-md-3 mb-2">
             <a href="{% url 'print-charts' %}" class="btn btn-success w-100" style="background-color: #198754; border-color: #198754; color: white; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
@@ -311,8 +311,8 @@
       data: {
           labels: conditionsData.map(item => item.conditions || 'Unknown'),
           datasets: [{
-              label: 'Number of Flights',
-              data: conditionsData.map(item => item.count),
+              label: 'Flight Hours',
+              data: conditionsData.map(item => item.hours),
               backgroundColor: '#3b82f6',
               borderColor: '#1d4ed8',
               borderWidth: 1
@@ -331,7 +331,7 @@
                   beginAtZero: true,
                   title: {
                       display: true,
-                      text: 'Number of Flights'
+                      text: 'Flight Hours'
                   }
               }
           }
@@ -379,12 +379,8 @@
 
 
 
-  // Export charts data to CSV function
-  function exportChartsData() {
-      const downloadBtn = event.target;
-      const originalText = downloadBtn.innerHTML;
-      downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating CSV...';
-      downloadBtn.disabled = true;
+
+
       
       try {
           // Get monthly data
@@ -409,7 +405,7 @@
           csvContent += '\n';
           
           // FAA/EASA Compliant Flight Log Structure
-          csvContent += 'Date,AircraftID,AircraftType,From,To,Route,TotalTime,PIC,SIC,DualReceived,InstructorGiven,Solo,CrossCountry,Day,Night,IFR,SimulatedInstrument,Simulator,DayLandings,NightLandings,Remarks\n';
+          csvContent += 'Date,AircraftRegistration,AircraftType,From,To,Route,TotalTime,PIC,SIC,DualReceived,InstructorGiven,Solo,CrossCountry,Day,Night,IFR,SimulatedInstrument,Simulator,DayLandings,NightLandings,Remarks\n';
           
           // Get flight data from Django context
           const flightData = {{ flights_data|safe }};
@@ -482,17 +478,9 @@
           link.download = `flight_analytics_data_${timestamp}.csv`;
           link.click();
           
-          // Clean up
-          URL.revokeObjectURL(link.href);
-          
-      } catch (error) {
-          console.error('Error exporting CSV:', error);
-      }
+
       
-      // Restore button state
-      downloadBtn.innerHTML = originalText;
-      downloadBtn.disabled = false;
-  }
+      
 
 
   

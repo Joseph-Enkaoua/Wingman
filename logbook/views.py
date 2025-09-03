@@ -173,6 +173,8 @@ def dashboard(request):
         aircraft_usage = Flight.objects.filter(pilot=user).annotate(
             registration=Case(
                 When(aircraft__isnull=False, then='aircraft__registration'),
+                When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
+                When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
                 default='aircraft_registration',
                 output_field=CharField(),
             )
@@ -236,11 +238,15 @@ def dashboard(request):
     aircraft_usage = Flight.objects.filter(pilot=user).annotate(
         registration=Case(
             When(aircraft__isnull=False, then='aircraft__registration'),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
+            When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
             default='aircraft_registration',
             output_field=CharField(),
         ),
         manufacturer=Case(
             When(aircraft__isnull=False, then='aircraft__manufacturer'),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('Simulator')),
+            When(aircraft__isnull=True, aircraft_registration='', then=Value('Simulator')),
             default='aircraft_manufacturer',
             output_field=CharField(),
         ),
@@ -257,8 +263,13 @@ def dashboard(request):
     # Clean up aircraft usage data to ensure we have meaningful information
     cleaned_aircraft_usage = []
     for item in aircraft_usage:
+        # Handle simulator flights (empty or null registration)
+        if not item['registration'] or item['registration'] == '':
+            item['registration'] = 'SIM'
+            item['manufacturer'] = 'Simulator'
+            item['type'] = 'SIM'
         # If manufacturer or type is empty, try to get it from the Aircraft model
-        if not item['manufacturer'] or not item['type']:
+        elif not item['manufacturer'] or not item['type']:
             # Look for an Aircraft with this registration
             try:
                 aircraft = Aircraft.objects.get(registration=item['registration'])
@@ -616,17 +627,23 @@ def charts_view(request):
     aircraft_data = Flight.objects.filter(pilot=user).annotate(
         registration=Case(
             When(aircraft__isnull=False, then='aircraft__registration'),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
+            When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
             default='aircraft_registration',
             output_field=CharField(),
         ),
         manufacturer=Case(
             When(aircraft__isnull=False, then='aircraft__manufacturer'),
-            default=Value(''),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('Simulator')),
+            When(aircraft__isnull=True, aircraft_registration='', then=Value('Simulator')),
+            default='aircraft_manufacturer',
             output_field=CharField(),
         ),
         type=Case(
             When(aircraft__isnull=False, then='aircraft__type'),
-            default=Value(''),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
+            When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
+            default='aircraft_type',
             output_field=CharField(),
         )
     ).values(
@@ -676,20 +693,20 @@ def charts_view(request):
     # Pilot role distribution based on time fields
     pilot_role_data = []
     
-    # Count flights by pilot role based on time fields
-    pic_flights = Flight.objects.filter(pilot=user, pic_time__gt=0).count()
-    copilot_flights = Flight.objects.filter(pilot=user, copilot_time__gt=0).count()
-    instructor_flights = Flight.objects.filter(pilot=user, instructor_time__gt=0).count()
-    multi_pilot_flights = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).count()
+    # Calculate hours by pilot role based on time fields (convert from minutes to hours)
+    pic_minutes = Flight.objects.filter(pilot=user, pic_time__gt=0).aggregate(total=Sum('pic_time'))['total'] or 0
+    copilot_minutes = Flight.objects.filter(pilot=user, copilot_time__gt=0).aggregate(total=Sum('copilot_time'))['total'] or 0
+    instructor_minutes = Flight.objects.filter(pilot=user, instructor_time__gt=0).aggregate(total=Sum('instructor_time'))['total'] or 0
+    multi_pilot_minutes = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).aggregate(total=Sum('multi_pilot_time'))['total'] or 0
     
-    if pic_flights > 0:
-        pilot_role_data.append({'pilot_role': 'PIC', 'count': pic_flights})
-    if copilot_flights > 0:
-        pilot_role_data.append({'pilot_role': 'SIC', 'count': copilot_flights})
-    if instructor_flights > 0:
-        pilot_role_data.append({'pilot_role': 'DUAL', 'count': instructor_flights})
-    if multi_pilot_flights > 0:
-        pilot_role_data.append({'pilot_role': 'MULTI', 'count': multi_pilot_flights})
+    if pic_minutes > 0:
+        pilot_role_data.append({'pilot_role': 'PIC', 'hours': float(pic_minutes) / 60})
+    if copilot_minutes > 0:
+        pilot_role_data.append({'pilot_role': 'SIC', 'hours': float(copilot_minutes) / 60})
+    if instructor_minutes > 0:
+        pilot_role_data.append({'pilot_role': 'DUAL', 'hours': float(instructor_minutes) / 60})
+    if multi_pilot_minutes > 0:
+        pilot_role_data.append({'pilot_role': 'MULTI', 'hours': float(multi_pilot_minutes) / 60})
     
     # Calculate additional statistics
     user_flights = Flight.objects.filter(pilot=user)
@@ -702,7 +719,7 @@ def charts_view(request):
     for item in pilot_role_data:
         conditions_data.append({
             'conditions': item['pilot_role'],
-            'count': item['count']
+            'hours': item['hours']
         })
     
     # Time breakdown data for the radar chart
@@ -719,6 +736,8 @@ def charts_view(request):
     most_used_aircraft = user_flights.annotate(
         registration=Case(
             When(aircraft__isnull=False, then='aircraft__registration'),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
+            When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
             default='aircraft_registration',
             output_field=CharField(),
         )
@@ -891,27 +910,27 @@ def print_charts_view(request):
     # Pilot role distribution based on time fields
     pilot_role_data = []
     
-    # Count flights by pilot role based on time fields
-    pic_flights = Flight.objects.filter(pilot=user, pic_time__gt=0).count()
-    copilot_flights = Flight.objects.filter(pilot=user, copilot_time__gt=0).count()
-    instructor_flights = Flight.objects.filter(pilot=user, instructor_time__gt=0).count()
-    multi_pilot_flights = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).count()
+    # Calculate hours by pilot role based on time fields (convert from minutes to hours)
+    pic_minutes = Flight.objects.filter(pilot=user, pic_time__gt=0).aggregate(total=Sum('pic_time'))['total'] or 0
+    copilot_minutes = Flight.objects.filter(pilot=user, copilot_time__gt=0).aggregate(total=Sum('copilot_time'))['total'] or 0
+    instructor_minutes = Flight.objects.filter(pilot=user, instructor_time__gt=0).aggregate(total=Sum('instructor_time'))['total'] or 0
+    multi_pilot_minutes = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).aggregate(total=Sum('multi_pilot_time'))['total'] or 0
     
-    if pic_flights > 0:
-        pilot_role_data.append({'pilot_role': 'PIC', 'count': pic_flights})
-    if copilot_flights > 0:
-        pilot_role_data.append({'pilot_role': 'SIC', 'count': copilot_flights})
-    if instructor_flights > 0:
-        pilot_role_data.append({'pilot_role': 'DUAL', 'count': instructor_flights})
-    if multi_pilot_flights > 0:
-        pilot_role_data.append({'pilot_role': 'MULTI', 'count': multi_pilot_flights})
+    if pic_minutes > 0:
+        pilot_role_data.append({'pilot_role': 'PIC', 'hours': float(pic_minutes) / 60})
+    if copilot_minutes > 0:
+        pilot_role_data.append({'pilot_role': 'SIC', 'hours': float(copilot_minutes) / 60})
+    if instructor_minutes > 0:
+        pilot_role_data.append({'pilot_role': 'DUAL', 'hours': float(instructor_minutes) / 60})
+    if multi_pilot_minutes > 0:
+        pilot_role_data.append({'pilot_role': 'MULTI', 'hours': float(multi_pilot_minutes) / 60})
     
     # Define conditions_data based on pilot_role_data (for compatibility with frontend)
     conditions_data = []
     for item in pilot_role_data:
         conditions_data.append({
             'conditions': item['pilot_role'],
-            'count': item['count']
+            'hours': item['hours']
         })
     
     # Calculate additional statistics
@@ -924,6 +943,8 @@ def print_charts_view(request):
     most_used_aircraft = user_flights.annotate(
         registration=Case(
             When(aircraft__isnull=False, then='aircraft__registration'),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
+            When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
             default='aircraft_registration',
             output_field=CharField(),
         )
@@ -1108,13 +1129,36 @@ def export_pdf(request):
 def export_csv(request):
     """Export flight logbook to CSV"""
     import csv
-    from django.http import HttpResponse
+    
+    # Helper function to convert decimal hours to hh:mm format
+    def hours_to_hhmm(hours):
+        """Convert decimal hours to hh:mm format"""
+        if not hours:
+            return "00:00"
+        total_minutes = int(hours * 60)
+        h = total_minutes // 60
+        m = total_minutes % 60
+        return f"{h:02d}:{m:02d}"
+    
+    # Helper function to convert minutes to hh:mm format
+    def minutes_to_hhmm(minutes):
+        """Convert minutes to hh:mm format"""
+        if not minutes:
+            return "00:00"
+        h = minutes // 60
+        m = minutes % 60
+        return f"{int(h):02d}:{int(m):02d}"
     
     user = request.user
     pilot_profile, created = PilotProfile.objects.get_or_create(user=user)
     
     # Get all flights
     flights = Flight.objects.filter(pilot=user).order_by('date', 'departure_time')
+    
+    # Calculate totals - convert all times to minutes for accurate calculations
+    total_flights = flights.count()
+    total_hours_minutes = sum(flight.exact_flight_minutes for flight in flights)  # Use exact minutes for accuracy
+    total_landings = sum(flight.day_landings + flight.night_landings for flight in flights)
     
     # Create CSV response
     response = HttpResponse(content_type='text/csv')
@@ -1123,66 +1167,196 @@ def export_csv(request):
     # Create CSV writer
     writer = csv.writer(response)
     
-    # Write header
-    writer.writerow([
-        'Date', 'AircraftID', 'AircraftType', 'From', 'To', 'Route', 'TotalTime', 
-        'PIC', 'SIC', 'DualReceived', 'InstructorGiven', 'Solo', 'CrossCountry', 
-        'DayTime', 'NightTime', 'ActualInstrument', 'SimulatedInstrument', 'Simulator', 
-        'DayLandings', 'NightLandings', 'Remarks'
-    ])
+    # Write pilot details header
+    writer.writerow(['PILOT DETAILS'])
+    writer.writerow(['Full Name', user.get_full_name() or user.username])
+    writer.writerow(['License Number', pilot_profile.license_number or 'N/A'])
+    writer.writerow(['License Type', pilot_profile.license_type or 'N/A'])
+    writer.writerow(['Medical Expiry', pilot_profile.medical_expiry.strftime('%Y-%m-%d') if pilot_profile.medical_expiry else 'N/A'])
+    writer.writerow(['Total Flights', total_flights])
+    writer.writerow(['Total Hours', minutes_to_hhmm(total_hours_minutes)])  # Use minutes_to_hhmm for accurate display
+    writer.writerow(['Total Landings', total_landings])
+    writer.writerow([''])  # Empty row for spacing
+    
+    # Determine which columns to include based on actual data
+    columns_to_include = ['Date', 'AircraftRegistration', 'AircraftType', 'From', 'DepartHour', 'To', 'ArriveHour', 'TotalTime']
+    
+    # Check if user has any of these time types and add columns accordingly
+    has_pic_time = any(flight.pic_time > 0 for flight in flights)
+    has_copilot_time = any(flight.copilot_time > 0 for flight in flights)
+    has_instructor_time = any(flight.instructor_time > 0 for flight in flights)
+    has_single_engine_time = any(flight.single_engine_time > 0 for flight in flights)
+    has_multi_engine_time = any(flight.multi_engine_time > 0 for flight in flights)
+    has_night_time = any(flight.night_time > 0 for flight in flights)
+    if has_night_time:
+        has_night_landings = any(flight.night_landings > 0 for flight in flights)
+    else:
+        has_night_landings = False
+    has_ifr_time = any(flight.ifr_time > 0 for flight in flights)
+    has_simulator_time = any(flight.simulator_time > 0 for flight in flights)
+    has_day_landings = any(flight.day_landings > 0 for flight in flights)
+    has_ifr_approaches = any(flight.ifr_approaches > 0 for flight in flights)
+    
+    # Add conditional columns
+    if has_pic_time:
+        columns_to_include.append('PIC')
+    if has_copilot_time:
+        columns_to_include.append('SIC')
+    if has_instructor_time:
+        columns_to_include.append('DualReceived')
+    if has_single_engine_time:
+        columns_to_include.append('SingleEngine')
+    if has_multi_engine_time:
+        columns_to_include.append('MultiEngine')
+    if has_night_time:
+        columns_to_include.append('NightTime')
+    if has_ifr_time:
+        columns_to_include.append('IFRTime')
+    if has_simulator_time:
+        columns_to_include.append('SimulatorTime')
+    if has_day_landings:
+        columns_to_include.append('DayLandings')
+    if has_night_landings:
+        columns_to_include.append('NightLandings')
+    if has_ifr_approaches:
+        columns_to_include.append('IFRApproaches')
+    
+    # Always include remarks and PIC name
+    columns_to_include.append('Remarks')
+    columns_to_include.append('PIC Name')
+    
+    # Add only Total Hours column
+    columns_to_include.append('Total Hours')
+    
+    # Write flight data header
+    writer.writerow(['FLIGHT DATA'])
+    writer.writerow(columns_to_include)
     
     # Write flight data
-    for flight in flights:
-        # Determine day/night condition
-        day_night = 'N' if flight.night_time > 0 else 'D'
+    for i, flight in enumerate(flights):
+        row_data = []
         
-        # Create aircraft type string with manufacturer
-        aircraft_type = flight.aircraft.type
-        if flight.aircraft.manufacturer:
-            aircraft_type = f"{flight.aircraft.manufacturer} {flight.aircraft.type}"
+        # Calculate accumulating total hours up to this flight - use exact minutes for accuracy
+        flights_up_to_now = flights[:i+1]
+        running_total_minutes = sum(f.exact_flight_minutes for f in flights_up_to_now)
         
-        # Calculate PIC/SIC time
-        pic_time = flight.pic_time / 60 if flight.pic_time else 0
-        sic_time = flight.copilot_time / 60 if flight.copilot_time else 0
-        
-        # Calculate solo time (PIC time)
-        solo_time = flight.pic_time / 60 if flight.pic_time else 0
-        
-        # Calculate day time (total time minus night time)
-        day_time = flight.total_time - (flight.night_time / 60 if flight.night_time else 0)
-        
-        # Calculate dual received time
-        dual_received_time = flight.instructor_time / 60 if flight.instructor_time else 0
-        
-        # Calculate instructor given time
-        instructor_given_time = flight.instructor_time / 60 if flight.instructor_time else 0
-        
-        # Create route string
-        route = f"{flight.departure_aerodrome} to {flight.arrival_aerodrome}"
-        
-        writer.writerow([
+        # Add required fields
+        row_data.extend([
             flight.date.strftime('%Y-%m-%d'),
-            flight.aircraft.registration,
-            aircraft_type,
+            flight.aircraft.registration if flight.aircraft else flight.aircraft_registration or 'N/A',
+            f"{flight.aircraft.manufacturer} {flight.aircraft.type}" if flight.aircraft and flight.aircraft.manufacturer else flight.aircraft.type if flight.aircraft else flight.aircraft_type or 'N/A',
             flight.departure_aerodrome,
+            flight.departure_time.strftime('%H:%M'),
             flight.arrival_aerodrome,
-            route,
-            f"{flight.total_time:.1f}",
-            f"{pic_time:.1f}",
-            f"{sic_time:.1f}",
-            f"{dual_received_time:.1f}",
-            f"{instructor_given_time:.1f}",
-            f"{solo_time:.1f}",
-            f"{flight.single_engine_time / 60:.1f}" if flight.single_engine_time else "0.0",
-            f"{day_time:.1f}",
-            f"{flight.night_time / 60:.1f}" if flight.night_time else "0.0",
-            f"{flight.ifr_time / 60:.1f}" if flight.ifr_time else "0.0",
-            f"{flight.simulator_time / 60:.1f}" if flight.simulator_time else "0.0",
-            f"{flight.total_time:.1f}" if flight.simulator_time else "0.0",
-            flight.day_landings,
-            flight.night_landings,
-            flight.remarks or ''
+            flight.arrival_time.strftime('%H:%M'),
+            minutes_to_hhmm(flight.exact_flight_minutes)
         ])
+        
+        # Add conditional fields
+        if has_pic_time:
+            row_data.append(minutes_to_hhmm(flight.pic_time) if flight.pic_time else "00:00")
+        if has_copilot_time:
+            row_data.append(minutes_to_hhmm(flight.copilot_time) if flight.copilot_time else "00:00")
+        if has_instructor_time:
+            row_data.append(minutes_to_hhmm(flight.instructor_time) if flight.instructor_time else "00:00")
+        if has_single_engine_time:
+            row_data.append(minutes_to_hhmm(flight.single_engine_time) if flight.single_engine_time else "00:00")
+        if has_multi_engine_time:
+            row_data.append(minutes_to_hhmm(flight.multi_engine_time) if flight.multi_engine_time else "00:00")
+        if has_night_time:
+            row_data.append(minutes_to_hhmm(flight.night_time) if flight.night_time else "00:00")
+        if has_ifr_time:
+            row_data.append(minutes_to_hhmm(flight.ifr_time) if flight.ifr_time else "00:00")
+        if has_simulator_time:
+            row_data.append(minutes_to_hhmm(flight.simulator_time) if flight.simulator_time else "00:00")
+        if has_day_landings:
+            row_data.append(flight.day_landings)
+        if has_night_landings:
+            row_data.append(flight.night_landings)
+        if has_ifr_approaches:
+            row_data.append(flight.ifr_approaches)
+        
+        # Always add remarks, PIC name, and total hours
+        row_data.append(flight.remarks or '')
+        row_data.append(user.get_full_name() or user.username)
+        row_data.append(minutes_to_hhmm(running_total_minutes))  # Use minutes_to_hhmm for accurate display
+        
+        writer.writerow(row_data)
+    
+    # Add empty row for spacing
+    writer.writerow([' '])
+    
+    # Calculate totals for all columns - use exact minutes for accurate calculations
+    total_flights = len(flights)
+    total_hours_minutes = sum(flight.exact_flight_minutes for flight in flights)  # Use exact minutes for accuracy
+    total_pic_time = sum(flight.pic_time for flight in flights)  # Already in minutes
+    total_copilot_time = sum(flight.copilot_time for flight in flights)  # Already in minutes
+    total_instructor_time = sum(flight.instructor_time for flight in flights)  # Already in minutes
+    total_single_engine_time = sum(flight.single_engine_time for flight in flights)  # Already in minutes
+    total_multi_engine_time = sum(flight.multi_engine_time for flight in flights)  # Already in minutes
+    total_night_time = sum(flight.night_time for flight in flights)  # Already in minutes
+    total_ifr_time = sum(flight.ifr_time for flight in flights)  # Already in minutes
+    total_simulator_time = sum(flight.simulator_time for flight in flights)  # Already in minutes
+    total_day_landings = sum(flight.day_landings for flight in flights)
+    total_night_landings = sum(flight.night_landings for flight in flights)
+    total_ifr_approaches = sum(flight.ifr_approaches for flight in flights)
+    
+
+    # Create totals row - start with TOTALS label
+    totals_row = ['TOTALS']
+    
+    # Add empty fields for required fields (Date, AircraftRegistration, AircraftType, From, DepartHour, To, ArriveHour, TotalTime)
+    # These fields don't have totals, so they remain empty
+    totals_row.extend(['', '', '', '', '', ''])
+    
+    # Add totals for conditional fields in the same order as they appear in flight data
+    totals_row.append(minutes_to_hhmm(total_hours_minutes))  # Use minutes_to_hhmm for accurate display
+    if has_pic_time:
+        totals_row.append(minutes_to_hhmm(total_pic_time))
+    if has_copilot_time:
+        totals_row.append(minutes_to_hhmm(total_copilot_time))
+    if has_instructor_time:
+        totals_row.append(minutes_to_hhmm(total_instructor_time))
+    if has_single_engine_time:
+        totals_row.append(minutes_to_hhmm(total_single_engine_time))
+    if has_multi_engine_time:
+        totals_row.append(minutes_to_hhmm(total_multi_engine_time))
+    if has_night_time:
+        totals_row.append(minutes_to_hhmm(total_night_time))
+    if has_ifr_time:
+        totals_row.append(minutes_to_hhmm(total_ifr_time))
+    if has_simulator_time:
+        totals_row.append(minutes_to_hhmm(total_simulator_time))
+    if has_day_landings:
+        totals_row.append(total_day_landings)
+    if has_night_landings:
+        totals_row.append(total_night_landings)
+    if has_ifr_approaches:
+        totals_row.append(total_ifr_approaches)
+    
+    # Add empty fields for remarks and PIC name, then total hours
+    totals_row.extend(['', '', minutes_to_hhmm(total_hours_minutes)])  # Use minutes_to_hhmm for accurate display
+    
+    # Write totals row
+    writer.writerow(totals_row)
+    
+    # Add footer information in separate sections to avoid affecting column widths
+    writer.writerow([' '])  # Empty row for spacing
+    
+    # Footer section 1 - End marker
+    writer.writerow(['END OF FLIGHT LOG'])
+    
+    # Footer section 2 - Generation info (single column to avoid affecting flight data columns)
+    writer.writerow([''])
+    writer.writerow(['GENERATION INFO'])
+    writer.writerow(['Generated by', 'Wingman Flight Logbook'])
+    writer.writerow(['Generated on', timezone.now().strftime("%Y-%m-%d")])
+    writer.writerow(['Generated at', timezone.now().strftime("%H:%M:%S")])
+    
+    # Footer section 3 - Compliance notes (single column to avoid affecting flight data columns)
+    writer.writerow([''])
+    writer.writerow(['COMPLIANCE NOTES'])
+    writer.writerow(['Format', 'FAA/EASA Compatible'])
     
     return response
 

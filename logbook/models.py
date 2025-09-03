@@ -103,7 +103,11 @@ class Flight(models.Model):
                     arrival_dt += timedelta(days=1)
                 
                 time_diff = arrival_dt - departure_dt
-                self.total_time = Decimal(str(time_diff.total_seconds() / 3600)).quantize(Decimal('0.1'))
+                # Calculate in minutes first for accuracy, then convert to hours
+                total_minutes = time_diff.total_seconds() / 60
+                # Round to the nearest minute, then convert to hours with more precision
+                total_minutes_rounded = round(total_minutes)
+                self.total_time = Decimal(str(total_minutes_rounded / 60)).quantize(Decimal('0.01'))
         
         # Auto-populate aircraft details from aircraft reference
         if self.aircraft:
@@ -164,6 +168,31 @@ class Flight(models.Model):
             return self.aircraft.engine_type == 'MULTI'
         return self.aircraft_engine_type == 'MULTI'
 
+    @property
+    def exact_flight_minutes(self):
+        """Calculate exact flight time in minutes for accurate calculations"""
+        if self.departure_time and self.arrival_time:
+            from datetime import datetime, timedelta
+            departure_dt = datetime.combine(self.date, self.departure_time)
+            arrival_dt = datetime.combine(self.date, self.arrival_time)
+            
+            # Handle overnight flights
+            if arrival_dt < departure_dt:
+                arrival_dt += timedelta(days=1)
+            
+            time_diff = arrival_dt - departure_dt
+            return int(time_diff.total_seconds() / 60)
+        return int(self.total_time * 60) if self.total_time else 0
+    
+    def recalculate_total_time(self):
+        """Recalculate and update total_time field with exact calculation"""
+        if self.departure_time and self.arrival_time:
+            exact_minutes = self.exact_flight_minutes
+            self.total_time = Decimal(str(exact_minutes / 60)).quantize(Decimal('0.01'))
+            self.save(update_fields=['total_time'])
+            return True
+        return False
+
 
 class PilotProfile(models.Model):
     """Extended profile for pilots with additional information"""
@@ -190,8 +219,9 @@ class PilotProfile(models.Model):
     
     @property
     def total_flight_hours(self):
-        """Calculate total flight hours"""
-        return sum(flight.total_time for flight in self.user.flights.all())
+        """Calculate total flight hours accurately by converting to minutes first"""
+        total_minutes = sum(flight.exact_flight_minutes for flight in self.user.flights.all())
+        return total_minutes / 60
     
     @property
     def total_night_hours(self):
