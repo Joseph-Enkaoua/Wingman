@@ -19,7 +19,6 @@ class TimeInMinutesField(forms.TimeField):
     
     def prepare_value(self, value):
         """Convert minutes back to time format for initial value display"""
-        print(f"DEBUG: prepare_value called with value: {value} (type: {type(value)})")
         if value is not None and value != '' and value != 0:
             try:
                 # Convert minutes to hours and minutes
@@ -28,12 +27,9 @@ class TimeInMinutesField(forms.TimeField):
                 minutes = value % 60
                 # Return time string in HH:MM format
                 result = f"{hours:02d}:{minutes:02d}"
-                print(f"DEBUG: Converting {value} minutes to {result}")
                 return result
             except (ValueError, TypeError) as e:
-                print(f"DEBUG: Error converting value: {e}")
                 return "00:00"
-        print(f"DEBUG: Returning 00:00 for value: {value}")
         return "00:00"
     
     def clean(self, value):
@@ -267,15 +263,6 @@ class FlightForm(forms.ModelForm):
         
         # Determine button text based on whether this is an update or create
         button_text = 'Update Flight' if self.instance and self.instance.pk else 'Log Flight'
-        
-        # Debug: Check what data is available in the instance
-        if self.instance and self.instance.pk:
-            print(f"DEBUG: Form instance has pk: {self.instance.pk}")
-            print(f"DEBUG: night_time value: {self.instance.night_time} (type: {type(self.instance.night_time)})")
-            print(f"DEBUG: ifr_time value: {self.instance.ifr_time} (type: {type(self.instance.ifr_time)})")
-            print(f"DEBUG: pic_time value: {self.instance.pic_time} (type: {type(self.instance.pic_time)})")
-        else:
-            print("DEBUG: No instance or no pk - this is a new form")
         
         # Handle aircraft data for existing flights
         if self.instance and self.instance.pk and self.instance.aircraft:
