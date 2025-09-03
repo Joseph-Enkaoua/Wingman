@@ -970,71 +970,163 @@ def print_charts_view(request):
 
 @login_required
 def export_pdf(request):
-    """Export flight logbook to PDF"""
+    """Export flight logbook to PDF with improved formatting and accuracy"""
     user = request.user
     pilot_profile, created = PilotProfile.objects.get_or_create(user=user)
     
     # Get all flights
     flights = Flight.objects.filter(pilot=user).order_by('date', 'departure_time')
     
+    # Calculate accurate totals using exact minutes
+    total_flights = flights.count()
+    total_hours_minutes = sum(flight.exact_flight_minutes for flight in flights)
+    total_pic_time = sum(flight.pic_time for flight in flights)
+    total_night_time = sum(flight.night_time for flight in flights)
+    total_ifr_time = sum(flight.ifr_time for flight in flights)
+    total_landings = sum(flight.day_landings + flight.night_landings for flight in flights)
+    
     # Create PDF
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="flight_logbook_{user.username}.pdf"'
     
-    doc = SimpleDocTemplate(response, pagesize=A4)
+    doc = SimpleDocTemplate(response, pagesize=A4, 
+                          leftMargin=0.5*inch, rightMargin=0.5*inch,
+                          topMargin=0.5*inch, bottomMargin=0.5*inch)
     elements = []
+    
+    # Helper function to convert minutes to hh:mm format
+    def minutes_to_hhmm(minutes):
+        """Convert minutes to hh:mm format"""
+        if not minutes:
+            return "00:00"
+        h = minutes // 60
+        m = minutes % 60
+        return f"{int(h):02d}:{int(m):02d}"
+    
+    # Helper function to convert decimal hours to hh:mm format
+    def hours_to_hhmm(hours):
+        """Convert decimal hours to hh:mm format"""
+        if not hours:
+            return "00:00"
+        total_minutes = int(hours * 60)
+        h = total_minutes // 60
+        m = total_minutes % 60
+        return f"{h:02d}:{m:02d}"
     
     # Styles
     styles = getSampleStyleSheet()
+    
+    # Custom styles
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=16,
-        spaceAfter=30,
-        alignment=1  # Center alignment
+        fontSize=18,
+        spaceAfter=20,
+        alignment=1,  # Center alignment
+        fontName='Helvetica-Bold',
+        textColor=colors.darkblue
     )
     
-    # Title
-    title = Paragraph(f"Flight Logbook - {user.get_full_name()}", title_style)
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=15,
+        alignment=1,  # Center alignment
+        fontName='Helvetica-Bold',
+        textColor=colors.darkblue
+    )
+    
+    header_style = ParagraphStyle(
+        'CustomHeader',
+        parent=styles['Heading3'],
+        fontSize=12,
+        spaceAfter=10,
+        fontName='Helvetica-Bold',
+        textColor=colors.darkblue
+    )
+    
+    # Title page
+    title = Paragraph(f"FLIGHT LOGBOOK", title_style)
     elements.append(title)
+    
+    subtitle = Paragraph(f"Pilot: {user.get_full_name() or user.username}", subtitle_style)
+    elements.append(subtitle)
     
     # Add compliance statement
     compliance_text = "This logbook format is designed to be compatible with both EASA (European Aviation Safety Agency) and FAA (Federal Aviation Administration) requirements."
     compliance_para = Paragraph(compliance_text, styles['Normal'])
     elements.append(compliance_para)
-    elements.append(Spacer(1, 20))
+    elements.append(Spacer(1, 30))
     
-    # Pilot information
+    # Pilot information section
+    pilot_header = Paragraph("PILOT INFORMATION", header_style)
+    elements.append(pilot_header)
+    
     pilot_info = [
-        ['Pilot Name:', user.get_full_name()],
+        ['Pilot Name:', user.get_full_name() or user.username],
         ['License Type:', pilot_profile.license_type or 'N/A'],
         ['License Number:', pilot_profile.license_number or 'N/A'],
-        ['Total Flight Hours:', f"{pilot_profile.total_flight_hours:.1f}"],
-        ['Total Night Hours:', f"{pilot_profile.total_night_hours:.1f}"],
-        ['Total Cross-Country Hours:', f"{pilot_profile.total_cross_country_hours:.1f}"],
+        ['Medical Class:', pilot_profile.medical_class or 'N/A'],
+        ['Medical Expiry:', pilot_profile.medical_expiry.strftime('%d/%m/%Y') if pilot_profile.medical_expiry else 'N/A'],
+        ['Flight School:', pilot_profile.flight_school or 'N/A'],
+        ['Instructor:', pilot_profile.instructor or 'N/A'],
     ]
     
-    pilot_table = Table(pilot_info, colWidths=[2*inch, 4*inch])
+    pilot_table = Table(pilot_info, colWidths=[2.2*inch, 3.5*inch])
     pilot_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.grey),
-        ('TEXTCOLOR', (0, 0), (0, -1), colors.whitesmoke),
+        ('BACKGROUND', (0, 0), (0, -1), colors.darkblue),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-        ('BACKGROUND', (1, 0), (1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BACKGROUND', (1, 0), (1, -1), colors.lightblue),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.lightblue, colors.white])
     ]))
     elements.append(pilot_table)
     elements.append(Spacer(1, 20))
     
+    # Flight summary section
+    summary_header = Paragraph("FLIGHT SUMMARY", header_style)
+    elements.append(summary_header)
+    
+    summary_data = [
+        ['Total Flights:', str(total_flights)],
+        ['Total Flight Time:', minutes_to_hhmm(total_hours_minutes)],
+        ['Total PIC Time:', minutes_to_hhmm(total_pic_time)],
+        ['Total Night Time:', minutes_to_hhmm(total_night_time)],
+        ['Total IFR Time:', minutes_to_hhmm(total_ifr_time)],
+        ['Total Landings:', str(total_landings)],
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[2.2*inch, 3.5*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.darkgreen),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BACKGROUND', (1, 0), (1, -1), colors.lightgreen),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.lightgreen, colors.white])
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 30))
+    
+    # Flight entries section
+    flights_header = Paragraph("FLIGHT ENTRIES", header_style)
+    elements.append(flights_header)
+    
     # Flight entries table - EASA/FAA compliant format
-    flight_data = [['Date', 'Aircraft', 'Type', 'From', 'To', 'Total', 'Night', 'IFR', 'Role', 'Engine', 'Landings']]
+    flight_headers = ['Date', 'Aircraft', 'Type', 'From', 'To', 'Total', 'Night', 'IFR', 'Role', 'Engine', 'Landings']
+    flight_data = [flight_headers]
     
     for flight in flights:
-        # Determine day/night condition
-        day_night = 'N' if flight.night_time > 0 else 'D'
-        
         # Create aircraft type string with manufacturer
         if flight.aircraft:
             aircraft_type = flight.aircraft.type
@@ -1047,78 +1139,122 @@ def export_pdf(request):
                 aircraft_type = f"{flight.aircraft_manufacturer} {flight.aircraft_type}"
             aircraft_registration = flight.aircraft_registration
         
+        # Determine pilot role
+        if flight.pic_time > 0:
+            role = 'PIC'
+        elif flight.copilot_time > 0:
+            role = 'SIC'
+        elif flight.instructor_time > 0:
+            role = 'Dual'
+        else:
+            role = 'Std'
+        
         # Determine engine type
         engine_type = 'SE' if flight.single_engine_time > 0 else 'ME' if flight.multi_engine_time > 0 else 'N/A'
         
         flight_data.append([
-            flight.date.strftime('%Y-%m-%d'),
-            aircraft_registration,
-            aircraft_type[:20],  # Increased length to accommodate manufacturer + type
-            flight.departure_aerodrome[:12],  # Truncate for space
-            flight.arrival_aerodrome[:12],    # Truncate for space
-            f"{flight.total_time:.1f}",
-            f"{flight.night_time:.1f}",
-            f"{flight.ifr_time:.1f}",
-            'PIC' if flight.pic_time > 0 else 'Co-Pilot' if flight.copilot_time > 0 else 'Standard',
+            flight.date.strftime('%d/%m/%Y'),  # Use dd/mm/yyyy format
+            aircraft_registration or 'N/A',
+            aircraft_type[:25] if aircraft_type else 'N/A',  # Increased length
+            flight.departure_aerodrome[:15],  # Increased length
+            flight.arrival_aerodrome[:15],    # Increased length
+            minutes_to_hhmm(flight.exact_flight_minutes),  # Use exact minutes for accuracy
+            minutes_to_hhmm(flight.night_time) if flight.night_time > 0 else '00:00',
+            minutes_to_hhmm(flight.ifr_time) if flight.ifr_time > 0 else '00:00',
+            role,
             engine_type,
-            f"{flight.day_landings + flight.night_landings}",
+            str(flight.day_landings + flight.night_landings),
         ])
     
-    # Optimized column widths for EASA/FAA compliance - reduced FROM/TO even more
-    flight_table = Table(flight_data, colWidths=[0.7*inch, 0.8*inch, 1.0*inch, 0.7*inch, 0.7*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.9*inch, 0.9*inch, 0.5*inch])
+    # Add totals row
+    totals_row = ['TOTALS', '', '', '', '', 
+                  minutes_to_hhmm(total_hours_minutes),
+                  minutes_to_hhmm(total_night_time),
+                  minutes_to_hhmm(total_ifr_time),
+                  '', '', str(total_landings)]
+    flight_data.append(totals_row)
+    
+    # Calculate column widths to fit within A4 page width (8.27 inches)
+    # Total available width: 8.27 inches - 1 inch margins = 7.27 inches
+    col_widths = [0.6*inch, 0.7*inch, 1.0*inch, 0.7*inch, 0.7*inch, 
+                   0.6*inch, 0.6*inch, 0.6*inch, 0.5*inch, 0.5*inch, 0.5*inch]
+    
+    flight_table = Table(flight_data, colWidths=col_widths)
     flight_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+        ('TOPPADDING', (0, 0), (-1, 0), 4),
+        
+        # Data rows styling
+        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -2), 7),
+        ('ALIGN', (0, 1), (-1, -2), 'CENTER'),
+        ('BOTTOMPADDING', (0, 1), (-1, -2), 6),
+        ('TOPPADDING', (0, 1), (-1, -2), 4),
+        
+        # Totals row styling
+        ('BACKGROUND', (0, -1), (-1, -1), colors.darkgreen),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.white),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 9),
+        ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
+        
+        # Grid and alternating row colors
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.lightgrey]),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     elements.append(flight_table)
+    elements.append(Spacer(1, 30))
     
-    # Add legend for abbreviations
-    elements.append(Spacer(1, 20))
+    # Abbreviations and compliance section
+    legend_header = Paragraph("ABBREVIATIONS & COMPLIANCE NOTES", header_style)
+    elements.append(legend_header)
     
-    # Legend title
-    legend_title = Paragraph("Abbreviations Legend & Compliance Notes", styles['Heading2'])
-    elements.append(legend_title)
-    elements.append(Spacer(1, 10))
-    
-    # Legend content - simple, guaranteed to work structure
+    # Legend content
     legend_data = [
-        ['Abbreviation', 'Full Meaning'],
-        ['PIC', 'Pilot in Command'],
-        ['SIC', 'Second in Command'],
-        ['SOLO', 'Solo Flight'],
-        ['DUAL', 'Dual Instruction Received'],
-        ['INSTR', 'Flight Instruction Given'],
-        ['SP', 'Safety Pilot'],
-        ['SIM', 'Simulator'],
-        ['SE', 'Single Engine Time'],
-        ['ME', 'Multi Engine Time'],
-        ['IFR', 'Instrument Flight Rules Time'],
-        ['N', 'Night Time'],
-        ['D', 'Day Time'],
-        ['Landings', 'Total Day + Night Landings'],
-        ['Type', 'Manufacturer + Aircraft Type'],
+        ['Abbreviation', 'Full Meaning', 'Abbreviation', 'Full Meaning'],
+        ['PIC', 'Pilot in Command', 'SIC', 'Second in Command'],
+        ['Dual', 'Dual Instruction Received', 'Std', 'Standard Flight'],
+        ['SE', 'Single Engine Time', 'ME', 'Multi Engine Time'],
+        ['IFR', 'Instrument Flight Rules Time', 'N', 'Night Time'],
+        ['D', 'Day Time', 'Landings', 'Total Day + Night Landings'],
+        ['Type', 'Manufacturer + Aircraft Type', 'SIM', 'Simulator'],
     ]
     
-    # Create legend table with simple styling
-    legend_table = Table(legend_data, colWidths=[2*inch, 4*inch])
+    legend_table = Table(legend_data, colWidths=[1.5*inch, 2.0*inch, 1.5*inch, 2.0*inch])
     legend_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.lightblue),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.lightblue, colors.white])
     ]))
     elements.append(legend_table)
+    elements.append(Spacer(1, 20))
+    
+    # Footer information
+    footer_text = f"""
+    <b>Generated by:</b> Wingman Flight Logbook<br/>
+    <b>Generated on:</b> {timezone.now().strftime('%d/%m/%Y')}<br/>
+    <b>Generated at:</b> {timezone.now().strftime('%H:%M:%S')}<br/>
+    <b>Format:</b> FAA/EASA Compatible<br/>
+    <b>Total Pages:</b> 1
+    """
+    
+    footer_para = Paragraph(footer_text, styles['Normal'])
+    elements.append(footer_para)
     
     # Build PDF
     doc.build(elements)
