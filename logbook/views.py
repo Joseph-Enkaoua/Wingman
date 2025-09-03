@@ -387,12 +387,15 @@ class FlightCreateView(LoginRequiredMixin, CreateView):
     model = Flight
     form_class = FlightForm
     template_name = 'logbook/flight_form.html'
-    success_url = reverse_lazy('flight-list')
     
     def form_valid(self, form):
         form.instance.pilot = self.request.user
         messages.success(self.request, 'Flight logged successfully!')
         return super().form_valid(form)
+    
+    def get_success_url(self):
+        """Redirect to the newly created flight's detail page"""
+        return reverse('flight-detail', kwargs={'pk': self.object.pk})
 
 
 class FlightUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -400,7 +403,6 @@ class FlightUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Flight
     form_class = FlightForm
     template_name = 'logbook/flight_form.html'
-    success_url = reverse_lazy('flight-list')
     
     def test_func(self):
         flight = self.get_object()
@@ -409,6 +411,10 @@ class FlightUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, 'Flight updated successfully!')
         return super().form_valid(form)
+    
+    def get_success_url(self):
+        """Redirect to the updated flight's detail page"""
+        return reverse('flight-detail', kwargs={'pk': self.object.pk})
 
 
 class FlightDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
