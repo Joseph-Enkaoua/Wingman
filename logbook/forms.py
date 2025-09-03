@@ -196,49 +196,54 @@ class FlightForm(forms.ModelForm):
             # Auto-calculate total time
             cleaned_data['total_time'] = round(total_hours, 1)
             
+            # Convert total time to HH:MM format for consistent error messages
+            total_hours_int = int(total_hours)
+            total_mins_int = int((total_hours - total_hours_int) * 60)
+            total_time_formatted = f"{total_hours_int:02d}:{total_mins_int:02d}"
+            
             # Validate that time components don't exceed total flight time (convert to minutes for comparison)
             if night_time and night_time > total_minutes:
                 night_hours = night_time // 60
                 night_mins = night_time % 60
-                raise forms.ValidationError(f"Night time ({night_hours:02d}:{night_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
+                raise forms.ValidationError(f"Night time ({night_hours:02d}:{night_mins:02d}) cannot exceed total flight time ({total_time_formatted})")
             
             if ifr_time and ifr_time > total_minutes:
                 ifr_hours = ifr_time // 60
                 ifr_mins = ifr_time % 60
-                raise forms.ValidationError(f"IFR time ({ifr_hours:02d}:{ifr_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
+                raise forms.ValidationError(f"IFR time ({ifr_hours:02d}:{ifr_mins:02d}) cannot exceed total flight time ({total_time_formatted})")
             
 
             # Validate that role time components don't exceed total flight time
             if pic_time and pic_time > total_minutes:
                 pic_hours = pic_time // 60
                 pic_mins = pic_time % 60
-                raise forms.ValidationError(f"PIC time ({pic_hours:02d}:{pic_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
+                raise forms.ValidationError(f"PIC time ({pic_hours:02d}:{pic_mins:02d}) cannot exceed total flight time ({total_time_formatted})")
             
             if copilot_time and copilot_time > total_minutes:
                 cp_hours = copilot_time // 60
                 cp_mins = copilot_time % 60
-                raise forms.ValidationError(f"Co-pilot time ({cp_hours:02d}:{cp_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
+                raise forms.ValidationError(f"Co-pilot time ({cp_hours:02d}:{cp_mins:02d}) cannot exceed total flight time ({total_time_formatted})")
             
             # Validate that other time components don't exceed total flight time
             if multi_pilot_time and multi_pilot_time > total_minutes:
                 mp_hours = multi_pilot_time // 60
                 mp_mins = multi_pilot_time % 60
-                raise forms.ValidationError(f"Multi-pilot time ({mp_hours:02d}:{mp_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
+                raise forms.ValidationError(f"Multi-pilot time ({mp_hours:02d}:{mp_mins:02d}) cannot exceed total flight time ({total_time_formatted})")
             
             if double_command_time and double_command_time > total_minutes:
                 dc_hours = double_command_time // 60
                 dc_mins = double_command_time % 60
-                raise forms.ValidationError(f"Double command time ({dc_hours:02d}:{dc_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
+                raise forms.ValidationError(f"Double command time ({dc_hours:02d}:{dc_mins:02d}) cannot exceed total flight time ({total_time_formatted})")
             
             if instructor_time and instructor_time > total_minutes:
                 inst_hours = instructor_time // 60
                 inst_mins = instructor_time % 60
-                raise forms.ValidationError(f"Instructor time ({inst_hours:02d}:{inst_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
+                raise forms.ValidationError(f"Instructor time ({inst_hours:02d}:{inst_mins:02d}) cannot exceed total flight time ({total_time_formatted})")
             
             if simulator_time and simulator_time > total_minutes:
                 sim_hours = simulator_time // 60
                 sim_mins = simulator_time % 60
-                raise forms.ValidationError(f"Simulator time ({sim_hours:02d}:{sim_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
+                raise forms.ValidationError(f"Simulator time ({sim_hours:02d}:{sim_mins:02d}) cannot exceed total flight time ({total_time_formatted})")
         
         return cleaned_data
     
