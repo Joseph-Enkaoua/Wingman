@@ -105,7 +105,7 @@
         <div class="col-md-6 mb-4">
             <label class="form-label">{{ form.night_time.label }}</label>
             <div class="{% if form.night_time.errors %}time-input-error{% endif %}">
-                {% time_input_with_button form.night_time total_time_minutes %}
+                {% time_input_with_button form.night_time %}
             </div>
             {% if form.night_time.help_text %}
                 <small class="form-text text-muted">{{ form.night_time.help_text }}</small>
@@ -121,7 +121,7 @@
         <div class="col-md-6 mb-3">
             <label class="form-label">{{ form.ifr_time.label }}</label>
             <div class="{% if form.ifr_time.errors %}time-input-error{% endif %}">
-                {% time_input_with_button form.ifr_time total_time_minutes %}
+                {% time_input_with_button form.ifr_time %}
             </div>
             {% if form.ifr_time.help_text %}
                 <small class="form-text text-muted">{{ form.ifr_time.help_text }}</small>
@@ -157,7 +157,7 @@
         <div class="col-md-4 mb-3">
             <label class="form-label">{{ form.pic_time.label }}</label>
             <div class="{% if form.pic_time.errors %}time-input-error{% endif %}">
-                {% time_input_with_button form.pic_time total_time_minutes %}
+                {% time_input_with_button form.pic_time %}
             </div>
             {% if form.pic_time.help_text %}
                 <small class="form-text text-muted">{{ form.pic_time.help_text }}</small>
@@ -173,7 +173,7 @@
         <div class="col-md-4 mb-3">
             <label class="form-label">{{ form.multi_pilot_time.label }}</label>
             <div class="{% if form.multi_pilot_time.errors %}time-input-error{% endif %}">
-                {% time_input_with_button form.multi_pilot_time total_time_minutes %}
+                {% time_input_with_button form.multi_pilot_time %}
             </div>
             {% if form.multi_pilot_time.help_text %}
                 <small class="form-text text-muted">{{ form.multi_pilot_time.help_text }}</small>
@@ -192,7 +192,7 @@
         <div class="col-md-4 mb-3">
             <label class="form-label">{{ form.copilot_time.label }}</label>
             <div class="{% if form.copilot_time.errors %}time-input-error{% endif %}">
-                {% time_input_with_button form.copilot_time total_time_minutes %}
+                {% time_input_with_button form.copilot_time %}
             </div>
             {% if form.copilot_time.help_text %}
                 <small class="form-text text-muted">{{ form.copilot_time.help_text }}</small>
@@ -208,7 +208,7 @@
         <div class="col-md-4 mb-3">
             <label class="form-label">{{ form.double_command_time.label }}</label>
             <div class="{% if form.double_command_time.errors %}time-input-error{% endif %}">
-                {% time_input_with_button form.double_command_time total_time_minutes %}
+                {% time_input_with_button form.double_command_time %}
             </div>
             {% if form.double_command_time.help_text %}
                 <small class="form-text text-muted">{{ form.double_command_time.help_text }}</small>
@@ -224,7 +224,7 @@
         <div class="col-md-4 mb-3">
             <label class="form-label">{{ form.instructor_time.label }}</label>
             <div class="{% if form.instructor_time.errors %}time-input-error{% endif %}">
-                {% time_input_with_button form.instructor_time total_time_minutes %}
+                {% time_input_with_button form.instructor_time %}
             </div>
             {% if form.instructor_time.help_text %}
                 <small class="form-text text-muted">{{ form.instructor_time.help_text }}</small>
@@ -247,7 +247,7 @@
         <div class="col-md-6 mb-3">
             <label class="form-label">{{ form.simulator_time.label }}</label>
             <div class="{% if form.simulator_time.errors %}time-input-error{% endif %}">
-                {% time_input_with_button form.simulator_time total_time_minutes %}
+                {% time_input_with_button form.simulator_time %}
             </div>
             {% if form.simulator_time.help_text %}
                 <small class="form-text text-muted">{{ form.simulator_time.help_text }}</small>

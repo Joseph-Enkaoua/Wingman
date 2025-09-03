@@ -272,15 +272,10 @@ class FlightForm(forms.ModelForm):
         else:
             print("DEBUG: No instance or no pk - this is a new form")
         
-        # Add total time to form context for fill buttons
-        self.total_time_minutes = 0
-        if self.instance and self.instance.pk and self.instance.total_time:
-            self.total_time_minutes = int(self.instance.total_time * 60)
-            
-            # Handle aircraft data for existing flights
-            if self.instance.aircraft:
-                # Aircraft is selected - populate aircraft field
-                self.fields['aircraft'].initial = self.instance.aircraft
+        # Handle aircraft data for existing flights
+        if self.instance and self.instance.pk and self.instance.aircraft:
+            # Aircraft is selected - populate aircraft field
+            self.fields['aircraft'].initial = self.instance.aircraft
         
         self.helper.layout = Layout(
             Row(

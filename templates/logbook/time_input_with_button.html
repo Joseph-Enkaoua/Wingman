@@ -1,25 +1,49 @@
 <div class="input-group">
     {{ field }}
-    {% if total_time_minutes %}
     <button type="button" class="btn btn-outline-secondary" 
-            onclick="fillFullTime('{{ field_id }}', {{ total_time_minutes }})"
+            onclick="fillFullTime('{{ field_id }}')"
             title="Fill with full flight time">
         <i class="fas fa-clock"></i> Full
     </button>
-    {% endif %}
 </div>
 
 <script>
-function fillFullTime(fieldId, totalMinutes) {
+function fillFullTime(fieldId) {
     const field = document.getElementById(fieldId);
-    if (field && totalMinutes > 0) {
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        field.value = timeString;
+    if (!field) return;
+    
+    // Get departure and arrival times
+    const departureTime = document.getElementById('id_departure_time');
+    const arrivalTime = document.getElementById('id_arrival_time');
+    const dateField = document.getElementById('id_date');
+    
+    if (departureTime && arrivalTime && dateField && 
+        departureTime.value && arrivalTime.value && dateField.value) {
         
-        // Trigger change event to update any validation or other dependent fields
-        field.dispatchEvent(new Event('change', { bubbles: true }));
+        // Calculate total time
+        const departure = new Date(dateField.value + 'T' + departureTime.value);
+        const arrival = new Date(dateField.value + 'T' + arrivalTime.value);
+        
+        // Handle overnight flights
+        if (arrival < departure) {
+            arrival.setDate(arrival.getDate() + 1);
+        }
+        
+        const diffMs = arrival - departure;
+        const totalMinutes = Math.round(diffMs / (1000 * 60));
+        
+        if (totalMinutes > 0) {
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            field.value = timeString;
+            
+            // Trigger change event to update any validation or other dependent fields
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    } else {
+        // Show alert if times are not set
+        alert('Please set departure and arrival times first to use the Full button.');
     }
 }
 </script>

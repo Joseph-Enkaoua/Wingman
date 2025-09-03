@@ -29,10 +29,9 @@ def minutes_to_hours(minutes):
         return "0.0"
 
 @register.inclusion_tag('logbook/time_input_with_button.html')
-def time_input_with_button(field, total_time_minutes=None):
+def time_input_with_button(field):
     """Render a time input field with a button to fill the full flight time"""
     return {
         'field': field,
-        'total_time_minutes': total_time_minutes,
         'field_id': field.auto_id or field.name
     }
