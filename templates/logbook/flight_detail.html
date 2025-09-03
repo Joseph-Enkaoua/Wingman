@@ -6,321 +6,497 @@
 
 {% block content %}
 
-<div class="row">
-  <div class="col-12">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h1 class="mb-2">
-          <i class="fas fa-plane aviation-icon"></i>
-          Flight Details
-        </h1>
-        <p class="text-muted">
-          {{ flight.date|date:"F d, Y" }} - {% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}
-        </p>
+<div class="container-fluid py-4">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div class="mb-3 mb-md-0">
+          <h1 class="mb-2">
+            <i class="fas fa-plane aviation-icon"></i>
+            Flight Details
+          </h1>
+          <div class="d-flex align-items-center flex-wrap">
+            <span class="badge bg-primary-subtle text-primary-emphasis fs-7 me-3 mb-2">
+              <i class="fas fa-calendar me-1"></i>
+              {{ flight.date|date:"l, F d, Y" }}
+            </span>
+            <span class="badge bg-info-subtle text-info-emphasis fs-7 me-3 mb-2">
+              <i class="fas fa-helicopter me-1"></i>
+              {% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}
+            </span>
+            {% if flight.is_cross_country %}
+            <span class="badge bg-warning-subtle text-warning-emphasis fs-7 me-3 mb-2">
+              <i class="fas fa-route me-1"></i>
+              Cross-Country
+            </span>
+            {% endif %}
+            {% if flight.is_night_flight %}
+            <span class="badge bg-dark-subtle text-dark-emphasis fs-7 me-3 mb-2">
+              <i class="fas fa-moon me-1"></i>
+              Night Flight
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'flight-update' flight.pk %}" class="btn btn-warning btn-lg">
+            <i class="fas fa-edit me-2"></i> Edit Flight
+          </a>
+          <a href="{% url 'flight-list' %}" class="btn btn-outline-secondary btn-lg">
+            <i class="fas fa-arrow-left me-2"></i> Back to Flights
+          </a>
+        </div>
       </div>
-      <div>
-        <a href="{% url 'flight-update' flight.pk %}" class="btn btn-warning">
-          <i class="fas fa-edit"></i> Edit Flight
-        </a>
-        <a href="{% url 'flight-list' %}" class="btn btn-outline-secondary">
-          <i class="fas fa-arrow-left"></i> Back to Flights
-        </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      
+      <!-- Flight Route Card -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-route aviation-icon"></i>
+            Flight Route
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="row align-items-center">
+            <div class="col-md-5 text-center">
+              <div class="departure-info">
+                <h5 class="text-success fw-bold mb-2">
+                  <i class="fas fa-plane-departure me-2"></i>
+                  Departure
+                </h5>
+                <h4 class="text-success mb-1">{{ flight.departure_aerodrome }}</h4>
+                <p class="text-muted mb-0">
+                  <i class="fas fa-clock me-1"></i>
+                  {{ flight.departure_time|time:"H:i" }}
+                </p>
+              </div>
+            </div>
+            <div class="col-md-2 text-center">
+              <div class="flight-arrow">
+                <i class="fas fa-arrow-right fa-2x text-primary"></i>
+                <div class="mt-2">
+                  <small class="text-muted">{{ flight.total_time }}h</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-5 text-center">
+              <div class="arrival-info">
+                <h5 class="text-danger fw-bold mb-2">
+                  <i class="fas fa-plane-arrival me-2"></i>
+                  Arrival
+                </h5>
+                <h4 class="text-danger mb-1">{{ flight.arrival_aerodrome }}</h4>
+                <p class="text-muted mb-0">
+                  <i class="fas fa-clock me-1"></i>
+                  {{ flight.arrival_time|time:"H:i" }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Breakdown Cards -->
+      <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+          <div class="card text-center border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+              <div class="time-stat-icon bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <i class="fas fa-clock fa-lg"></i>
+              </div>
+              <h3 class="fw-bold text-primary mb-1">{{ flight.total_time }}</h3>
+              <p class="text-muted mb-0 small">Total Hours</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card text-center border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+              <div class="time-stat-icon bg-dark text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <i class="fas fa-moon fa-lg"></i>
+              </div>
+              <h3 class="fw-bold text-dark mb-1">{{ flight.night_time|minutes_to_time }}</h3>
+              <p class="text-muted mb-0 small">Night Time</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card text-center border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+              <div class="time-stat-icon bg-warning text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <i class="fas fa-tachometer-alt fa-lg"></i>
+              </div>
+              <h3 class="fw-bold text-warning mb-1">{{ flight.ifr_time|minutes_to_time }}</h3>
+              <p class="text-muted mb-0 small">IFR Time</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card text-center border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+              <div class="time-stat-icon bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <i class="fas fa-user fa-lg"></i>
+              </div>
+              <h3 class="fw-bold text-success mb-1">{{ flight.pic_time|minutes_to_time }}</h3>
+              <p class="text-muted mb-0 small">PIC Time</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flight Details Card -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-clipboard-list aviation-icon"></i>
+            Flight Details
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <h6 class="text-muted text-uppercase small mb-3">Pilot Roles</h6>
+              <div class="d-flex flex-wrap gap-2">
+                {% if flight.pic_time > 0 %}
+                <span class="badge bg-primary fs-6 p-2">
+                  <i class="fas fa-user me-1"></i>
+                  PIC: {{ flight.pic_time|minutes_to_time }}
+                </span>
+                {% endif %}
+                {% if flight.copilot_time > 0 %}
+                <span class="badge bg-info fs-6 p-2">
+                  <i class="fas fa-users me-1"></i>
+                  Co-Pilot: {{ flight.copilot_time|minutes_to_time }}
+                </span>
+                {% endif %}
+                {% if flight.instructor_time > 0 %}
+                <span class="badge bg-warning fs-6 p-2">
+                  <i class="fas fa-chalkboard-teacher me-1"></i>
+                  Instructor: {{ flight.instructor_time|minutes_to_time }}
+                </span>
+                {% endif %}
+                {% if flight.double_command_time > 0 %}
+                <span class="badge bg-secondary fs-6 p-2">
+                  <i class="fas fa-exchange-alt me-1"></i>
+                  Double Command: {{ flight.double_command_time|minutes_to_time }}
+                </span>
+                {% endif %}
+                {% if flight.multi_pilot_time > 0 %}
+                <span class="badge bg-dark fs-6 p-2">
+                  <i class="fas fa-user-friends me-1"></i>
+                  Multi-Pilot: {{ flight.multi_pilot_time|minutes_to_time }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6 mb-4">
+              <h6 class="text-muted text-uppercase small mb-3">Engine Time</h6>
+              <div class="d-flex flex-wrap gap-2">
+                {% if flight.single_engine_time > 0 %}
+                <span class="badge bg-success fs-6 p-2">
+                  <i class="fas fa-engine me-1"></i>
+                  Single Engine: {{ flight.single_engine_time|minutes_to_time }}
+                </span>
+                {% endif %}
+                {% if flight.multi_engine_time > 0 %}
+                <span class="badge bg-info fs-6 p-2">
+                  <i class="fas fa-engine me-1"></i>
+                  Multi Engine: {{ flight.multi_engine_time|minutes_to_time }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6 mb-4">
+              <h6 class="text-muted text-uppercase small mb-3">Landings</h6>
+              <div class="d-flex flex-wrap gap-2">
+                {% if flight.day_landings > 0 %}
+                <span class="badge bg-success fs-6 p-2">
+                  <i class="fas fa-sun me-1"></i>
+                  Day: {{ flight.day_landings }}
+                </span>
+                {% endif %}
+                {% if flight.night_landings > 0 %}
+                <span class="badge bg-dark fs-6 p-2">
+                  <i class="fas fa-moon me-1"></i>
+                  Night: {{ flight.night_landings }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6 mb-4">
+              <h6 class="text-muted text-uppercase small mb-3">IFR Approaches</h6>
+              {% if flight.ifr_approaches > 0 %}
+              <span class="badge bg-warning fs-6 p-2">
+                <i class="fas fa-cloud me-1"></i>
+                {{ flight.ifr_approaches }} Approach{{ flight.ifr_approaches|pluralize:"es" }}
+              </span>
+              {% else %}
+              <span class="badge bg-light text-dark fs-6 p-2">
+                <i class="fas fa-sun me-1"></i>
+                VFR Only
+              </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simulator Information -->
+      {% if flight.simulator_time > 0 %}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-desktop aviation-icon"></i>
+            Simulator Information
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Simulator Type:</strong>
+              <p class="mb-0">{{ flight.simulator_type|default:"Not specified" }}</p>
+            </div>
+            <div class="col-md-6">
+              <strong>Simulator Time:</strong>
+              <p class="mb-0">{{ flight.simulator_time|minutes_to_time }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Remarks Section -->
+      {% if flight.remarks %}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-sticky-note aviation-icon"></i>
+            Flight Remarks
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="remarks-content">
+            {{ flight.remarks|linebreaks }}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      
+      <!-- Quick Actions Card -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-tools aviation-icon"></i>
+            Quick Actions
+          </h5>
+        </div>
+        <div class="card-body p-3">
+          <div class="d-grid gap-2">
+            <a href="{% url 'flight-update' flight.pk %}" class="btn btn-warning">
+              <i class="fas fa-edit me-2"></i> Edit Flight
+            </a>
+            <a href="{% url 'flight-delete' flight.pk %}" class="btn btn-danger">
+              <i class="fas fa-trash me-2"></i> Delete Flight
+            </a>
+            <a href="{% url 'flight-create' %}" class="btn btn-success">
+              <i class="fas fa-plus me-2"></i> Log New Flight
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flight Summary Card -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-chart-pie aviation-icon"></i>
+            Flight Summary
+          </h5>
+        </div>
+        <div class="card-body p-3">
+          <div class="summary-item mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Route:</span>
+              <span class="fw-bold">{{ flight.departure_aerodrome }} → {{ flight.arrival_aerodrome }}</span>
+            </div>
+          </div>
+          <div class="summary-item mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Duration:</span>
+              <span class="fw-bold text-primary">{{ flight.total_time }} hours</span>
+            </div>
+          </div>
+          <div class="summary-item mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Date:</span>
+              <span class="fw-bold">{{ flight.date|date:"M d, Y" }}</span>
+            </div>
+          </div>
+          <div class="summary-item mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Time:</span>
+              <span class="fw-bold">{{ flight.departure_time|time:"H:i" }} - {{ flight.arrival_time|time:"H:i" }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aircraft Information Card -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-helicopter aviation-icon"></i>
+            Aircraft Details
+          </h5>
+        </div>
+        <div class="card-body p-3">
+          <div class="aircraft-info">
+            <div class="mb-3">
+              <strong class="text-muted small text-uppercase">Registration:</strong>
+              <div class="mt-1">
+                <span class="badge bg-info fs-6">
+                  {% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}
+                </span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <strong class="text-muted small text-uppercase">Type:</strong>
+              <div class="mt-1">
+                <span class="fw-bold">
+                  {% if flight.aircraft %}{{ flight.aircraft.type }}{% else %}{{ flight.aircraft_type }}{% endif %}
+                </span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <strong class="text-muted small text-uppercase">Engine Type:</strong>
+              <div class="mt-1">
+                <span class="badge {% if flight.aircraft %}{% if flight.aircraft.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}{% else %}{% if flight.aircraft_engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}{% endif %}">
+                  {% if flight.aircraft %}{{ flight.aircraft.get_engine_type_display }}{% else %}{% if flight.aircraft_engine_type == 'SINGLE' %}Single Engine{% else %}Multi Engine{% endif %}{% endif %}
+                </span>
+              </div>
+            </div>
+            {% if flight.aircraft and flight.aircraft.manufacturer or flight.aircraft_manufacturer %}
+            <div class="mb-3">
+              <strong class="text-muted small text-uppercase">Manufacturer:</strong>
+              <div class="mt-1">
+                <span class="fw-bold">
+                  {% if flight.aircraft %}{{ flight.aircraft.manufacturer }}{% else %}{{ flight.aircraft_manufacturer }}{% endif %}
+                </span>
+              </div>
+            </div>
+            {% endif %}
+            {% if flight.aircraft and flight.aircraft.year_manufactured %}
+            <div class="mb-3">
+              <strong class="text-muted small text-uppercase">Year:</strong>
+              <div class="mt-1">
+                <span class="fw-bold">{{ flight.aircraft.year_manufactured }}</span>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Record Information Card -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-calendar-alt aviation-icon"></i>
+            Record Information
+          </h5>
+        </div>
+        <div class="card-body p-3">
+          <div class="record-info">
+            <div class="mb-3">
+              <strong class="text-muted small text-uppercase">Created:</strong>
+              <div class="mt-1">
+                <small class="text-muted">{{ flight.created_at|date:"M d, Y H:i" }}</small>
+              </div>
+            </div>
+            <div class="mb-3">
+              <strong class="text-muted small text-uppercase">Last Updated:</strong>
+              <div class="mt-1">
+                <small class="text-muted">{{ flight.updated_at|date:"M d, Y H:i" }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="row">
-  <!-- Flight Information -->
-  <div class="col-lg-8">
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-info-circle aviation-icon"></i>
-          Flight Information
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <strong>Date:</strong><br />
-            <span class="text-primary">{{ flight.date|date:"l, F d, Y" }}</span>
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>Aircraft:</strong><br />
-            <span class="badge bg-info"
-                              >{% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}</span
-            >
-                          <small class="text-muted d-block">{% if flight.aircraft %}{{ flight.aircraft.type }}{% else %}{{ flight.aircraft_type }}{% endif %}</small>
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>Departure:</strong><br />
-            <span class="text-success">{{ flight.departure_aerodrome }}</span>
-            <small class="text-muted d-block"
-              >{{ flight.departure_time|time:"H:i" }}</small
-            >
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>Arrival:</strong><br />
-            <span class="text-danger">{{ flight.arrival_aerodrome }}</span>
-            <small class="text-muted d-block"
-              >{{ flight.arrival_time|time:"H:i" }}</small
-            >
-          </div>
-        </div>
-      </div>
-    </div>
+<style>
+.time-stat-icon {
+  transition: transform 0.3s ease;
+}
 
-    <!-- Time Breakdown -->
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-clock aviation-icon"></i>
-          Time Breakdown
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-3 mb-3 text-center">
-            <div class="stats-card">
-              <h3>{{ flight.total_time }}</h3>
-              <p><i class="fas fa-clock"></i> Total Hours</p>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3 text-center">
-            <div class="stats-card">
-              <h3>{{ flight.night_time|minutes_to_time }}</h3>
-              <p><i class="fas fa-moon"></i> Night Time</p>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3 text-center">
-            <div class="stats-card">
-              <h3>{{ flight.instrument_time|minutes_to_time }}</h3>
-              <p><i class="fas fa-tachometer-alt"></i> Instrument</p>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3 text-center">
-            <div class="stats-card">
-              <h3>{{ flight.cross_country_time|minutes_to_time }}</h3>
-              <p><i class="fas fa-route"></i> Cross-Country</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+.time-stat-icon:hover {
+  transform: scale(1.1);
+}
 
-    <!-- Flight Details -->
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-clipboard-list aviation-icon"></i>
-          Flight Details
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <strong>Pilot Role:</strong><br />
-            <span class="badge bg-primary"
-              >{{ flight.get_pilot_role_display }}</span
-            >
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>Engine Time:</strong><br />
-            {% if flight.single_engine_time > 0 %}
-            <span class="badge bg-success">{{ flight.single_engine_time|minutes_to_time }} SE</span>
-            {% endif %}
-            {% if flight.multi_engine_time > 0 %}
-            <span class="badge bg-info">{{ flight.multi_engine_time|minutes_to_time }} ME</span>
-            {% endif %}
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>Landings:</strong><br />
-            <span class="badge bg-success">{{ flight.day_landings }} day</span>
-            {% if flight.night_landings > 0 %}
-            <span class="badge bg-dark">{{ flight.night_landings }} night</span>
-            {% endif %}
-          </div>
-          <div class="col-md-6 mb-3">
-            <strong>IFR Approaches:</strong><br />
-            {% if flight.ifr_approaches > 0 %}
-            <span class="badge bg-warning">{{ flight.ifr_approaches }} approaches</span>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
+.flight-arrow {
+  position: relative;
+}
 
+.flight-arrow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  right: -20px;
+  height: 2px;
+  background: linear-gradient(90deg, #dee2e6 0%, #007bff 50%, #dee2e6 100%);
+  transform: translateY(-50%);
+}
 
+.summary-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f8f9fa;
+}
 
-    <!-- Remarks -->
-    {% if flight.remarks %}
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-sticky-note aviation-icon"></i>
-          Remarks
-        </h5>
-      </div>
-      <div class="card-body">
-        <p class="mb-0">{{ flight.remarks|linebreaks }}</p>
-      </div>
-    </div>
-    {% endif %}
-  </div>
+.summary-item:last-child {
+  border-bottom: none;
+}
 
-  <!-- Sidebar -->
-  <div class="col-lg-4">
-    <!-- Quick Actions -->
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-tools aviation-icon"></i>
-          Quick Actions
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="d-grid gap-2">
-          <a href="{% url 'flight-update' flight.pk %}" class="btn btn-warning">
-            <i class="fas fa-edit"></i> Edit Flight
-          </a>
-          <a href="{% url 'flight-delete' flight.pk %}" class="btn btn-danger">
-            <i class="fas fa-trash"></i> Delete Flight
-          </a>
-          <a href="{% url 'flight-create' %}" class="btn btn-success">
-            <i class="fas fa-plus"></i> Log New Flight
-          </a>
-        </div>
-      </div>
-    </div>
+.remarks-content {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid #ffc107;
+}
 
-    <!-- Flight Summary -->
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-chart-pie aviation-icon"></i>
-          Flight Summary
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <strong>Route:</strong><br />
-          <span class="text-success">{{ flight.departure_aerodrome }}</span>
-          <i class="fas fa-arrow-right mx-2"></i>
-          <span class="text-danger">{{ flight.arrival_aerodrome }}</span>
-        </div>
-        <div class="mb-3">
-          <strong>Duration:</strong><br />
-          <span class="text-primary">{{ flight.total_time }} hours</span>
-        </div>
-        <div class="mb-3">
-          <strong>Flight Conditions:</strong><br />
-          {% if flight.pic_time > 0 %}
-          <span class="badge bg-primary me-1">PIC</span>
-          {% endif %}
-          {% if flight.copilot_time > 0 %}
-          <span class="badge bg-info me-1">Co-Pilot</span>
-          {% endif %}
-          {% if flight.instructor_time > 0 %}
-          <span class="badge bg-warning me-1">Instructor</span>
-          {% endif %}
-          {% if flight.double_command_time > 0 %}
-          <span class="badge bg-secondary me-1">Double Command</span>
-          {% endif %}
-          {% if flight.multi_pilot_time > 0 %}
-          <span class="badge bg-dark me-1">Multi-Pilot</span>
-          {% endif %}
-          {% if flight.simulator_time > 0 %}
-          <span class="badge bg-success me-1">Simulator</span>
-          {% endif %}
-        </div>
-        <div class="mb-3">
-          <strong>Engine Time:</strong><br />
-          {% if flight.single_engine_time > 0 %}
-          <span class="badge bg-success">{{ flight.single_engine_time|minutes_to_time }} SE</span>
-          {% endif %}
-          {% if flight.multi_engine_time > 0 %}
-          <span class="badge bg-info">{{ flight.multi_engine_time|minutes_to_time }} ME</span>
-          {% endif %}
-        </div>
-        {% if flight.is_cross_country %}
-        <div class="mb-3">
-          <span class="badge bg-warning">
-            <i class="fas fa-route"></i> Cross-Country Flight
-          </span>
-        </div>
-        {% endif %} {% if flight.is_night_flight %}
-        <div class="mb-3">
-          <span class="badge bg-dark">
-            <i class="fas fa-moon"></i> Night Flight
-          </span>
-        </div>
-        {% endif %}
-      </div>
-    </div>
+.aircraft-info .badge,
+.record-info .badge {
+  font-size: 0.875rem;
+}
 
-    <!-- Aircraft Information -->
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-helicopter aviation-icon"></i>
-          Aircraft Details
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <strong>Registration:</strong><br />
-          <span class="badge bg-info">{% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}</span>
-        </div>
-        <div class="mb-3">
-          <strong>Type:</strong><br />
-          <span class="text-muted">{% if flight.aircraft %}{{ flight.aircraft.type }}{% else %}{{ flight.aircraft_type }}{% endif %}</span>
-        </div>
-        <div class="mb-3">
-          <strong>Engine Type:</strong><br />
-          <span class="badge {% if flight.aircraft %}{% if flight.aircraft.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}{% else %}{% if flight.aircraft_engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}{% endif %}">
-            {% if flight.aircraft %}{{ flight.aircraft.get_engine_type_display }}{% else %}{% if flight.aircraft_engine_type == 'SINGLE' %}Single Engine{% else %}Multi Engine{% endif %}{% endif %}
-          </span>
-        </div>
-        {% if flight.aircraft and flight.aircraft.manufacturer or flight.aircraft_manufacturer %}
-        <div class="mb-3">
-          <strong>Manufacturer:</strong><br />
-          <span class="text-muted">{% if flight.aircraft %}{{ flight.aircraft.manufacturer }}{% else %}{{ flight.aircraft_manufacturer }}{% endif %}</span>
-        </div>
-        {% endif %} {% if flight.aircraft and flight.aircraft.year_manufactured %}
-        <div class="mb-3">
-          <strong>Year:</strong><br />
-          <span class="text-muted"
-            >{{ flight.aircraft.year_manufactured }}</span
-          >
-        </div>
-        {% endif %}
-      </div>
-    </div>
+@media (max-width: 768px) {
+  .departure-info,
+  .arrival-info {
+    margin-bottom: 1rem;
+  }
+  
+  .flight-arrow {
+    transform: rotate(90deg);
+    margin: 1rem 0;
+  }
+  
+  .flight-arrow::before {
+    display: none;
+  }
+}
+</style>
 
-    <!-- Timestamps -->
-    <div class="card">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-calendar-alt aviation-icon"></i>
-          Record Information
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <strong>Created:</strong><br />
-          <small class="text-muted"
-            >{{ flight.created_at|date:"M d, Y H:i" }}</small
-          >
-        </div>
-        <div class="mb-3">
-          <strong>Last Updated:</strong><br />
-          <small class="text-muted"
-            >{{ flight.updated_at|date:"M d, Y H:i" }}</small
-          >
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}

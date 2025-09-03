@@ -362,9 +362,9 @@ class FlightListView(LoginRequiredMixin, ListView):
         context['total_hours'] = filtered_queryset.aggregate(total=Sum('total_time'))['total'] or 0
         # Convert minutes to hours for display
         total_night_minutes = filtered_queryset.aggregate(total=Sum('night_time'))['total'] or 0
-        total_cross_country_minutes = filtered_queryset.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        total_pic_minutes = filtered_queryset.aggregate(total=Sum('pic_time'))['total'] or 0
         context['total_night_hours'] = total_night_minutes / 60
-        context['total_cross_country_hours'] = total_cross_country_minutes / 60
+        context['total_pic_hours'] = total_pic_minutes / 60
         
 
         
