@@ -1242,7 +1242,7 @@ def export_csv(request):
         
         # Add required fields
         row_data.extend([
-            flight.date.strftime('%Y-%m-%d'),
+            flight.date.strftime('%d/%m/%Y'),
             flight.aircraft.registration if flight.aircraft else flight.aircraft_registration or 'N/A',
             f"{flight.aircraft.manufacturer} {flight.aircraft.type}" if flight.aircraft and flight.aircraft.manufacturer else flight.aircraft.type if flight.aircraft else flight.aircraft_type or 'N/A',
             flight.departure_aerodrome,
