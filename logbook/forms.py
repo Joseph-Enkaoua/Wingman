@@ -7,18 +7,24 @@ from crispy_forms.layout import Layout, Row, Column, Submit, HTML
 from django.contrib.auth.password_validation import password_validators_help_text_html, validate_password
 
 
-class TimeInMinutesField(forms.TimeField):
+class TimeInMinutesField(forms.CharField):
     """Custom field that accepts time input (HH:MM) and converts to minutes for storage"""
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'HH:00'
+            'placeholder': 'HH:00',
+            'type': 'text'
         })
     
     def prepare_value(self, value):
         """Convert minutes back to time format for initial value display"""
+        # If value is already in HH:MM format (from form submission), return as is
+        if isinstance(value, str) and ':' in value:
+            return value
+        
+        # If value is in minutes (from database), convert to HH:MM format
         if value is not None and value != '' and value != 0:
             try:
                 # Convert minutes to hours and minutes
@@ -31,6 +37,26 @@ class TimeInMinutesField(forms.TimeField):
             except (ValueError, TypeError) as e:
                 return "00:00"
         return "00:00"
+    
+    def to_python(self, value):
+        """Convert the input value to the correct Python type"""
+        if value is None or value == '':
+            return None
+        # If value is already a string (from form submission), return as is
+        if isinstance(value, str):
+            return value
+        # If value is an integer (from database), convert to HH:MM format
+        if isinstance(value, int):
+            hours = value // 60
+            minutes = value % 60
+            return f"{hours:02d}:{minutes:02d}"
+        return str(value)
+    
+    def bound_data(self, data, initial):
+        """Handle bound form data properly"""
+        if data is not None:
+            return data
+        return initial
     
     def clean(self, value):
         """Convert time input to minutes"""
@@ -257,10 +283,6 @@ class FlightForm(forms.ModelForm):
         self.fields['aircraft'].help_text = "Select an aircraft from your registered aircraft (optional for simulator flights)"
         self.fields['aircraft'].required = False
         
-
-        
-
-        
         # Determine button text based on whether this is an update or create
         button_text = 'Update Flight' if self.instance and self.instance.pk else 'Log Flight'
         
@@ -268,6 +290,13 @@ class FlightForm(forms.ModelForm):
         if self.instance and self.instance.pk and self.instance.aircraft:
             # Aircraft is selected - populate aircraft field
             self.fields['aircraft'].initial = self.instance.aircraft
+        
+        # Ensure time fields preserve submitted data on validation errors
+        if self.data:
+            for field_name in ['multi_pilot_time', 'night_time', 'ifr_time', 'pic_time', 
+                              'copilot_time', 'double_command_time', 'instructor_time', 'simulator_time']:
+                if field_name in self.data and self.data[field_name]:
+                    self.fields[field_name].initial = self.data[field_name]
         
         self.helper.layout = Layout(
             Row(

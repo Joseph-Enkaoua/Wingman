@@ -388,10 +388,24 @@ class FlightCreateView(LoginRequiredMixin, CreateView):
     form_class = FlightForm
     template_name = 'logbook/flight_form.html'
     
+    def get_form_kwargs(self):
+        """Ensure form preserves submitted data on validation errors"""
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            # For POST requests, ensure we're using the submitted data
+            kwargs['data'] = self.request.POST
+            kwargs['files'] = self.request.FILES
+        return kwargs
+    
     def form_valid(self, form):
         form.instance.pilot = self.request.user
         messages.success(self.request, 'Flight logged successfully!')
         return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """Handle form validation errors - stay on the same page"""
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
     
     def get_success_url(self):
         """Redirect to the newly created flight's detail page"""
@@ -408,9 +422,23 @@ class FlightUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         flight = self.get_object()
         return flight.pilot == self.request.user
     
+    def get_form_kwargs(self):
+        """Ensure form preserves submitted data on validation errors"""
+        kwargs = super().get_form_kwargs()
+        if self.request.method == 'POST':
+            # For POST requests, ensure we're using the submitted data
+            kwargs['data'] = self.request.POST
+            kwargs['files'] = self.request.FILES
+        return kwargs
+    
     def form_valid(self, form):
         messages.success(self.request, 'Flight updated successfully!')
         return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """Handle form validation errors - stay on the same page"""
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
     
     def get_success_url(self):
         """Redirect to the updated flight's detail page"""

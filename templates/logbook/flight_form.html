@@ -170,12 +170,19 @@
     }
 
     // Auto-format time inputs to HH:MM and add validation
-    const timeInputs = document.querySelectorAll('input[type="time"]');
+    const timeInputs = document.querySelectorAll('input[name*="time"]');
     
     timeInputs.forEach(input => {
-      // Set default value to 00:00 for time breakdown fields
-      if (input.name.includes('night_time') || input.name.includes('instrument_time') || input.name.includes('cross_country_time')) {
-        input.value = '00:00';
+      // Check if this is a time breakdown field
+      if (input.name.includes('night_time') || input.name.includes('ifr_time') || 
+          input.name.includes('pic_time') || input.name.includes('copilot_time') ||
+          input.name.includes('double_command_time') || input.name.includes('instructor_time') ||
+          input.name.includes('simulator_time') || input.name.includes('multi_pilot_time')) {
+        
+        // Only set default if the field is empty (preserve existing values from form submission)
+        if (!input.value || input.value === '') {
+          input.value = '00:00';
+        }
         
         // Add validation feedback
         input.addEventListener('change', function() {
