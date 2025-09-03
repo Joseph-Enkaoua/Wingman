@@ -34,9 +34,7 @@ class FlightAdmin(admin.ModelAdmin):
         ('Time Details', {
             'fields': ('departure_time', 'arrival_time', 'total_time')
         }),
-        ('Pilot Role', {
-            'fields': ('pilot_role',)
-        }),
+
         ('Engine Time', {
             'fields': ('single_engine_time', 'multi_engine_time', 'multi_pilot_time')
         }),

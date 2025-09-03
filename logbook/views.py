@@ -309,7 +309,18 @@ class FlightListView(LoginRequiredMixin, ListView):
     model = Flight
     template_name = 'logbook/flight_list.html'
     context_object_name = 'flights'
-    paginate_by = 20
+    paginate_by = 10  # Default pagination
+    
+    def get_paginate_by(self, queryset):
+        """Get pagination size from request parameters"""
+        try:
+            page_size = int(self.request.GET.get('page_size', 10))
+            # Ensure page_size is valid
+            if page_size <= 0:
+                page_size = 10
+            return page_size
+        except (ValueError, TypeError):
+            return 10
     
     def get_queryset(self):
         queryset = Flight.objects.filter(pilot=self.request.user)
@@ -343,6 +354,8 @@ class FlightListView(LoginRequiredMixin, ListView):
         total_cross_country_minutes = filtered_queryset.aggregate(total=Sum('cross_country_time'))['total'] or 0
         context['total_night_hours'] = total_night_minutes / 60
         context['total_cross_country_hours'] = total_cross_country_minutes / 60
+        
+
         
         return context
 
@@ -642,16 +655,65 @@ def charts_view(request):
         count=Count('id')
     )
     
-    # Pilot role distribution
-    pilot_role_data = Flight.objects.filter(pilot=user).values('pilot_role').annotate(
-        count=Count('id')
-    )
+    # Flight type distribution (based on cross-country and IFR time)
+    flight_type_data = []
+    
+    # Count flights by type
+    cross_country_flights = Flight.objects.filter(pilot=user, cross_country_time__gt=0).count()
+    ifr_flights = Flight.objects.filter(pilot=user, ifr_time__gt=0).count()
+    night_flights = Flight.objects.filter(pilot=user, night_time__gt=0).count()
+    local_flights = Flight.objects.filter(pilot=user, cross_country_time=0, ifr_time=0, night_time=0).count()
+    
+    if cross_country_flights > 0:
+        flight_type_data.append({'flight_type': 'Cross-Country', 'count': cross_country_flights})
+    if ifr_flights > 0:
+        flight_type_data.append({'flight_type': 'IFR', 'count': ifr_flights})
+    if night_flights > 0:
+        flight_type_data.append({'flight_type': 'Night', 'count': night_flights})
+    if local_flights > 0:
+        flight_type_data.append({'flight_type': 'Local', 'count': local_flights})
+    
+    # Pilot role distribution based on time fields
+    pilot_role_data = []
+    
+    # Count flights by pilot role based on time fields
+    pic_flights = Flight.objects.filter(pilot=user, pic_time__gt=0).count()
+    copilot_flights = Flight.objects.filter(pilot=user, copilot_time__gt=0).count()
+    instructor_flights = Flight.objects.filter(pilot=user, instructor_time__gt=0).count()
+    multi_pilot_flights = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).count()
+    
+    if pic_flights > 0:
+        pilot_role_data.append({'pilot_role': 'PIC', 'count': pic_flights})
+    if copilot_flights > 0:
+        pilot_role_data.append({'pilot_role': 'SIC', 'count': copilot_flights})
+    if instructor_flights > 0:
+        pilot_role_data.append({'pilot_role': 'DUAL', 'count': instructor_flights})
+    if multi_pilot_flights > 0:
+        pilot_role_data.append({'pilot_role': 'MULTI', 'count': multi_pilot_flights})
     
     # Calculate additional statistics
     user_flights = Flight.objects.filter(pilot=user)
     total_flights = user_flights.count()
     total_hours = user_flights.aggregate(total=Sum('total_time'))['total'] or 0
     avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
+    
+    # Define conditions_data based on pilot_role_data (for compatibility with frontend)
+    conditions_data = []
+    for item in pilot_role_data:
+        conditions_data.append({
+            'conditions': item['pilot_role'],
+            'count': item['count']
+        })
+    
+    # Time breakdown data for the radar chart
+    time_breakdown_data = {
+        'total_hours': float(total_hours),
+        'night_hours': float(user_flights.aggregate(total=Sum('night_time'))['total'] or 0) / 60,
+        'ifr_hours': float(user_flights.aggregate(total=Sum('ifr_time'))['total'] or 0) / 60,
+        'cross_country_hours': float(user_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0) / 60,
+        'dual_instruction_hours': float(user_flights.aggregate(total=Sum('instructor_time'))['total'] or 0) / 60,
+        'solo_hours': float(user_flights.aggregate(total=Sum('pic_time'))['total'] or 0) / 60
+    }
     
     # Get most used aircraft
     most_used_aircraft = user_flights.annotate(
@@ -691,11 +753,14 @@ def charts_view(request):
         })
     
     context = {
+        'user': user,
         'pilot_profile': pilot_profile,
         'monthly_data': json.dumps(monthly_data),
         'aircraft_data': json.dumps(aircraft_data),
         'engine_type_data': json.dumps(list(engine_type_data)),
+        'flight_type_data': json.dumps(flight_type_data),
         'conditions_data': json.dumps(conditions_data),
+        'time_breakdown_data': time_breakdown_data,
         'flights_data': json.dumps(flights_for_csv),
         'total_flights': total_flights,
         'total_hours': float(total_hours),
@@ -763,16 +828,19 @@ def print_charts_view(request):
     aircraft_data = Flight.objects.filter(pilot=user).annotate(
         registration=Case(
             When(aircraft__isnull=False, then='aircraft__registration'),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
             default='aircraft_registration',
             output_field=CharField(),
         ),
         manufacturer=Case(
             When(aircraft__isnull=False, then='aircraft__manufacturer'),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('Simulator')),
             default=Value(''),
             output_field=CharField(),
         ),
         type=Case(
             When(aircraft__isnull=False, then='aircraft__type'),
+            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
             default=Value(''),
             output_field=CharField(),
         )
@@ -802,10 +870,49 @@ def print_charts_view(request):
         count=Count('id')
     )
     
-    # Pilot role distribution
-    pilot_role_data = Flight.objects.filter(pilot=user).values('pilot_role').annotate(
-        count=Count('id')
-    )
+    # Flight type distribution (based on cross-country and IFR time)
+    flight_type_data = []
+    
+    # Count flights by type
+    cross_country_flights = Flight.objects.filter(pilot=user, cross_country_time__gt=0).count()
+    ifr_flights = Flight.objects.filter(pilot=user, ifr_time__gt=0).count()
+    night_flights = Flight.objects.filter(pilot=user, night_time__gt=0).count()
+    local_flights = Flight.objects.filter(pilot=user, cross_country_time=0, ifr_time=0, night_time=0).count()
+    
+    if cross_country_flights > 0:
+        flight_type_data.append({'flight_type': 'Cross-Country', 'count': cross_country_flights})
+    if ifr_flights > 0:
+        flight_type_data.append({'flight_type': 'IFR', 'count': ifr_flights})
+    if night_flights > 0:
+        flight_type_data.append({'flight_type': 'Night', 'count': night_flights})
+    if local_flights > 0:
+        flight_type_data.append({'flight_type': 'Local', 'count': local_flights})
+    
+    # Pilot role distribution based on time fields
+    pilot_role_data = []
+    
+    # Count flights by pilot role based on time fields
+    pic_flights = Flight.objects.filter(pilot=user, pic_time__gt=0).count()
+    copilot_flights = Flight.objects.filter(pilot=user, copilot_time__gt=0).count()
+    instructor_flights = Flight.objects.filter(pilot=user, instructor_time__gt=0).count()
+    multi_pilot_flights = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).count()
+    
+    if pic_flights > 0:
+        pilot_role_data.append({'pilot_role': 'PIC', 'count': pic_flights})
+    if copilot_flights > 0:
+        pilot_role_data.append({'pilot_role': 'SIC', 'count': copilot_flights})
+    if instructor_flights > 0:
+        pilot_role_data.append({'pilot_role': 'DUAL', 'count': instructor_flights})
+    if multi_pilot_flights > 0:
+        pilot_role_data.append({'pilot_role': 'MULTI', 'count': multi_pilot_flights})
+    
+    # Define conditions_data based on pilot_role_data (for compatibility with frontend)
+    conditions_data = []
+    for item in pilot_role_data:
+        conditions_data.append({
+            'conditions': item['pilot_role'],
+            'count': item['count']
+        })
     
     # Calculate additional statistics
     user_flights = Flight.objects.filter(pilot=user)
@@ -829,7 +936,8 @@ def print_charts_view(request):
         'monthly_data': json.dumps(monthly_data),
         'aircraft_data': json.dumps(aircraft_data),
         'engine_type_data': json.dumps(list(engine_type_data)),
-        'conditions_data': json.dumps([]),
+        'flight_type_data': json.dumps(flight_type_data),
+        'conditions_data': json.dumps(conditions_data),
         'total_flights': total_flights,
         'total_hours': float(total_hours),
         'avg_flight_time': float(avg_flight_time),

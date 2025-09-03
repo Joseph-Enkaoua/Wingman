@@ -7,19 +7,19 @@ from crispy_forms.layout import Layout, Row, Column, Submit, HTML
 from django.contrib.auth.password_validation import password_validators_help_text_html, validate_password
 
 
-class TimeInMinutesField(forms.CharField):
+class TimeInMinutesField(forms.TimeField):
     """Custom field that accepts time input (HH:MM) and converts to minutes for storage"""
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.widget = forms.TimeInput(attrs={
-            'type': 'time',
+        self.widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'HH:MM'
+            'placeholder': 'HH:00'
         })
     
     def prepare_value(self, value):
         """Convert minutes back to time format for initial value display"""
+        print(f"DEBUG: prepare_value called with value: {value} (type: {type(value)})")
         if value is not None and value != '' and value != 0:
             try:
                 # Convert minutes to hours and minutes
@@ -27,9 +27,13 @@ class TimeInMinutesField(forms.CharField):
                 hours = value // 60
                 minutes = value % 60
                 # Return time string in HH:MM format
-                return f"{hours:02d}:{minutes:02d}"
-            except (ValueError, TypeError):
+                result = f"{hours:02d}:{minutes:02d}"
+                print(f"DEBUG: Converting {value} minutes to {result}")
+                return result
+            except (ValueError, TypeError) as e:
+                print(f"DEBUG: Error converting value: {e}")
                 return "00:00"
+        print(f"DEBUG: Returning 00:00 for value: {value}")
         return "00:00"
     
     def clean(self, value):
@@ -54,9 +58,7 @@ class TimeInMinutesField(forms.CharField):
 class FlightForm(forms.ModelForm):
     """Form for creating and editing flight entries"""
     
-    # Custom fields for time inputs - new structure
-    single_engine_time = TimeInMinutesField(required=False, label="Single Engine Time")
-    multi_engine_time = TimeInMinutesField(required=False, label="Multi Engine Time")
+    # Custom fields for time inputs - new structure (removed single_engine_time and multi_engine_time)
     multi_pilot_time = TimeInMinutesField(required=False, label="Multi-Pilot Flight Time")
     night_time = TimeInMinutesField(required=False, label="Night Flight Time")
     ifr_time = TimeInMinutesField(required=False, label="IFR Flight Time")
@@ -66,17 +68,9 @@ class FlightForm(forms.ModelForm):
     instructor_time = TimeInMinutesField(required=False, label="Instructor Time")
     simulator_time = TimeInMinutesField(required=False, label="Simulator Time")
     
-    # Manual aircraft registration field
-    manual_aircraft_registration = forms.CharField(
-        max_length=10, 
-        required=False, 
-        label="Or enter aircraft registration manually",
-        help_text="Enter the aircraft registration (e.g., F-GABC) if not in the list above",
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'F-GABC'
-        })
-    )
+
+    
+
     
     # PIC field
     pic_name = forms.CharField(
@@ -93,15 +87,16 @@ class FlightForm(forms.ModelForm):
     class Meta:
         model = Flight
         fields = [
-            'date', 'aircraft', 'manual_aircraft_registration', 'departure_aerodrome', 'arrival_aerodrome',
-            'departure_time', 'arrival_time', 'pic_name',
-            'single_engine_time', 'multi_engine_time', 'multi_pilot_time', 'day_landings', 'night_landings',
+            'date', 'aircraft', 'departure_aerodrome', 'arrival_aerodrome', 'departure_time', 'arrival_time', 'pic_name',
+            'multi_pilot_time', 'day_landings', 'night_landings',
             'ifr_approaches', 'night_time', 'ifr_time', 'pic_time', 'copilot_time', 'double_command_time',
             'instructor_time', 'simulator_type', 'simulator_time', 'remarks'
         ]
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'aircraft': forms.Select(attrs={'class': 'form-control'}),
+            'departure_aerodrome': forms.TextInput(attrs={'class': 'form-control'}),
+            'arrival_aerodrome': forms.TextInput(attrs={'class': 'form-control'}),
             'departure_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'arrival_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'day_landings': forms.NumberInput(attrs={'min': '0', 'class': 'form-control'}),
@@ -116,8 +111,6 @@ class FlightForm(forms.ModelForm):
         flight = super().save(commit=False)
         
         # Set the time values from our custom fields
-        flight.single_engine_time = self.cleaned_data.get('single_engine_time', 0)
-        flight.multi_engine_time = self.cleaned_data.get('multi_engine_time', 0)
         flight.multi_pilot_time = self.cleaned_data.get('multi_pilot_time', 0)
         flight.night_time = self.cleaned_data.get('night_time', 0)
         flight.ifr_time = self.cleaned_data.get('ifr_time', 0)
@@ -129,7 +122,6 @@ class FlightForm(forms.ModelForm):
         
         # Handle aircraft data
         aircraft = self.cleaned_data.get('aircraft')
-        manual_registration = self.cleaned_data.get('manual_aircraft_registration')
         
         if aircraft:
             # Aircraft selected from list - populate preserved fields
@@ -138,16 +130,23 @@ class FlightForm(forms.ModelForm):
             flight.aircraft_type = aircraft.type
             flight.aircraft_engine_type = aircraft.engine_type
             
-            # Auto-populate engine time based on aircraft type if not manually set
-            if aircraft.engine_type == 'SINGLE' and not self.cleaned_data.get('single_engine_time'):
+            # Auto-populate engine time based on aircraft type and flight duration
+            if aircraft.engine_type == 'SINGLE':
                 flight.single_engine_time = int(flight.total_time * 60) if flight.total_time else 0
-            elif aircraft.engine_type == 'MULTI' and not self.cleaned_data.get('multi_engine_time'):
+                flight.multi_engine_time = 0
+            elif aircraft.engine_type == 'MULTI':
                 flight.multi_engine_time = int(flight.total_time * 60) if flight.total_time else 0
-        elif manual_registration:
-            # Manual registration provided - clear aircraft reference and set preserved fields
+                flight.single_engine_time = 0
+        else:
+            # No aircraft selected - this is allowed for simulator flights
             flight.aircraft = None
-            flight.aircraft_registration = manual_registration
-            # Leave other aircraft fields blank as they're not provided
+            flight.aircraft_registration = ''
+            flight.aircraft_manufacturer = ''
+            flight.aircraft_type = ''
+            flight.aircraft_engine_type = ''
+            # Set both engine times to 0 for simulator flights
+            flight.single_engine_time = 0
+            flight.multi_engine_time = 0
         
         if commit:
             flight.save()
@@ -156,36 +155,13 @@ class FlightForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         aircraft = cleaned_data.get('aircraft')
-        manual_registration = cleaned_data.get('manual_aircraft_registration')
         
-        # Validate that either aircraft is selected or manual registration is provided
-        if not aircraft and not manual_registration:
-            raise forms.ValidationError("Please either select an aircraft from the list or enter a manual aircraft registration.")
-        
-        if aircraft and manual_registration:
-            # If both are provided, clear the manual registration
-            cleaned_data['manual_aircraft_registration'] = ''
-            manual_registration = ''  # Also clear the local variable
-        
-        # If manual registration is provided, validate format
-        if manual_registration:
-            manual_registration = manual_registration.upper().strip()
-            cleaned_data['manual_aircraft_registration'] = manual_registration
-            
-            # Basic validation for aircraft registration format
-            if len(manual_registration) < 2:
-                raise forms.ValidationError("Aircraft registration must be at least 2 characters long.")
-            
-            # Check if it contains only valid characters (letters, numbers, hyphens)
-            import re
-            if not re.match(r'^[A-Z0-9\-]+$', manual_registration):
-                raise forms.ValidationError("Aircraft registration can only contain letters, numbers, and hyphens.")
+        # Aircraft is now optional - simulator flights don't require aircraft
+        # No validation needed for aircraft field
         
         departure_time = cleaned_data.get('departure_time')
         arrival_time = cleaned_data.get('arrival_time')
         date = cleaned_data.get('date')
-        single_engine_time = cleaned_data.get('single_engine_time')
-        multi_engine_time = cleaned_data.get('multi_engine_time')
         multi_pilot_time = cleaned_data.get('multi_pilot_time')
         night_time = cleaned_data.get('night_time')
         ifr_time = cleaned_data.get('ifr_time')
@@ -231,17 +207,7 @@ class FlightForm(forms.ModelForm):
                 ifr_mins = ifr_time % 60
                 raise forms.ValidationError(f"IFR time ({ifr_hours:02d}:{ifr_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
             
-            # Validate that engine time components don't exceed total flight time
-            if single_engine_time and single_engine_time > total_minutes:
-                se_hours = single_engine_time // 60
-                se_mins = single_engine_time % 60
-                raise forms.ValidationError(f"Single engine time ({se_hours:02d}:{se_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
-            
-            if multi_engine_time and multi_engine_time > total_minutes:
-                me_hours = multi_engine_time // 60
-                me_mins = multi_engine_time % 60
-                raise forms.ValidationError(f"Multi engine time ({me_hours:02d}:{me_mins:02d}) cannot exceed total flight time ({total_hours:.1f}h)")
-            
+
             # Validate that role time components don't exceed total flight time
             if pic_time and pic_time > total_minutes:
                 pic_hours = pic_time // 60
@@ -287,38 +253,24 @@ class FlightForm(forms.ModelForm):
         # Update aircraft field to include a "None" option
         self.fields['aircraft'].label = "Select Aircraft"
         self.fields['aircraft'].empty_label = "Choose from list..."
-        self.fields['aircraft'].help_text = "Select an aircraft from your registered aircraft"
+        self.fields['aircraft'].help_text = "Select an aircraft from your registered aircraft (optional for simulator flights)"
+        self.fields['aircraft'].required = False
         
-        # Update manual aircraft registration field label and help text
-        self.fields['manual_aircraft_registration'].label = "Or Enter Registration"
-        self.fields['manual_aircraft_registration'].help_text = "Type aircraft registration (e.g., F-GABC)"
+
+        
+
         
         # Determine button text based on whether this is an update or create
         button_text = 'Update Flight' if self.instance and self.instance.pk else 'Log Flight'
         
-        # Set initial values for custom time fields when editing
+        # Debug: Check what data is available in the instance
         if self.instance and self.instance.pk:
-            # Convert minutes to time format for display
-            if self.instance.single_engine_time:
-                self.fields['single_engine_time'].initial = self._minutes_to_time(self.instance.single_engine_time)
-            if self.instance.multi_engine_time:
-                self.fields['multi_engine_time'].initial = self._minutes_to_time(self.instance.multi_engine_time)
-            if self.instance.multi_pilot_time:
-                self.fields['multi_pilot_time'].initial = self._minutes_to_time(self.instance.multi_pilot_time)
-            if self.instance.night_time:
-                self.fields['night_time'].initial = self._minutes_to_time(self.instance.night_time)
-            if self.instance.ifr_time:
-                self.fields['ifr_time'].initial = self._minutes_to_time(self.instance.ifr_time)
-            if self.instance.pic_time:
-                self.fields['pic_time'].initial = self._minutes_to_time(self.instance.pic_time)
-            if self.instance.copilot_time:
-                self.fields['copilot_time'].initial = self._minutes_to_time(self.instance.copilot_time)
-            if self.instance.double_command_time:
-                self.fields['double_command_time'].initial = self._minutes_to_time(self.instance.double_command_time)
-            if self.instance.instructor_time:
-                self.fields['instructor_time'].initial = self._minutes_to_time(self.instance.instructor_time)
-            if self.instance.simulator_time:
-                self.fields['simulator_time'].initial = self._minutes_to_time(self.instance.simulator_time)
+            print(f"DEBUG: Form instance has pk: {self.instance.pk}")
+            print(f"DEBUG: night_time value: {self.instance.night_time} (type: {type(self.instance.night_time)})")
+            print(f"DEBUG: ifr_time value: {self.instance.ifr_time} (type: {type(self.instance.ifr_time)})")
+            print(f"DEBUG: pic_time value: {self.instance.pic_time} (type: {type(self.instance.pic_time)})")
+        else:
+            print("DEBUG: No instance or no pk - this is a new form")
         
         # Add total time to form context for fill buttons
         self.total_time_minutes = 0
@@ -329,20 +281,11 @@ class FlightForm(forms.ModelForm):
             if self.instance.aircraft:
                 # Aircraft is selected - populate aircraft field
                 self.fields['aircraft'].initial = self.instance.aircraft
-            elif self.instance.aircraft_registration:
-                # Manual registration was used - populate manual field and clear aircraft
-                self.fields['aircraft'].initial = None
-                self.fields['manual_aircraft_registration'].initial = self.instance.aircraft_registration
         
         self.helper.layout = Layout(
             Row(
                 Column('date', css_class='form-group col-md-6'),
-                Column(HTML('<div class="form-group col-md-6"><label class="form-label">Aircraft</label><div class="text-muted small">Select an aircraft or enter registration manually</div></div>'), css_class='form-group col-md-6'),
-                css_class='form-row'
-            ),
-            Row(
                 Column('aircraft', css_class='form-group col-md-6'),
-                Column('manual_aircraft_registration', css_class='form-group col-md-6'),
                 css_class='form-row'
             ),
             Row(
@@ -360,9 +303,9 @@ class FlightForm(forms.ModelForm):
                 css_class='form-row'
             ),
             Row(
-                Column('single_engine_time', css_class='form-group col-md-4'),
-                Column('multi_engine_time', css_class='form-group col-md-4'),
                 Column('multi_pilot_time', css_class='form-group col-md-4'),
+                Column('night_time', css_class='form-group col-md-4'),
+                Column('ifr_time', css_class='form-group col-md-4'),
                 css_class='form-row'
             ),
             Row(
@@ -372,23 +315,21 @@ class FlightForm(forms.ModelForm):
                 css_class='form-row'
             ),
             Row(
-                Column('night_time', css_class='form-group col-md-4'),
-                Column('ifr_time', css_class='form-group col-md-4'),
                 Column('pic_time', css_class='form-group col-md-4'),
-                css_class='form-row'
-            ),
-            Row(
                 Column('copilot_time', css_class='form-group col-md-4'),
                 Column('double_command_time', css_class='form-group col-md-4'),
-                Column('instructor_time', css_class='form-group col-md-4'),
                 css_class='form-row'
             ),
             Row(
+                Column('instructor_time', css_class='form-group col-md-6'),
                 Column('simulator_type', css_class='form-group col-md-6'),
-                Column('simulator_time', css_class='form-group col-md-6'),
                 css_class='form-row'
             ),
-            'remarks',
+            Row(
+                Column('simulator_time', css_class='form-group col-md-6'),
+                Column('remarks', css_class='form-group col-md-6'),
+                css_class='form-row'
+            ),
             Row(
                 Column(
                     HTML('<div class="d-flex justify-content-between">'),
@@ -403,17 +344,7 @@ class FlightForm(forms.ModelForm):
     
 
     
-    def _minutes_to_time(self, minutes):
-        """Convert minutes to time string format (HH:MM)"""
-        if minutes is None or minutes == 0:
-            return "00:00"
-        
-        try:
-            hours = minutes // 60
-            mins = minutes % 60
-            return f"{hours:02d}:{mins:02d}"
-        except (ValueError, TypeError):
-            return "00:00"
+
 
 
 class AircraftForm(forms.ModelForm):

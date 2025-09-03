@@ -107,7 +107,6 @@
                 <th>Route</th>
                 <th>Duration</th>
                 <th>Conditions</th>
-                <th>Engine Time</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -123,8 +122,8 @@
                 <td>
                   <span class="badge bg-info"
                     >{% if flight.aircraft %}{{ flight.aircraft.registration }}{% else %}{{ flight.aircraft_registration }}{% endif %}</span
-                  ><br />
-                                      <small class="text-muted">{% if flight.aircraft %}{{ flight.aircraft.type }}{% else %}{{ flight.aircraft_type }}{% endif %}</small>
+                  ><br />                    
+                  <small class="text-muted">{% if flight.aircraft %}{{ flight.aircraft.type }}{% else %}{{ flight.aircraft_type }}{% endif %}</small>
                 </td>
                 <td>
                   <span class="badge {% if flight.aircraft %}{% if flight.aircraft.engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}{% else %}{% if flight.aircraft_engine_type == 'SINGLE' %}bg-primary{% else %}bg-warning{% endif %}{% endif %}"
@@ -142,7 +141,13 @@
                   <br /><span class="badge bg-dark"
                     >{{ flight.night_time|minutes_to_time }} night</span
                   >
-                  {% endif %} {% if flight.cross_country_time > 0 %}
+                  {% endif %} 
+                  {% if flight.ifr_time > 0 %}
+                  <br /><span class="badge bg-info"
+                    >{{ flight.ifr_time|minutes_to_time }} IFR</span
+                  >
+                  {% endif %}
+                  {% if flight.cross_country_time > 0 %}
                   <br /><span class="badge bg-warning"
                     >{{ flight.cross_country_time|minutes_to_time }} XC</span
                   >
@@ -166,14 +171,6 @@
                   {% endif %}
                   {% if flight.simulator_time > 0 %}
                   <span class="badge bg-success me-1">Simulator</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if flight.single_engine_time > 0 %}
-                  <span class="badge bg-success">{{ flight.single_engine_time|minutes_to_time }} SE</span><br />
-                  {% endif %}
-                  {% if flight.multi_engine_time > 0 %}
-                  <span class="badge bg-info">{{ flight.multi_engine_time|minutes_to_time }} ME</span>
                   {% endif %}
                 </td>
                 <td>
@@ -207,55 +204,91 @@
           </table>
         </div>
 
-        <!-- Pagination -->
+        <!-- Enhanced Pagination -->
         {% if is_paginated %}
-        <nav aria-label="Flight pagination" class="mt-4">
-          <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-              <a
-                class="page-link"
-                href="?page=1{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}"
-              >
-                <i class="fas fa-angle-double-left"></i>
-              </a>
-            </li>
-            <li class="page-item">
-              <a
-                class="page-link"
-                href="?page={{ page_obj.previous_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}"
-              >
-                <i class="fas fa-angle-left"></i>
-              </a>
-            </li>
-            {% endif %}
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <div class="d-flex align-items-center">
+            <div class="text-muted me-3">
+              <small>
+                <i class="fas fa-info-circle"></i>
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} flights
+              </small>
+            </div>
+            <!-- Page size selector -->
+            <div class="d-flex align-items-center">
+              <small class="text-muted me-2">Show:</small>
+              <select class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                <option value="10" {% if request.GET.page_size == '10' or not request.GET.page_size %}selected{% endif %}>10</option>
+                <option value="20" {% if request.GET.page_size == '20' %}selected{% endif %}>20</option>
+                <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50</option>
+                <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100</option>
+              </select>
+            </div>
+          </div>
+          <nav aria-label="Flight pagination">
+            <ul class="pagination pagination-sm mb-0">
+              {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?page=1{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                  title="First page"
+                >
+                  <i class="fas fa-angle-double-left"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?page={{ page_obj.previous_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                  title="Previous page"
+                >
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+              {% endif %}
 
-            <li class="page-item active">
-              <span class="page-link">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-              </span>
-            </li>
+              <!-- Page numbers with smart range display -->
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                  </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item">
+                    <a
+                      class="page-link"
+                      href="?page={{ num }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                    >
+                      {{ num }}
+                    </a>
+                  </li>
+                {% endif %}
+              {% endfor %}
 
-            {% if page_obj.has_next %}
-            <li class="page-item">
-              <a
-                class="page-link"
-                href="?page={{ page_obj.next_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}"
-              >
-                <i class="fas fa-angle-right"></i>
-              </a>
-            </li>
-            <li class="page-item">
-              <a
-                class="page-link"
-                href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.pilot_role %}&pilot_role={{ request.GET.pilot_role }}{% endif %}"
-              >
-                <i class="fas fa-angle-double-right"></i>
-              </a>
-            </li>
-            {% endif %}
-          </ul>
-        </nav>
+              {% if page_obj.has_next %}
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?page={{ page_obj.next_page_number }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                  title="Next page"
+                >
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.aircraft %}&aircraft={{ request.GET.aircraft }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}"
+                  title="Last page"
+                >
+                  <i class="fas fa-angle-double-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
         {% endif %} {% else %}
         <div class="text-center py-5">
           <i class="fas fa-plane fa-3x text-muted mb-3"></i>
@@ -329,5 +362,20 @@
       });
     });
   });
+
+  // Function to change page size
+  function changePageSize(pageSize) {
+    const currentUrl = new URL(window.location);
+    const searchParams = currentUrl.searchParams;
+    
+    // Update or add page_size parameter
+    searchParams.set('page_size', pageSize);
+    
+    // Reset to first page when changing page size
+    searchParams.set('page', '1');
+    
+    // Redirect to new URL
+    window.location.href = currentUrl.toString();
+  }
 </script>
 {% endblock %}

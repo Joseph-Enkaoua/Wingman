@@ -58,37 +58,23 @@
       <div class="card-body">
         <div class="row">
           <div class="col-md-6">
-            <h6 class="text-primary">Time Calculations</h6>
             <ul class="list-unstyled">
               <li>
                 <i class="fas fa-check text-success"></i> Total time is
                 auto-calculated from departure/arrival times
               </li>
               <li>
-                <i class="fas fa-check text-success"></i> Night time: enter in HH:MM format (e.g., 01:30 for 1.5 hours)
-              </li>
-              <li>
-                <i class="fas fa-check text-success"></i> Instrument time: enter in HH:MM format (e.g., 00:45 for 0.75 hours)
-              </li>
-              <li>
-                <i class="fas fa-check text-success"></i> Cross-country time: enter in HH:MM format (e.g., 02:00 for 2.0 hours)
-              </li>
-              <li>
                 <i class="fas fa-check text-success"></i> All time components are validated against total flight time
+              </li>
+              <li>
+                <i class="fas fa-check text-success"></i> Single/Multi engine time is automatically set when selecting an aircraft
               </li>
             </ul>
           </div>
           <div class="col-md-6">
-            <h6 class="text-primary">New Time Structure</h6>
             <ul class="list-unstyled">
               <li>
-                <i class="fas fa-check text-success"></i> Engine time auto-populates based on aircraft type
-              </li>
-              <li>
                 <i class="fas fa-check text-success"></i> Use "Full" buttons to quickly fill time fields
-              </li>
-              <li>
-                <i class="fas fa-check text-success"></i> All times are validated against flight duration
               </li>
               <li>
                 <i class="fas fa-check text-success"></i> Enter times in HH:MM format (e.g., 01:30)
@@ -118,6 +104,8 @@
         // Aircraft selected - clear manual field
         manualAircraftField.value = '';
       }
+      
+
     }
 
     // Manual aircraft registration handling
@@ -204,75 +192,7 @@
       }
     });
     
-    // Add form validation feedback
-    const form = document.querySelector('form');
-    if (form) {
-      form.addEventListener('submit', function(e) {
-        const departureTimeInput = document.querySelector('input[name="departure_time"]');
-        const arrivalTimeInput = document.querySelector('input[name="arrival_time"]');
-        const nightTimeInput = document.querySelector('input[name="night_time"]');
-        const instrumentTimeInput = document.querySelector('input[name="instrument_time"]');
-        const crossCountryTimeInput = document.querySelector('input[name="cross_country_time"]');
-        
-        // Only proceed with validation if required fields exist
-        if (!departureTimeInput || !arrivalTimeInput) {
-          return;
-        }
-        
-        const departureTime = departureTimeInput.value;
-        const arrivalTime = arrivalTimeInput.value;
-        const nightTime = nightTimeInput ? nightTimeInput.value : '';
-        const instrumentTime = instrumentTimeInput ? instrumentTimeInput.value : '';
-        const crossCountryTime = crossCountryTimeInput ? crossCountryTimeInput.value : '';
-        
-        if (departureTime && arrivalTime) {
-          // Calculate total flight time
-          const [depHour, depMin] = departureTime.split(':').map(Number);
-          const [arrHour, arrMin] = arrivalTime.split(':').map(Number);
-          
-          let totalMinutes = (arrHour * 60 + arrMin) - (depHour * 60 + depMin);
-          if (totalMinutes < 0) totalMinutes += 24 * 60; // Handle overnight flights
-          
-          const totalHours = totalMinutes / 60;
-          
-          // Validate individual time components
-          let isValid = true;
-          let errorMessage = '';
-          
-          if (nightTime && nightTime !== '00:00') {
-            const [nightHour, nightMin] = nightTime.split(':').map(Number);
-            const nightHours = (nightHour * 60 + nightMin) / 60;
-            if (nightHours > totalHours) {
-              isValid = false;
-              errorMessage += `Night time (${nightHours.toFixed(1)}h) exceeds total flight time (${totalHours.toFixed(1)}h). `;
-            }
-          }
-          
-          if (instrumentTime && instrumentTime !== '00:00') {
-            const [instHour, instMin] = instrumentTime.split(':').map(Number);
-            const instHours = (instHour * 60 + instMin) / 60;
-            if (instHours > totalHours) {
-              isValid = false;
-              errorMessage += `Instrument time (${instHour.toFixed(1)}h) exceeds total flight time (${totalHours.toFixed(1)}h). `;
-            }
-          }
-          
-          if (crossCountryTime && crossCountryTime !== '00:00') {
-            const [xcHour, xcMin] = crossCountryTime.split(':').map(Number);
-            const xcHours = (xcHour * 60 + xcMin) / 60;
-            if (xcHours > totalHours) {
-              isValid = false;
-              errorMessage += `Cross country time (${xcHours.toFixed(1)}h) exceeds total flight time (${totalHours.toFixed(1)}h). `;
-            }
-          }
-          
-          if (!isValid) {
-            e.preventDefault();
-            alert('Validation Error: ' + errorMessage);
-          }
-        }
-      });
-    }
+
   });
 </script>
 {% endblock %}

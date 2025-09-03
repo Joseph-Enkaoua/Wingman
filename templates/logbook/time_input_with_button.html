@@ -12,11 +12,14 @@
 <script>
 function fillFullTime(fieldId, totalMinutes) {
     const field = document.getElementById(fieldId);
-    if (field) {
+    if (field && totalMinutes > 0) {
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
         const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         field.value = timeString;
+        
+        // Trigger change event to update any validation or other dependent fields
+        field.dispatchEvent(new Event('change', { bubbles: true }));
     }
 }
 </script>

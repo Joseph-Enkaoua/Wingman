@@ -348,7 +348,7 @@
           labels: ['Total Hours', 'Night Time', 'Instrument Time', 'Cross-Country', 'Dual Instruction', 'Solo Time'],
           datasets: [{
               label: 'Current Hours',
-              data: [{{ total_hours|floatformat:1 }}, {{ pilot_profile.total_night_hours|floatformat:1 }}, {{ pilot_profile.total_instrument_hours|floatformat:1 }}, {{ pilot_profile.total_cross_country_hours|floatformat:1 }}, {{ pilot_profile.total_dual_hours|floatformat:1 }}, {{ pilot_profile.total_solo_hours|floatformat:1 }}],
+              data: [{{ time_breakdown_data.total_hours|floatformat:1 }}, {{ time_breakdown_data.night_hours|floatformat:1 }}, {{ time_breakdown_data.ifr_hours|floatformat:1 }}, {{ time_breakdown_data.cross_country_hours|floatformat:1 }}, {{ time_breakdown_data.dual_instruction_hours|floatformat:1 }}, {{ time_breakdown_data.solo_hours|floatformat:1 }}],
               backgroundColor: 'rgba(59, 130, 246, 0.2)',
               borderColor: '#3b82f6',
               borderWidth: 2,
