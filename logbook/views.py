@@ -641,7 +641,11 @@ def charts_view(request):
         # Use exact calculation for accuracy (same as dashboard)
         total_hours = sum(flight.exact_flight_minutes for flight in month_flights) / 60
         night_minutes = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
-        cross_country_minutes = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        # Calculate cross-country hours using new logic (different departure/arrival aerodromes)
+        cross_country_minutes = 0
+        for flight in month_flights:
+            if flight.is_cross_country:
+                cross_country_minutes += flight.exact_flight_minutes
         
         monthly_data.append({
             'month': month_start.strftime('%b %Y'),
@@ -675,11 +679,12 @@ def charts_view(request):
     # Flight type distribution (based on cross-country and IFR time)
     flight_type_data = []
     
-    # Count flights by type
-    cross_country_flights = Flight.objects.filter(pilot=user, cross_country_time__gt=0).count()
+    # Count flights by type using new cross-country logic
+    user_flights = Flight.objects.filter(pilot=user)
+    cross_country_flights = sum(1 for flight in user_flights if flight.is_cross_country)
     ifr_flights = Flight.objects.filter(pilot=user, ifr_time__gt=0).count()
     night_flights = Flight.objects.filter(pilot=user, night_time__gt=0).count()
-    local_flights = Flight.objects.filter(pilot=user, cross_country_time=0, ifr_time=0, night_time=0).count()
+    local_flights = sum(1 for flight in user_flights if not flight.is_cross_country and flight.ifr_time == 0 and flight.night_time == 0)
     
     if cross_country_flights > 0:
         flight_type_data.append({'flight_type': 'Cross-Country', 'count': cross_country_flights})
@@ -724,11 +729,14 @@ def charts_view(request):
         })
     
     # Time breakdown data for the radar chart
+    # Calculate cross-country hours using new logic
+    cross_country_minutes = sum(flight.exact_flight_minutes for flight in user_flights if flight.is_cross_country)
+    
     time_breakdown_data = {
         'total_hours': float(total_hours),
         'night_hours': float(user_flights.aggregate(total=Sum('night_time'))['total'] or 0) / 60,
         'ifr_hours': float(user_flights.aggregate(total=Sum('ifr_time'))['total'] or 0) / 60,
-        'cross_country_hours': float(user_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0) / 60,
+        'cross_country_hours': float(cross_country_minutes) / 60,
         'dual_instruction_hours': float(user_flights.aggregate(total=Sum('instructor_time'))['total'] or 0) / 60,
         'solo_hours': float(user_flights.aggregate(total=Sum('pic_time'))['total'] or 0) / 60
     }
@@ -834,7 +842,11 @@ def print_charts_view(request):
         # Use exact calculation for accuracy (same as dashboard)
         total_hours = sum(flight.exact_flight_minutes for flight in month_flights) / 60
         night_minutes = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
-        cross_country_minutes = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
+        # Calculate cross-country hours using new logic (different departure/arrival aerodromes)
+        cross_country_minutes = 0
+        for flight in month_flights:
+            if flight.is_cross_country:
+                cross_country_minutes += flight.exact_flight_minutes
         
         monthly_data.append({
             'month': month_start.strftime('%b %Y'),
@@ -868,11 +880,12 @@ def print_charts_view(request):
     # Flight type distribution (based on cross-country and IFR time)
     flight_type_data = []
     
-    # Count flights by type
-    cross_country_flights = Flight.objects.filter(pilot=user, cross_country_time__gt=0).count()
+    # Count flights by type using new cross-country logic
+    user_flights = Flight.objects.filter(pilot=user)
+    cross_country_flights = sum(1 for flight in user_flights if flight.is_cross_country)
     ifr_flights = Flight.objects.filter(pilot=user, ifr_time__gt=0).count()
     night_flights = Flight.objects.filter(pilot=user, night_time__gt=0).count()
-    local_flights = Flight.objects.filter(pilot=user, cross_country_time=0, ifr_time=0, night_time=0).count()
+    local_flights = sum(1 for flight in user_flights if not flight.is_cross_country and flight.ifr_time == 0 and flight.night_time == 0)
     
     if cross_country_flights > 0:
         flight_type_data.append({'flight_type': 'Cross-Country', 'count': cross_country_flights})
