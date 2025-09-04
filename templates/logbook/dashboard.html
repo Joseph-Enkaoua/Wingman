@@ -53,38 +53,66 @@
     <div class="card">
       <div class="card-header">
         <h5 class="card-title mb-0">
-          <i class="fas fa-chart-pie aviation-icon"></i>
+          <i class="fas fa-list-alt aviation-icon"></i>
           Flight Time Breakdown
         </h5>
       </div>
       <div class="card-body">
         <div class="row">
-          <div class="col-6">
-            <div class="d-flex justify-content-between mb-2">
-              <span>PIC Hours:</span>
-              <strong>{{ total_pic_hours|floatformat:1 }}</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span>Dual Instruction:</span>
-              <strong>{{ total_dual_hours|floatformat:1 }}</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span>Solo Hours:</span>
-              <strong>{{ total_solo_hours|floatformat:1 }}</strong>
+          <div class="col-md-6">
+            <div class="flight-stats">
+              {% if total_pic_hours > 0 %}
+              <div class="d-flex justify-content-between mb-2">
+                <span><i class="fas fa-user-tie text-primary"></i> PIC Hours:</span>
+                <strong>{{ total_pic_hours|floatformat:1 }}h</strong>
+              </div>
+              {% endif %}
+              {% if total_dual_hours > 0 %}
+              <div class="d-flex justify-content-between mb-2">
+                <span><i class="fas fa-users text-success"></i> Dual Instruction:</span>
+                <strong>{{ total_dual_hours|floatformat:1 }}h</strong>
+              </div>
+              {% endif %}
+              {% if total_solo_hours > 0 %}
+              <div class="d-flex justify-content-between mb-2">
+                <span><i class="fas fa-user text-warning"></i> Solo Hours:</span>
+                <strong>{{ total_solo_hours|floatformat:1 }}h</strong>
+              </div>
+              {% endif %}
             </div>
           </div>
-          <div class="col-6">
-            <div class="d-flex justify-content-between mb-2">
-              <span>Instrument Time:</span>
-              <strong>{{ total_instrument_hours|floatformat:1 }}</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span>Night Landings:</span>
-              <strong>{{ total_night_landings }}</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span>Day Landings:</span>
-              <strong>{{ total_day_landings }}</strong>
+          <div class="col-md-6">
+            <div class="flight-stats">
+              {% if total_night_hours > 0 %}
+              <div class="d-flex justify-content-between mb-2">
+                <span><i class="fas fa-moon text-dark"></i> Night Time:</span>
+                <strong>{{ total_night_hours|floatformat:1 }}h</strong>
+              </div>
+              {% endif %}
+              {% if total_instrument_hours > 0 %}
+              <div class="d-flex justify-content-between mb-2">
+                <span><i class="fas fa-compass text-info"></i> IFR Time:</span>
+                <strong>{{ total_instrument_hours|floatformat:1 }}h</strong>
+              </div>
+              {% endif %}
+              {% if total_day_landings > 0 %}
+              <div class="d-flex justify-content-between mb-2">
+                <span><i class="fas fa-sun text-warning"></i> Day Landings:</span>
+                <strong>{{ total_day_landings }}</strong>
+              </div>
+              {% endif %}
+              {% if total_night_landings > 0 %}
+              <div class="d-flex justify-content-between mb-2">
+                <span><i class="fas fa-moon text-dark"></i> Night Landings:</span>
+                <strong>{{ total_night_landings }}</strong>
+              </div>
+              {% endif %}
+              {% if total_ifr_approaches > 0 %}
+              <div class="d-flex justify-content-between mb-2">
+                <span><i class="fas fa-compass text-primary"></i> IFR Approaches:</span>
+                <strong>{{ total_ifr_approaches }}</strong>
+              </div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -337,6 +365,7 @@
           }
       }
   });
+
 
 
 </script>

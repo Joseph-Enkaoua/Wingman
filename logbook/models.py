@@ -231,14 +231,17 @@ class PilotProfile(models.Model):
     
     @property
     def total_cross_country_hours(self):
-        """Calculate total cross-country hours (convert minutes to hours)"""
-        total_minutes = sum(flight.cross_country_time for flight in self.user.flights.all())
+        """Calculate total cross-country hours based on flights with different departure/arrival aerodromes"""
+        total_minutes = 0
+        for flight in self.user.flights.all():
+            if flight.is_cross_country:
+                total_minutes += flight.exact_flight_minutes
         return total_minutes / 60
     
     @property
     def total_instrument_hours(self):
-        """Calculate total instrument hours (convert minutes to hours)"""
-        total_minutes = sum(flight.instrument_time for flight in self.user.flights.all())
+        """Calculate total IFR hours (convert minutes to hours)"""
+        total_minutes = sum(flight.ifr_time for flight in self.user.flights.all())
         return total_minutes / 60
     
     @property

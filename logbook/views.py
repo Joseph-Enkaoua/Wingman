@@ -225,6 +225,11 @@ def dashboard(request):
     total_day_landings = landing_stats['total_day_landings'] or 0
     total_night_landings = landing_stats['total_night_landings'] or 0
     
+    # Calculate IFR approaches
+    total_ifr_approaches = Flight.objects.filter(pilot=user).aggregate(
+        total=Sum('ifr_approaches')
+    )['total'] or 0
+    
     # Monthly flight hours for the last 12 months
     monthly_hours = []
     
@@ -283,6 +288,7 @@ def dashboard(request):
         'total_pic_hours': total_pic_hours,
         'total_day_landings': total_day_landings,
         'total_night_landings': total_night_landings,
+        'total_ifr_approaches': total_ifr_approaches,
         'monthly_hours': json.dumps(monthly_hours),
         'aircraft_usage': [
             {
