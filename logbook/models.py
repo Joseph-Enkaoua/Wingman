@@ -167,6 +167,21 @@ class Flight(models.Model):
         if self.aircraft:
             return self.aircraft.engine_type == 'MULTI'
         return self.aircraft_engine_type == 'MULTI'
+    
+    def get_pilot_role_display(self):
+        """Determine pilot role based on time fields"""
+        if self.pic_time > 0:
+            return 'PIC'
+        elif self.copilot_time > 0:
+            return 'SIC'
+        elif self.instructor_time > 0:
+            return 'DUAL'
+        elif self.multi_pilot_time > 0:
+            return 'MULTI'
+        elif self.simulator_time > 0:
+            return 'SIM'
+        else:
+            return 'PIC'  # Default to PIC if no specific role is set
 
     @property
     def exact_flight_minutes(self):
