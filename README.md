@@ -174,7 +174,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Live Demo:** [https://wingman.cyou](https://wingman.cyou)
-- **Email:** spie.system@gmail.com
+- **Email:** joseph.enkaoua@gmail.com
 
 ---
 
