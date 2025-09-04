@@ -188,8 +188,8 @@ def dashboard(request):
     
     # Calculate landing statistics
     landing_stats = Flight.objects.filter(pilot=user).aggregate(
-        total_day_landings=Sum('landings_day'),
-        total_night_landings=Sum('landings_night')
+        total_day_landings=Sum('day_landings'),
+        total_night_landings=Sum('night_landings')
     )
     total_day_landings = landing_stats['total_day_landings'] or 0
     total_night_landings = landing_stats['total_night_landings'] or 0
