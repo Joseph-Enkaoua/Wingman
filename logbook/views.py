@@ -695,23 +695,6 @@ def charts_view(request):
     if local_flights > 0:
         flight_type_data.append({'flight_type': 'Local', 'count': local_flights})
     
-    # Pilot role distribution based on time fields
-    pilot_role_data = []
-    
-    # Calculate hours by pilot role based on time fields (convert from minutes to hours)
-    pic_minutes = Flight.objects.filter(pilot=user, pic_time__gt=0).aggregate(total=Sum('pic_time'))['total'] or 0
-    copilot_minutes = Flight.objects.filter(pilot=user, copilot_time__gt=0).aggregate(total=Sum('copilot_time'))['total'] or 0
-    instructor_minutes = Flight.objects.filter(pilot=user, instructor_time__gt=0).aggregate(total=Sum('instructor_time'))['total'] or 0
-    multi_pilot_minutes = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).aggregate(total=Sum('multi_pilot_time'))['total'] or 0
-    
-    if pic_minutes > 0:
-        pilot_role_data.append({'pilot_role': 'PIC', 'hours': float(pic_minutes) / 60})
-    if copilot_minutes > 0:
-        pilot_role_data.append({'pilot_role': 'SIC', 'hours': float(copilot_minutes) / 60})
-    if instructor_minutes > 0:
-        pilot_role_data.append({'pilot_role': 'DUAL', 'hours': float(instructor_minutes) / 60})
-    if multi_pilot_minutes > 0:
-        pilot_role_data.append({'pilot_role': 'MULTI', 'hours': float(multi_pilot_minutes) / 60})
     
     # Calculate additional statistics
     user_flights = Flight.objects.filter(pilot=user)
@@ -720,13 +703,6 @@ def charts_view(request):
     total_hours = sum(flight.exact_flight_minutes for flight in user_flights) / 60
     avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
     
-    # Define conditions_data based on pilot_role_data (for compatibility with frontend)
-    conditions_data = []
-    for item in pilot_role_data:
-        conditions_data.append({
-            'conditions': item['pilot_role'],
-            'hours': item['hours']
-        })
     
     # Time breakdown data for the radar chart
     # Calculate cross-country hours using new logic
@@ -779,6 +755,48 @@ def charts_view(request):
             'ifr_approaches': int(flight.ifr_approaches or 0),
             'remarks': flight.remarks
         })
+    
+    # Flight conditions distribution based on all time fields
+    conditions_data = []
+    
+    # Calculate hours by flight conditions (convert from minutes to hours)
+    pic_minutes = Flight.objects.filter(pilot=user, pic_time__gt=0).aggregate(total=Sum('pic_time'))['total'] or 0
+    copilot_minutes = Flight.objects.filter(pilot=user, copilot_time__gt=0).aggregate(total=Sum('copilot_time'))['total'] or 0
+    instructor_minutes = Flight.objects.filter(pilot=user, instructor_time__gt=0).aggregate(total=Sum('instructor_time'))['total'] or 0
+    multi_pilot_minutes = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).aggregate(total=Sum('multi_pilot_time'))['total'] or 0
+    night_minutes = Flight.objects.filter(pilot=user, night_time__gt=0).aggregate(total=Sum('night_time'))['total'] or 0
+    ifr_minutes = Flight.objects.filter(pilot=user, ifr_time__gt=0).aggregate(total=Sum('ifr_time'))['total'] or 0
+    single_engine_minutes = Flight.objects.filter(pilot=user, single_engine_time__gt=0).aggregate(total=Sum('single_engine_time'))['total'] or 0
+    multi_engine_minutes = Flight.objects.filter(pilot=user, multi_engine_time__gt=0).aggregate(total=Sum('multi_engine_time'))['total'] or 0
+    simulator_minutes = Flight.objects.filter(pilot=user, simulator_time__gt=0).aggregate(total=Sum('simulator_time'))['total'] or 0
+    
+    # Calculate cross-country hours using new logic (different departure/arrival aerodromes)
+    cross_country_minutes = 0
+    for flight in user_flights:
+        if flight.is_cross_country:
+            cross_country_minutes += flight.exact_flight_minutes
+    
+    # Add all flight conditions that have time > 0
+    if pic_minutes > 0:
+        conditions_data.append({'conditions': 'PIC', 'hours': float(pic_minutes) / 60})
+    if copilot_minutes > 0:
+        conditions_data.append({'conditions': 'SIC', 'hours': float(copilot_minutes) / 60})
+    if instructor_minutes > 0:
+        conditions_data.append({'conditions': 'DUAL', 'hours': float(instructor_minutes) / 60})
+    if multi_pilot_minutes > 0:
+        conditions_data.append({'conditions': 'MULTI', 'hours': float(multi_pilot_minutes) / 60})
+    if night_minutes > 0:
+        conditions_data.append({'conditions': 'NIGHT', 'hours': float(night_minutes) / 60})
+    if ifr_minutes > 0:
+        conditions_data.append({'conditions': 'IFR', 'hours': float(ifr_minutes) / 60})
+    if single_engine_minutes > 0:
+        conditions_data.append({'conditions': 'SINGLE ENGINE', 'hours': float(single_engine_minutes) / 60})
+    if multi_engine_minutes > 0:
+        conditions_data.append({'conditions': 'MULTI ENGINE', 'hours': float(multi_engine_minutes) / 60})
+    if simulator_minutes > 0:
+        conditions_data.append({'conditions': 'SIMULATOR', 'hours': float(simulator_minutes) / 60})
+    if cross_country_minutes > 0:
+        conditions_data.append({'conditions': 'CROSS COUNTRY', 'hours': float(cross_country_minutes) / 60})
     
     context = {
         'user': user,
@@ -896,38 +914,54 @@ def print_charts_view(request):
     if local_flights > 0:
         flight_type_data.append({'flight_type': 'Local', 'count': local_flights})
     
-    # Pilot role distribution based on time fields
-    pilot_role_data = []
-    
-    # Calculate hours by pilot role based on time fields (convert from minutes to hours)
-    pic_minutes = Flight.objects.filter(pilot=user, pic_time__gt=0).aggregate(total=Sum('pic_time'))['total'] or 0
-    copilot_minutes = Flight.objects.filter(pilot=user, copilot_time__gt=0).aggregate(total=Sum('copilot_time'))['total'] or 0
-    instructor_minutes = Flight.objects.filter(pilot=user, instructor_time__gt=0).aggregate(total=Sum('instructor_time'))['total'] or 0
-    multi_pilot_minutes = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).aggregate(total=Sum('multi_pilot_time'))['total'] or 0
-    
-    if pic_minutes > 0:
-        pilot_role_data.append({'pilot_role': 'PIC', 'hours': float(pic_minutes) / 60})
-    if copilot_minutes > 0:
-        pilot_role_data.append({'pilot_role': 'SIC', 'hours': float(copilot_minutes) / 60})
-    if instructor_minutes > 0:
-        pilot_role_data.append({'pilot_role': 'DUAL', 'hours': float(instructor_minutes) / 60})
-    if multi_pilot_minutes > 0:
-        pilot_role_data.append({'pilot_role': 'MULTI', 'hours': float(multi_pilot_minutes) / 60})
-    
-    # Define conditions_data based on pilot_role_data (for compatibility with frontend)
-    conditions_data = []
-    for item in pilot_role_data:
-        conditions_data.append({
-            'conditions': item['pilot_role'],
-            'hours': item['hours']
-        })
-    
     # Calculate additional statistics
     user_flights = Flight.objects.filter(pilot=user)
     total_flights = user_flights.count()
     # Use exact calculation for accuracy (same as dashboard)
     total_hours = sum(flight.exact_flight_minutes for flight in user_flights) / 60
     avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
+    
+    # Flight conditions distribution based on all time fields
+    conditions_data = []
+    
+    # Calculate hours by flight conditions (convert from minutes to hours)
+    pic_minutes = Flight.objects.filter(pilot=user, pic_time__gt=0).aggregate(total=Sum('pic_time'))['total'] or 0
+    copilot_minutes = Flight.objects.filter(pilot=user, copilot_time__gt=0).aggregate(total=Sum('copilot_time'))['total'] or 0
+    instructor_minutes = Flight.objects.filter(pilot=user, instructor_time__gt=0).aggregate(total=Sum('instructor_time'))['total'] or 0
+    multi_pilot_minutes = Flight.objects.filter(pilot=user, multi_pilot_time__gt=0).aggregate(total=Sum('multi_pilot_time'))['total'] or 0
+    night_minutes = Flight.objects.filter(pilot=user, night_time__gt=0).aggregate(total=Sum('night_time'))['total'] or 0
+    ifr_minutes = Flight.objects.filter(pilot=user, ifr_time__gt=0).aggregate(total=Sum('ifr_time'))['total'] or 0
+    single_engine_minutes = Flight.objects.filter(pilot=user, single_engine_time__gt=0).aggregate(total=Sum('single_engine_time'))['total'] or 0
+    multi_engine_minutes = Flight.objects.filter(pilot=user, multi_engine_time__gt=0).aggregate(total=Sum('multi_engine_time'))['total'] or 0
+    simulator_minutes = Flight.objects.filter(pilot=user, simulator_time__gt=0).aggregate(total=Sum('simulator_time'))['total'] or 0
+    
+    # Calculate cross-country hours using new logic (different departure/arrival aerodromes)
+    cross_country_minutes = 0
+    for flight in user_flights:
+        if flight.is_cross_country:
+            cross_country_minutes += flight.exact_flight_minutes
+    
+    # Add all flight conditions that have time > 0
+    if pic_minutes > 0:
+        conditions_data.append({'conditions': 'PIC', 'hours': float(pic_minutes) / 60})
+    if copilot_minutes > 0:
+        conditions_data.append({'conditions': 'SIC', 'hours': float(copilot_minutes) / 60})
+    if instructor_minutes > 0:
+        conditions_data.append({'conditions': 'DUAL', 'hours': float(instructor_minutes) / 60})
+    if multi_pilot_minutes > 0:
+        conditions_data.append({'conditions': 'MULTI', 'hours': float(multi_pilot_minutes) / 60})
+    if night_minutes > 0:
+        conditions_data.append({'conditions': 'NIGHT', 'hours': float(night_minutes) / 60})
+    if ifr_minutes > 0:
+        conditions_data.append({'conditions': 'IFR', 'hours': float(ifr_minutes) / 60})
+    if single_engine_minutes > 0:
+        conditions_data.append({'conditions': 'SINGLE ENGINE', 'hours': float(single_engine_minutes) / 60})
+    if multi_engine_minutes > 0:
+        conditions_data.append({'conditions': 'MULTI ENGINE', 'hours': float(multi_engine_minutes) / 60})
+    if simulator_minutes > 0:
+        conditions_data.append({'conditions': 'SIMULATOR', 'hours': float(simulator_minutes) / 60})
+    if cross_country_minutes > 0:
+        conditions_data.append({'conditions': 'CROSS COUNTRY', 'hours': float(cross_country_minutes) / 60})
     
     # Get most used aircraft
     most_used_aircraft = user_flights.annotate(
