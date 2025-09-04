@@ -122,8 +122,9 @@ make help  # Show all available commands
 ## 📸 Screenshots
 
 <div align="center">
-  <img src="https://via.placeholder.com/800x400/1e3a8a/ffffff?text=Dashboard+Preview" alt="Dashboard" width="400"/>
-  <img src="https://via.placeholder.com/800x400/3b82f6/ffffff?text=Flight+Logging" alt="Flight Logging" width="400"/>
+  <img src="static/images/dashboard.png" alt="Dashboard" width="400"/>
+  <img src="static/images/flight-list.png" alt="Flight Logging" width="400"/>
+  <img src="static/images/charts.png" alt="Flight Charts" width="400"/>
 </div>
 
 ## 🌟 Key Features in Detail
