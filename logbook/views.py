@@ -221,11 +221,13 @@ def dashboard(request):
         month_end = datetime(year, month, last_day).date()
         
         # Query flights for this month
-        month_hours = Flight.objects.filter(
+        # Use exact calculation for accuracy (same as dashboard)
+        month_flights = Flight.objects.filter(
             pilot=user,
             date__gte=month_start,
             date__lte=month_end
-        ).aggregate(total=Sum('total_time'))['total'] or 0
+        )
+        month_hours = sum(flight.exact_flight_minutes for flight in month_flights) / 60
         
         monthly_hours.append({
             'month': month_start.strftime('%b %Y'),
@@ -359,7 +361,8 @@ class FlightListView(LoginRequiredMixin, ListView):
         
         # Calculate statistics for the filtered flights
         context['total_flights'] = filtered_queryset.count()
-        context['total_hours'] = filtered_queryset.aggregate(total=Sum('total_time'))['total'] or 0
+        # Use exact calculation for accuracy (same as dashboard)
+        context['total_hours'] = sum(flight.exact_flight_minutes for flight in filtered_queryset) / 60
         # Convert minutes to hours for display
         total_night_minutes = filtered_queryset.aggregate(total=Sum('night_time'))['total'] or 0
         total_pic_minutes = filtered_queryset.aggregate(total=Sum('pic_time'))['total'] or 0
@@ -495,7 +498,8 @@ class AircraftListView(LoginRequiredMixin, ListView):
         # Calculate statistics for the current user's flights
         user_flights = Flight.objects.filter(pilot=self.request.user)
         total_flights = user_flights.count()
-        total_hours = user_flights.aggregate(total=Sum('total_time'))['total'] or 0
+        # Use exact calculation for accuracy (same as dashboard)
+        total_hours = sum(flight.exact_flight_minutes for flight in user_flights) / 60
         
         # Calculate average hours per aircraft
         aircraft_count = Aircraft.objects.count()
@@ -644,7 +648,8 @@ def charts_view(request):
             date__lte=month_end
         )
         
-        total_hours = month_flights.aggregate(total=Sum('total_time'))['total'] or 0
+        # Use exact calculation for accuracy (same as dashboard)
+        total_hours = sum(flight.exact_flight_minutes for flight in month_flights) / 60
         night_minutes = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
         cross_country_minutes = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
         
@@ -745,7 +750,8 @@ def charts_view(request):
     # Calculate additional statistics
     user_flights = Flight.objects.filter(pilot=user)
     total_flights = user_flights.count()
-    total_hours = user_flights.aggregate(total=Sum('total_time'))['total'] or 0
+    # Use exact calculation for accuracy (same as dashboard)
+    total_hours = sum(flight.exact_flight_minutes for flight in user_flights) / 60
     avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
     
     # Define conditions_data based on pilot_role_data (for compatibility with frontend)
@@ -864,7 +870,8 @@ def print_charts_view(request):
             date__lte=month_end
         )
         
-        total_hours = month_flights.aggregate(total=Sum('total_time'))['total'] or 0
+        # Use exact calculation for accuracy (same as dashboard)
+        total_hours = sum(flight.exact_flight_minutes for flight in month_flights) / 60
         night_minutes = month_flights.aggregate(total=Sum('night_time'))['total'] or 0
         cross_country_minutes = month_flights.aggregate(total=Sum('cross_country_time'))['total'] or 0
         
@@ -970,7 +977,8 @@ def print_charts_view(request):
     # Calculate additional statistics
     user_flights = Flight.objects.filter(pilot=user)
     total_flights = user_flights.count()
-    total_hours = user_flights.aggregate(total=Sum('total_time'))['total'] or 0
+    # Use exact calculation for accuracy (same as dashboard)
+    total_hours = sum(flight.exact_flight_minutes for flight in user_flights) / 60
     avg_flight_time = total_hours / total_flights if total_flights > 0 else 0
     
     # Get most used aircraft
