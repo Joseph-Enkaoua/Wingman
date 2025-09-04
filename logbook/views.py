@@ -32,6 +32,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from .models import Flight, Aircraft, PilotProfile
 from .forms import FlightForm, AircraftForm, PilotProfileForm, UserRegistrationForm, FlightSearchForm, PasswordResetRequestForm, SetPasswordForm
 from .decorators import adaptive_ratelimit, user_ratelimit
+from collections import defaultdict
 
 # Set up logger for this module
 import logging
@@ -45,6 +46,49 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+def calculate_aircraft_usage_accurate(flights_queryset, limit=None):
+    """
+    Calculate aircraft usage with exact flight time calculations for accuracy.
+    Returns a list of dictionaries with aircraft usage data.
+    """
+    # Group flights by aircraft registration
+    aircraft_totals = defaultdict(lambda: {
+        'registration': '',
+        'manufacturer': '',
+        'type': '',
+        'total_hours': 0,
+        'flight_count': 0
+    })
+    
+    for flight in flights_queryset:
+        # Determine aircraft registration
+        if flight.aircraft:
+            registration = flight.aircraft.registration
+            manufacturer = flight.aircraft.manufacturer
+            aircraft_type = flight.aircraft.type
+        elif flight.aircraft_registration:
+            registration = flight.aircraft_registration
+            manufacturer = flight.aircraft_manufacturer
+            aircraft_type = flight.aircraft_type
+        else:
+            registration = 'SIM'
+            manufacturer = 'Simulator'
+            aircraft_type = 'SIM'
+        
+        # Add to totals using exact calculation
+        aircraft_totals[registration]['registration'] = registration
+        aircraft_totals[registration]['manufacturer'] = manufacturer or ''
+        aircraft_totals[registration]['type'] = aircraft_type or ''
+        aircraft_totals[registration]['total_hours'] += flight.exact_flight_minutes / 60
+        aircraft_totals[registration]['flight_count'] += 1
+    
+    # Convert to list and sort by total hours
+    result = list(aircraft_totals.values())
+    result.sort(key=lambda x: x['total_hours'], reverse=True)
+    
+    return result[:limit] if limit else result
 
 
 class CustomLoginView(View):
@@ -166,25 +210,12 @@ def dashboard(request):
     if total_flights > 0:
         avg_flight_time = total_hours / total_flights
     
-    # Get most used aircraft
+    # Get most used aircraft using accurate calculation
     most_used_aircraft = "N/A"
     if total_flights > 0:
-        # Use COALESCE to handle both aircraft.registration and aircraft_registration fields
-        aircraft_usage = Flight.objects.filter(pilot=user).annotate(
-            registration=Case(
-                When(aircraft__isnull=False, then='aircraft__registration'),
-                When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
-                When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
-                default='aircraft_registration',
-                output_field=CharField(),
-            )
-        ).values('registration').annotate(
-            total_hours=Sum('total_time'),
-            flight_count=Count('id')
-        ).order_by('-flight_count', '-total_hours').first()
-        
-        if aircraft_usage:
-            most_used_aircraft = aircraft_usage['registration']
+        aircraft_usage_accurate = calculate_aircraft_usage_accurate(Flight.objects.filter(pilot=user), limit=1)
+        if aircraft_usage_accurate:
+            most_used_aircraft = aircraft_usage_accurate[0]['registration']
     
     # Calculate landing statistics
     landing_stats = Flight.objects.filter(pilot=user).aggregate(
@@ -236,55 +267,8 @@ def dashboard(request):
     
     monthly_hours.reverse()
     
-    # Aircraft usage
-    aircraft_usage = Flight.objects.filter(pilot=user).annotate(
-        registration=Case(
-            When(aircraft__isnull=False, then='aircraft__registration'),
-            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
-            When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
-            default='aircraft_registration',
-            output_field=CharField(),
-        ),
-        manufacturer=Case(
-            When(aircraft__isnull=False, then='aircraft__manufacturer'),
-            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('Simulator')),
-            When(aircraft__isnull=True, aircraft_registration='', then=Value('Simulator')),
-            default='aircraft_manufacturer',
-            output_field=CharField(),
-        ),
-        type=Case(
-            When(aircraft__isnull=False, then='aircraft__type'),
-            default='aircraft_type',
-            output_field=CharField(),
-        )
-    ).values('registration', 'manufacturer', 'type').annotate(
-        total_hours=Sum('total_time'),
-        flight_count=Count('id')
-    ).order_by('-total_hours')[:5]
-    
-    # Clean up aircraft usage data to ensure we have meaningful information
-    cleaned_aircraft_usage = []
-    for item in aircraft_usage:
-        # Handle simulator flights (empty or null registration)
-        if not item['registration'] or item['registration'] == '':
-            item['registration'] = 'SIM'
-            item['manufacturer'] = 'Simulator'
-            item['type'] = 'SIM'
-        # If manufacturer or type is empty, try to get it from the Aircraft model
-        elif not item['manufacturer'] or not item['type']:
-            # Look for an Aircraft with this registration
-            try:
-                aircraft = Aircraft.objects.get(registration=item['registration'])
-                item['manufacturer'] = item['manufacturer'] or aircraft.manufacturer
-                item['type'] = item['type'] or aircraft.type
-            except Aircraft.DoesNotExist:
-                # If no Aircraft found, use default values
-                item['manufacturer'] = item['manufacturer'] or 'Unknown'
-                item['type'] = item['type'] or 'Unknown'
-        
-        cleaned_aircraft_usage.append(item)
-    
-    aircraft_usage = cleaned_aircraft_usage
+    # Aircraft usage using accurate calculation
+    aircraft_usage = calculate_aircraft_usage_accurate(Flight.objects.filter(pilot=user), limit=5)
     
     context = {
         'pilot_profile': pilot_profile,
@@ -662,48 +646,19 @@ def charts_view(request):
     
     monthly_data.reverse()
     
-    # Aircraft usage
-    aircraft_data = Flight.objects.filter(pilot=user).annotate(
-        registration=Case(
-            When(aircraft__isnull=False, then='aircraft__registration'),
-            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
-            When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
-            default='aircraft_registration',
-            output_field=CharField(),
-        ),
-        manufacturer=Case(
-            When(aircraft__isnull=False, then='aircraft__manufacturer'),
-            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('Simulator')),
-            When(aircraft__isnull=True, aircraft_registration='', then=Value('Simulator')),
-            default='aircraft_manufacturer',
-            output_field=CharField(),
-        ),
-        type=Case(
-            When(aircraft__isnull=False, then='aircraft__type'),
-            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
-            When(aircraft__isnull=True, aircraft_registration='', then=Value('SIM')),
-            default='aircraft_type',
-            output_field=CharField(),
-        )
-    ).values(
-        'registration', 
-        'manufacturer', 
-        'type'
-    ).annotate(
-        total_hours=Sum('total_time'),
-        flight_count=Count('id')
-    ).order_by('-total_hours')
+    # Aircraft usage using accurate calculation
+    aircraft_usage_accurate = calculate_aircraft_usage_accurate(Flight.objects.filter(pilot=user))
     
-    # Convert Decimal values to float for JSON serialization
+    # Convert to format expected by charts
     aircraft_data = [
         {
             'aircraft__registration': item['registration'],
             'aircraft__manufacturer': item['manufacturer'] or '',
             'aircraft__type': item['type'] or '',
-            'total_hours': float(item['total_hours'] or 0),
+            'total_hours': float(item['total_hours']),
             'flight_count': item['flight_count']
         }
-        for item in aircraft_data
+        for item in aircraft_usage_accurate
     ]
     
     # Engine type distribution
@@ -884,45 +839,19 @@ def print_charts_view(request):
     
     monthly_data.reverse()
     
-    # Aircraft usage
-    aircraft_data = Flight.objects.filter(pilot=user).annotate(
-        registration=Case(
-            When(aircraft__isnull=False, then='aircraft__registration'),
-            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
-            default='aircraft_registration',
-            output_field=CharField(),
-        ),
-        manufacturer=Case(
-            When(aircraft__isnull=False, then='aircraft__manufacturer'),
-            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('Simulator')),
-            default=Value(''),
-            output_field=CharField(),
-        ),
-        type=Case(
-            When(aircraft__isnull=False, then='aircraft__type'),
-            When(aircraft__isnull=True, aircraft_registration__isnull=True, then=Value('SIM')),
-            default=Value(''),
-            output_field=CharField(),
-        )
-    ).values(
-        'registration', 
-        'manufacturer', 
-        'type'
-    ).annotate(
-        total_hours=Sum('total_time'),
-        flight_count=Count('id')
-    ).order_by('-total_hours')
+    # Aircraft usage using accurate calculation
+    aircraft_usage_accurate = calculate_aircraft_usage_accurate(Flight.objects.filter(pilot=user))
     
-    # Convert Decimal values to float for JSON serialization
+    # Convert to format expected by charts
     aircraft_data = [
         {
             'aircraft__registration': item['registration'],
             'aircraft__manufacturer': item['manufacturer'] or '',
             'aircraft__type': item['type'] or '',
-            'total_hours': float(item['total_hours'] or 0),
+            'total_hours': float(item['total_hours']),
             'flight_count': item['flight_count']
         }
-        for item in aircraft_data
+        for item in aircraft_usage_accurate
     ]
     
     # Engine type distribution
