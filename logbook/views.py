@@ -1570,19 +1570,29 @@ def password_reset_request(request):
                 try:
                     from django.core.mail import EmailMessage
                     from django.conf import settings
+                    import socket
                     
-                    # Create email message with timeout settings
-                    email_msg = EmailMessage(
-                        subject=subject,
-                        body=message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[email],
-                    )
-                    email_msg.content_subtype = "html"  # Send as HTML
+                    # Set socket timeout for email operations
+                    original_timeout = socket.getdefaulttimeout()
+                    socket.setdefaulttimeout(getattr(settings, 'EMAIL_CONNECTION_TIMEOUT', 10))
                     
-                    # Send with timeout
-                    email_msg.send(fail_silently=False)
-                    logger.info(f'Password reset email sent successfully to {email}')
+                    try:
+                        # Create email message with timeout settings
+                        email_msg = EmailMessage(
+                            subject=subject,
+                            body=message,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            to=[email],
+                        )
+                        email_msg.content_subtype = "html"  # Send as HTML
+                        
+                        # Send with timeout
+                        email_msg.send(fail_silently=False)
+                        logger.info(f'Password reset email sent successfully to {email}')
+                    finally:
+                        # Restore original socket timeout
+                        socket.setdefaulttimeout(original_timeout)
+                        
                 except Exception as e:
                     logger.error(f'Failed to send password reset email to {email}: {str(e)}')
                     messages.error(request, 'Failed to send password reset email. Please try again later.')
