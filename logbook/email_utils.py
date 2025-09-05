@@ -2,6 +2,7 @@
 Email utility functions for sending emails via Resend
 """
 import os
+import time
 import logging
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -107,6 +108,7 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
         email_data["headers"] = {
             "X-Mailer": "Wingman Flight Logbook",
             "X-Priority": "3",  # Normal priority
+            "X-Entity-Ref-ID": f"wingman-{to_email.split('@')[0]}-{int(time.time())}",  # Unique reference
         }
         
         # Log email data (without sensitive content)
@@ -118,8 +120,10 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
         # Log the full response for debugging
         logger.debug(f'Resend API response: {response}')
         
-        if response and hasattr(response, 'id'):
-            logger.info(f'Email sent successfully via Resend. Email ID: {response.id}, To: {to_email}')
+        # Check if response contains an email ID (success indicator)
+        if response and (hasattr(response, 'id') or (isinstance(response, dict) and 'id' in response)):
+            email_id = response.id if hasattr(response, 'id') else response['id']
+            logger.info(f'Email sent successfully via Resend. Email ID: {email_id}, To: {to_email}')
             return True
         else:
             logger.error(f'Failed to send email via Resend. Response: {response}')
