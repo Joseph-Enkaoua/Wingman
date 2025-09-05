@@ -1568,26 +1568,21 @@ def password_reset_request(request):
                 reset_url = request.build_absolute_uri(
                     reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
                 )
-                # Email content
-                subject = 'Password Reset Request - Wingman Flight Logbook'
-                message = render_to_string('logbook/password_reset_email.html', {
-                    'user': user,
-                    'reset_url': reset_url,
-                })
-                # Send email (simplified for testing)
-                try:
-                    send_mail(
-                        subject,
-                        message,
-                        None,  # Use DEFAULT_FROM_EMAIL
-                        [email],
-                        fail_silently=False,
-                    )
-                    logger.info(f'Password reset email sent successfully to {email}')   
-                except Exception as e:
-                    logger.error(f'Failed to send password reset email to {email}: {str(e)}')
+                # Send email using production email service
+                print(f"🔍 [DEBUG] About to import email_service")
+                from .email_service import email_service
+                print(f"🔍 [DEBUG] email_service imported successfully")
+                
+                print(f"🔍 [DEBUG] Calling email_service.send_password_reset_email()")
+                email_sent = email_service.send_password_reset_email(user, reset_url)
+                print(f"🔍 [DEBUG] email_service.send_password_reset_email() returned: {email_sent}")
+                
+                if not email_sent:
+                    print(f"❌ [DEBUG] Email sending failed, showing error message")
                     messages.error(request, 'Failed to send password reset email. Please try again later.')
                     return render(request, 'logbook/password_reset_request.html', {'form': form})
+                
+                print(f"🔍 [DEBUG] Email sending successful, showing success message")
                 
                 messages.success(request, 'Password reset email has been sent. Please check your inbox.')
                 return redirect('login')
