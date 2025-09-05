@@ -1545,24 +1545,16 @@ def api_flight_stats(request):
 def password_reset_request(request):
     """Handle password reset request"""
     if request.method == 'POST':
-        print("Password reset request received")
         # Check rate limiting and show messages instead of blocking
         was_limited = getattr(request, 'limited', False)
-        print(f"🔍 [DEBUG] Rate limit check - was_limited: {was_limited}")
-        print(f"🔍 [DEBUG] Rate limit check - request.limited: {getattr(request, 'limited', 'NOT SET')}")
-        print(f"🔍 [DEBUG] Rate limit check - IP: {get_client_ip(request)}")
-        
         if was_limited:
-            print(f"🔍 [DEBUG] Rate limit exceeded, showing error message")
             logger.warning(f'Password reset rate limit exceeded from IP: {get_client_ip(request)}')
             messages.error(request, 'Too many password reset attempts. Please wait a few hours before trying again for security reasons.')
             form = PasswordResetRequestForm()
             return render(request, 'logbook/password_reset_request.html', {'form': form})
-        print("Password reset request not limited")
         form = PasswordResetRequestForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
-            print("Email:", email)
             try:
                 user = User.objects.get(email=email, is_active=True)
                 # Generate token and send email
@@ -1573,21 +1565,20 @@ def password_reset_request(request):
                 reset_url = request.build_absolute_uri(
                     reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
                 )
-                # Send email using production email service
-                print(f"🔍 [DEBUG] About to import email_service")
-                from .email_service import email_service
-                print(f"🔍 [DEBUG] email_service imported successfully")
-                
-                print(f"🔍 [DEBUG] Calling email_service.send_password_reset_email()")
-                email_sent = email_service.send_password_reset_email(user, reset_url)
-                print(f"🔍 [DEBUG] email_service.send_password_reset_email() returned: {email_sent}")
-                
-                if not email_sent:
-                    print(f"❌ [DEBUG] Email sending failed, showing error message")
+                # Send password reset email
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        None,  # Use DEFAULT_FROM_EMAIL
+                        [email],
+                        fail_silently=False,
+                    )
+                    logger.info(f'Password reset email sent successfully to {email}')
+                except Exception as e:
+                    logger.error(f'Failed to send password reset email to {email}: {str(e)}')
                     messages.error(request, 'Failed to send password reset email. Please try again later.')
                     return render(request, 'logbook/password_reset_request.html', {'form': form})
-                
-                print(f"🔍 [DEBUG] Email sending successful, showing success message")
                 
                 messages.success(request, 'Password reset email has been sent. Please check your inbox.')
                 return redirect('login')

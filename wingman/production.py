@@ -194,13 +194,8 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 EMAIL_TIMEOUT = 30  # 30 seconds timeout for email operations
 EMAIL_CONNECTION_TIMEOUT = 10  # 10 seconds connection timeout
 
-# Gmail-specific optimizations
+# Email optimizations
 EMAIL_SUBJECT_PREFIX = '[Wingman] '  # Add prefix to all emails
-
-# Additional Gmail settings for better connectivity
-EMAIL_SSL_CERTFILE = None
-EMAIL_SSL_KEYFILE = None
-EMAIL_SSL_CAFILE = None
 
 # Validate required email settings
 if not all([EMAIL_HOST_USER, EMAIL_HOST_PASSWORD]):
