@@ -145,12 +145,22 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# In production, we use Resend API directly (not Django's SMTP backend)
+# Django's email backend is only used in development for console logging
 
 # Resend Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@wingman.cyou')
+
+# Use subdomain for better deliverability and reputation management
+# This helps segment your sending by purpose and protects your main domain reputation
+# Using 'notifications' instead of 'noreply' for better deliverability
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Reply-To email for better trust and deliverability
+# This allows recipients to reply, increasing trust and reducing spam likelihood
+# Must use the same verified domain as the sender
+REPLY_TO_EMAIL = os.environ.get('REPLY_TO_EMAIL', 'support@mail.wingman.cyou')
 
 # Logging configuration for security monitoring
 LOGGING = {

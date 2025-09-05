@@ -81,7 +81,7 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
             return False
             
         if not from_email:
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@wingman.cyou')
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
         
         # Log the attempt with sanitized data
         logger.info(f'Attempting to send email via Resend to {to_email} from {from_email}')
@@ -97,6 +97,17 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
         # Add text content if provided
         if text_content:
             email_data["text"] = text_content
+        
+        # Add Reply-To header to improve deliverability and trust
+        # This allows recipients to reply to emails, increasing trust
+        reply_to_email = getattr(settings, 'REPLY_TO_EMAIL', 'support@mail.wingman.cyou')
+        email_data["reply_to"] = reply_to_email
+        
+        # Add headers for better deliverability
+        email_data["headers"] = {
+            "X-Mailer": "Wingman Flight Logbook",
+            "X-Priority": "3",  # Normal priority
+        }
         
         # Log email data (without sensitive content)
         logger.debug(f'Email data prepared: from={from_email}, to={to_email}, subject={subject}')
@@ -140,7 +151,10 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
 
 def send_email_via_django(to_email, subject, html_content, text_content=None, from_email=None):
     """
-    Send email using Django's built-in email backend (fallback method)
+    Send email using Django's built-in email backend (development only)
+    
+    This function is only used in development when EMAIL_BACKEND is set to console.
+    In production, all emails are sent via Resend API.
     
     Args:
         to_email (str): Recipient email address
@@ -154,9 +168,9 @@ def send_email_via_django(to_email, subject, html_content, text_content=None, fr
     """
     try:
         if not from_email:
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@wingman.cyou')
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
         
-        # Send email via Django
+        # Send email via Django (will print to console in development)
         send_mail(
             subject=subject,
             message=text_content or html_content,
@@ -176,7 +190,7 @@ def send_email_via_django(to_email, subject, html_content, text_content=None, fr
 
 def send_email(to_email, subject, html_content, text_content=None, from_email=None, use_resend=True):
     """
-    Send email using either Resend API or Django's email backend with fallback
+    Send email using Resend API (production) or Django console backend (development)
     
     Args:
         to_email (str): Recipient email address
@@ -189,20 +203,13 @@ def send_email(to_email, subject, html_content, text_content=None, from_email=No
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
-    # Try Resend first if configured and requested
+    # In production: Always use Resend API if configured
     if use_resend and os.getenv('RESEND_API_KEY'):
         logger.info(f'Attempting to send email via Resend to {to_email}')
-        success = send_email_via_resend(to_email, subject, html_content, text_content, from_email)
-        
-        if success:
-            return True
-        else:
-            logger.warning(f'Resend failed, attempting fallback to Django email backend for {to_email}')
-            # Fallback to Django email backend
-            return send_email_via_django(to_email, subject, html_content, text_content, from_email)
+        return send_email_via_resend(to_email, subject, html_content, text_content, from_email)
     else:
-        # Use Django email backend directly
-        logger.info(f'Sending email via Django backend to {to_email}')
+        # In development: Use Django console backend for logging
+        logger.info(f'Sending email via Django console backend to {to_email}')
         return send_email_via_django(to_email, subject, html_content, text_content, from_email)
 
 
@@ -226,22 +233,29 @@ def send_password_reset_email(user, reset_url):
         
         # Create plain text version
         text_content = f"""
+PASSWORD RESET REQUEST - WINGMAN FLIGHT LOGBOOK
+
 Hello {user.get_full_name() or user.username},
 
 You're receiving this email because you requested a password reset for your Wingman Flight Logbook account.
 
-Please click the link below to reset your password:
+TO RESET YOUR PASSWORD:
+Click the link below or copy and paste it into your browser:
 {reset_url}
 
-If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.
+IMPORTANT SECURITY INFORMATION:
+- This link will expire in 24 hours for security reasons
+- If you didn't request this password reset, you can safely ignore this email
+- Your password will remain unchanged unless you use the link above
 
-This link will expire in 24 hours for security reasons.
+If you have any questions or need assistance, please contact our support team.
 
 Best regards,
 The Wingman Team
 
 ---
-This is an automated message, please do not reply to this email.
+This email was sent from Wingman Flight Logbook ({user.email})
+If you have questions, please reply to this email or contact us at support@mail.wingman.cyou
         """
         
         subject = "Password Reset Request - Wingman Flight Logbook"
