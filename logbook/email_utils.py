@@ -35,29 +35,24 @@ def test_resend_connection():
             return result
         
         # Test API key by making a simple request
-        # We'll try to get domains to test the connection
         try:
             domains = resend.Domains.list()
             result['api_key_valid'] = True
-            logger.info('Resend API connection test successful')
         except Exception as e:
             result['error'] = f'Resend API connection failed: {str(e)}'
-            logger.error(f'Resend API connection test failed: {str(e)}')
             return result
         
         # Check if we have a configured domain
-        default_from = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@wingman.cyou')
+        default_from = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
         if '@' in default_from:
             domain = default_from.split('@')[1]
             result['domain_configured'] = True
             result['configured_domain'] = domain
-            logger.info(f'Using domain: {domain}')
         
         return result
         
     except Exception as e:
         result['error'] = f'Unexpected error during Resend connection test: {str(e)}'
-        logger.error(f'Unexpected error during Resend connection test: {str(e)}')
         return result
 
 
@@ -84,9 +79,6 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
         if not from_email:
             from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
         
-        # Log the attempt with sanitized data
-        logger.info(f'Attempting to send email via Resend to {to_email} from {from_email}')
-        
         # Prepare email data
         email_data = {
             "from": from_email,
@@ -100,7 +92,6 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
             email_data["text"] = text_content
         
         # Add Reply-To header to improve deliverability and trust
-        # This allows recipients to reply to emails, increasing trust
         reply_to_email = getattr(settings, 'REPLY_TO_EMAIL', 'support@mail.wingman.cyou')
         email_data["reply_to"] = reply_to_email
         
@@ -111,45 +102,18 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
             "X-Entity-Ref-ID": f"wingman-{to_email.split('@')[0]}-{int(time.time())}",  # Unique reference
         }
         
-        # Log email data (without sensitive content)
-        logger.debug(f'Email data prepared: from={from_email}, to={to_email}, subject={subject}')
-        
         # Send email via Resend
         response = resend.Emails.send(email_data)
         
-        # Log the full response for debugging
-        logger.debug(f'Resend API response: {response}')
-        
         # Check if response contains an email ID (success indicator)
         if response and (hasattr(response, 'id') or (isinstance(response, dict) and 'id' in response)):
-            email_id = response.id if hasattr(response, 'id') else response['id']
-            logger.info(f'Email sent successfully via Resend. Email ID: {email_id}, To: {to_email}')
             return True
         else:
             logger.error(f'Failed to send email via Resend. Response: {response}')
             return False
             
     except Exception as e:
-        # Enhanced error logging
-        error_msg = str(e)
-        error_type = type(e).__name__
-        
-        logger.error(f'Error sending email via Resend to {to_email}: {error_type}: {error_msg}')
-        
-        # Log additional context for debugging
-        logger.error(f'Email context - From: {from_email}, Subject: {subject}')
-        logger.error(f'Resend API key present: {bool(resend.api_key)}')
-        
-        # Check for specific error types
-        if '401' in error_msg or 'unauthorized' in error_msg.lower():
-            logger.error('Resend API authentication failed. Check your API key.')
-        elif '403' in error_msg or 'forbidden' in error_msg.lower():
-            logger.error('Resend API access forbidden. Check your domain verification and API permissions.')
-        elif '429' in error_msg or 'rate limit' in error_msg.lower():
-            logger.error('Resend API rate limit exceeded.')
-        elif '422' in error_msg or 'validation' in error_msg.lower():
-            logger.error('Resend API validation error. Check email format and content.')
-        
+        logger.error(f'Error sending email via Resend to {to_email}: {str(e)}')
         return False
 
 
@@ -184,7 +148,6 @@ def send_email_via_django(to_email, subject, html_content, text_content=None, fr
             fail_silently=False
         )
         
-        logger.info(f'Email sent successfully via Django to {to_email}')
         return True
         
     except Exception as e:
@@ -209,11 +172,9 @@ def send_email(to_email, subject, html_content, text_content=None, from_email=No
     """
     # In production: Always use Resend API if configured
     if use_resend and os.getenv('RESEND_API_KEY'):
-        logger.info(f'Attempting to send email via Resend to {to_email}')
         return send_email_via_resend(to_email, subject, html_content, text_content, from_email)
     else:
         # In development: Use Django console backend for logging
-        logger.info(f'Sending email via Django console backend to {to_email}')
         return send_email_via_django(to_email, subject, html_content, text_content, from_email)
 
 
