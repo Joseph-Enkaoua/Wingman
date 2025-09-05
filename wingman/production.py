@@ -152,13 +152,6 @@ RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@wingman.cyou')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-# Email settings for production (when using Resend SMTP)
-EMAIL_HOST = 'smtp.resend.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'resend'
-EMAIL_HOST_PASSWORD = RESEND_API_KEY
-
 # Logging configuration for security monitoring
 LOGGING = {
     'version': 1,
