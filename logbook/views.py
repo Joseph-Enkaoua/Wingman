@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -18,10 +19,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.contrib.auth.models import User
-from django.contrib.auth import update_session_auth_hash
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
@@ -31,17 +29,14 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 from .models import Flight, Aircraft, PilotProfile
 from .forms import FlightForm, AircraftForm, PilotProfileForm, UserRegistrationForm, FlightSearchForm, PasswordResetRequestForm, SetPasswordForm
-from .decorators import adaptive_ratelimit, user_ratelimit
+from .email_utils import send_password_reset_email, send_welcome_email
 from collections import defaultdict
 
 import logging
-import resend
 import os
 
 # Set up logger for this module
 logger = logging.getLogger(__name__)
-
-resend.api_key = os.getenv('RESEND_API_KEY')
 
 def get_client_ip(request):
     """Get client IP for logging purposes"""
@@ -158,6 +153,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             logger.info(f'Successful registration for user: {user.username} from IP: {get_client_ip(request)}')
+            
             messages.success(request, 'Account created successfully!')
             return redirect('dashboard')
         else:
@@ -1568,23 +1564,16 @@ def password_reset_request(request):
                 reset_url = request.build_absolute_uri(
                     reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
                 )
-                # Send password reset email
+                
+                # Send password reset email using our utility function
                 try:
-                    # send_mail(
-                    #     subject,
-                    #     message,
-                    #     None,  # Use DEFAULT_FROM_EMAIL
-                    #     [email],
-                    #     fail_silently=False,
-                    # )
-
-                    r = resend.Emails.send({
-                    "from": "onboarding@resend.dev",
-                    "to": "henkaoua@student.42lausanne.ch",
-                    "subject": "Hello World",
-                    "html": "<p>Congrats on sending your <strong>first email</strong>!</p>"
-                    })
-                    logger.info(f'Password reset email sent successfully to {email}')
+                    success = send_password_reset_email(user, reset_url)
+                    if success:
+                        logger.info(f'Password reset email sent successfully to {email}')
+                    else:
+                        logger.error(f'Failed to send password reset email to {email}')
+                        messages.error(request, 'Failed to send password reset email. Please try again later.')
+                        return render(request, 'logbook/password_reset_request.html', {'form': form})
                 except Exception as e:
                     logger.error(f'Failed to send password reset email to {email}: {str(e)}')
                     messages.error(request, 'Failed to send password reset email. Please try again later.')
@@ -1646,6 +1635,66 @@ def terms_of_service(request):
         'last_updated': timezone.now().strftime('%B %d, %Y')
     }
     return render(request, 'terms_of_service.html', context)
+
+
+@login_required
+def test_email_view(request):
+    """Test email sending functionality (for development only)"""
+    if not settings.DEBUG:
+        messages.error(request, 'Email testing is only available in development mode.')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        from .email_utils import send_email
+        
+        # Send a test email
+        test_email = request.user.email
+        subject = "Test Email from Wingman"
+        html_content = """
+        <html>
+        <body>
+            <h2>Test Email</h2>
+            <p>This is a test email from your Wingman Flight Logbook application.</p>
+            <p>If you're receiving this, your email configuration is working correctly!</p>
+            <p>Best regards,<br>Wingman Team</p>
+        </body>
+        </html>
+        """
+        
+        text_content = """
+Test Email
+
+This is a test email from your Wingman Flight Logbook application.
+
+If you're receiving this, your email configuration is working correctly!
+
+Best regards,
+Wingman Team
+        """
+        
+        try:
+            success = send_email(
+                to_email=test_email,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content
+            )
+            
+            if success:
+                messages.success(request, f'Test email sent successfully to {test_email}!')
+            else:
+                messages.error(request, 'Failed to send test email. Check your configuration.')
+                
+        except Exception as e:
+            logger.error(f'Error sending test email: {str(e)}')
+            messages.error(request, f'Error sending test email: {str(e)}')
+    
+    context = {
+        'resend_api_key': bool(os.getenv('RESEND_API_KEY')),
+        'default_from_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not set'),
+        'email_backend': getattr(settings, 'EMAIL_BACKEND', 'Not set'),
+    }
+    return render(request, 'logbook/test_email.html', context)
 
 
 

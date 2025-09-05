@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Test Email - Wingman{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Test Email Functionality</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        This page allows you to test the email sending functionality in development mode.
+                        A test email will be sent to your registered email address: <strong>{{ user.email }}</strong>
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-envelope"></i> Send Test Email
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <h5>Email Configuration Status:</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Resend API Key:</strong> 
+                                {% if resend_api_key %}
+                                    <span class="text-success">✓ Configured</span>
+                                {% else %}
+                                    <span class="text-danger">✗ Not configured</span>
+                                {% endif %}
+                            </li>
+                            <li><strong>Default From Email:</strong> {{ default_from_email|default:"Not set" }}</li>
+                            <li><strong>Email Backend:</strong> {{ email_backend }}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>Instructions:</h5>
+                        <ol>
+                            <li>Make sure you have set your <code>RESEND_API_KEY</code> environment variable</li>
+                            <li>Configure your domain in the Resend dashboard</li>
+                            <li>Set your <code>DEFAULT_FROM_EMAIL</code> to use your verified domain</li>
+                            <li>Click "Send Test Email" to test the functionality</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
