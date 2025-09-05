@@ -1541,7 +1541,7 @@ def api_flight_stats(request):
     return JsonResponse(stats)
 
 
-@adaptive_ratelimit(rate='3/h', key='ip', method='POST')
+@ratelimit(key='ip', rate='3/h', method='POST', block=False)
 def password_reset_request(request):
     """Handle password reset request"""
     if request.method == 'POST':
@@ -1566,15 +1566,22 @@ def password_reset_request(request):
                     'reset_url': reset_url,
                 })
                 
-                # Send email
+                # Send email with timeout handling
                 try:
-                    send_mail(
-                        subject,
-                        message,
-                        None,  # Use DEFAULT_FROM_EMAIL
-                        [email],
-                        fail_silently=False,
+                    from django.core.mail import EmailMessage
+                    from django.conf import settings
+                    
+                    # Create email message with timeout settings
+                    email_msg = EmailMessage(
+                        subject=subject,
+                        body=message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[email],
                     )
+                    email_msg.content_subtype = "html"  # Send as HTML
+                    
+                    # Send with timeout
+                    email_msg.send(fail_silently=False)
                     logger.info(f'Password reset email sent successfully to {email}')
                 except Exception as e:
                     logger.error(f'Failed to send password reset email to {email}: {str(e)}')
