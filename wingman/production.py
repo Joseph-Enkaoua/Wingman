@@ -144,6 +144,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Email Configuration for Production
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Resend Configuration
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@wingman.cyou')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Email settings for production (when using Resend SMTP)
+EMAIL_HOST = 'smtp.resend.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'resend'
+EMAIL_HOST_PASSWORD = RESEND_API_KEY
+
 # Logging configuration for security monitoring
 LOGGING = {
     'version': 1,
@@ -172,6 +187,16 @@ LOGGING = {
         'django': {
             'handlers': ['console'],
             'level': 'INFO',
+        },
+        'logbook': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'logbook.email_utils': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
     'root': {
