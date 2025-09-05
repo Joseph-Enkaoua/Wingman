@@ -1545,6 +1545,7 @@ def api_flight_stats(request):
 def password_reset_request(request):
     """Handle password reset request"""
     if request.method == 'POST':
+        print("Password reset request received")
         # Check rate limiting and show messages instead of blocking
         was_limited = getattr(request, 'limited', False)
         if was_limited:
@@ -1552,9 +1553,11 @@ def password_reset_request(request):
             messages.error(request, 'Too many password reset attempts. Please wait a few hours before trying again for security reasons.')
             form = PasswordResetRequestForm()
             return render(request, 'logbook/password_reset_request.html', {'form': form})
+        print("Password reset request not limited")
         form = PasswordResetRequestForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
+            print("Email:", email)
             try:
                 user = User.objects.get(email=email, is_active=True)
                 # Generate token and send email
@@ -1565,41 +1568,22 @@ def password_reset_request(request):
                 reset_url = request.build_absolute_uri(
                     reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
                 )
-                
                 # Email content
                 subject = 'Password Reset Request - Wingman Flight Logbook'
                 message = render_to_string('logbook/password_reset_email.html', {
                     'user': user,
                     'reset_url': reset_url,
                 })
-                
-                # Send email with timeout handling
+                # Send email (simplified for testing)
                 try:
-                    from django.core.mail import EmailMessage
-                    from django.conf import settings
-                    import socket
-                    
-                    # Set socket timeout for email operations
-                    original_timeout = socket.getdefaulttimeout()
-                    socket.setdefaulttimeout(getattr(settings, 'EMAIL_CONNECTION_TIMEOUT', 10))
-                    
-                    try:
-                        # Create email message with timeout settings
-                        email_msg = EmailMessage(
-                            subject=subject,
-                            body=message,
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            to=[email],
-                        )
-                        email_msg.content_subtype = "html"  # Send as HTML
-                        
-                        # Send with timeout
-                        email_msg.send(fail_silently=False)
-                        logger.info(f'Password reset email sent successfully to {email}')
-                    finally:
-                        # Restore original socket timeout
-                        socket.setdefaulttimeout(original_timeout)
-                        
+                    send_mail(
+                        subject,
+                        message,
+                        None,  # Use DEFAULT_FROM_EMAIL
+                        [email],
+                        fail_silently=False,
+                    )
+                    logger.info(f'Password reset email sent successfully to {email}')   
                 except Exception as e:
                     logger.error(f'Failed to send password reset email to {email}: {str(e)}')
                     messages.error(request, 'Failed to send password reset email. Please try again later.')
