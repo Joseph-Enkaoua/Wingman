@@ -1548,7 +1548,12 @@ def password_reset_request(request):
         print("Password reset request received")
         # Check rate limiting and show messages instead of blocking
         was_limited = getattr(request, 'limited', False)
+        print(f"🔍 [DEBUG] Rate limit check - was_limited: {was_limited}")
+        print(f"🔍 [DEBUG] Rate limit check - request.limited: {getattr(request, 'limited', 'NOT SET')}")
+        print(f"🔍 [DEBUG] Rate limit check - IP: {get_client_ip(request)}")
+        
         if was_limited:
+            print(f"🔍 [DEBUG] Rate limit exceeded, showing error message")
             logger.warning(f'Password reset rate limit exceeded from IP: {get_client_ip(request)}')
             messages.error(request, 'Too many password reset attempts. Please wait a few hours before trying again for security reasons.')
             form = PasswordResetRequestForm()

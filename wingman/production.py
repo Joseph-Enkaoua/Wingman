@@ -183,8 +183,9 @@ LOGGING = {
 # Email Configuration - Gmail SMTP (Production Ready)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
@@ -194,8 +195,12 @@ EMAIL_TIMEOUT = 30  # 30 seconds timeout for email operations
 EMAIL_CONNECTION_TIMEOUT = 10  # 10 seconds connection timeout
 
 # Gmail-specific optimizations
-EMAIL_USE_SSL = False  # Use TLS instead of SSL for Gmail
 EMAIL_SUBJECT_PREFIX = '[Wingman] '  # Add prefix to all emails
+
+# Additional Gmail settings for better connectivity
+EMAIL_SSL_CERTFILE = None
+EMAIL_SSL_KEYFILE = None
+EMAIL_SSL_CAFILE = None
 
 # Validate required email settings
 if not all([EMAIL_HOST_USER, EMAIL_HOST_PASSWORD]):

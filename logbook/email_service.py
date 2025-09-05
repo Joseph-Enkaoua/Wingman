@@ -24,6 +24,7 @@ class EmailService:
         Send password reset email with proper error handling
         """
         print(f"🔍 [DEBUG] Starting email send process for {user.email}")
+        print(f"🔍 [DEBUG] Email config - BACKEND: {getattr(settings, 'EMAIL_BACKEND', 'NOT SET')}")
         print(f"🔍 [DEBUG] Email config - HOST: {getattr(settings, 'EMAIL_HOST', 'NOT SET')}")
         print(f"🔍 [DEBUG] Email config - PORT: {getattr(settings, 'EMAIL_PORT', 'NOT SET')}")
         print(f"🔍 [DEBUG] Email config - USE_TLS: {getattr(settings, 'EMAIL_USE_TLS', 'NOT SET')}")
@@ -87,7 +88,13 @@ class EmailService:
                 
                 try:
                     print(f"🔍 [DEBUG] About to call email_msg.send()")
-                    email_msg.send(fail_silently=False)
+                    print(f"🔍 [DEBUG] Email details - From: {email_msg.from_email}")
+                    print(f"🔍 [DEBUG] Email details - To: {email_msg.to}")
+                    print(f"🔍 [DEBUG] Email details - Subject: {email_msg.subject}")
+                    print(f"🔍 [DEBUG] Email details - Body length: {len(email_msg.body)}")
+                    
+                    result = email_msg.send(fail_silently=False)
+                    print(f"🔍 [DEBUG] email_msg.send() returned: {result}")
                     print(f"🔍 [DEBUG] email_msg.send() completed successfully!")
                     logger.info(f'Password reset email sent successfully to {recipient_email}')
                     return True
