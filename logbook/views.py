@@ -1545,6 +1545,13 @@ def api_flight_stats(request):
 def password_reset_request(request):
     """Handle password reset request"""
     if request.method == 'POST':
+        # Check rate limiting and show messages instead of blocking
+        was_limited = getattr(request, 'limited', False)
+        if was_limited:
+            logger.warning(f'Password reset rate limit exceeded from IP: {get_client_ip(request)}')
+            messages.error(request, 'Too many password reset attempts. Please wait a few hours before trying again for security reasons.')
+            form = PasswordResetRequestForm()
+            return render(request, 'logbook/password_reset_request.html', {'form': form})
         form = PasswordResetRequestForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
