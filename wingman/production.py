@@ -144,7 +144,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Email Configuration for Production
+# Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Resend Configuration
