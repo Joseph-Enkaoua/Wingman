@@ -34,9 +34,14 @@ from .forms import FlightForm, AircraftForm, PilotProfileForm, UserRegistrationF
 from .decorators import adaptive_ratelimit, user_ratelimit
 from collections import defaultdict
 
-# Set up logger for this module
 import logging
+import resend
+import os
+
+# Set up logger for this module
 logger = logging.getLogger(__name__)
+
+resend.api_key = os.getenv('RESEND_API_KEY')
 
 def get_client_ip(request):
     """Get client IP for logging purposes"""
@@ -134,8 +139,6 @@ class CustomLoginView(View):
     def get(self, request, *args, **kwargs):
         form = AuthenticationForm()
         return render(request, self.template_name, {'form': form})
-    
-
 
 
 @ratelimit(key='ip', rate='3/h', method='POST', block=False)
@@ -1567,13 +1570,20 @@ def password_reset_request(request):
                 )
                 # Send password reset email
                 try:
-                    send_mail(
-                        subject,
-                        message,
-                        None,  # Use DEFAULT_FROM_EMAIL
-                        [email],
-                        fail_silently=False,
-                    )
+                    # send_mail(
+                    #     subject,
+                    #     message,
+                    #     None,  # Use DEFAULT_FROM_EMAIL
+                    #     [email],
+                    #     fail_silently=False,
+                    # )
+
+                    r = resend.Emails.send({
+                    "from": "onboarding@resend.dev",
+                    "to": "henkaoua@student.42lausanne.ch",
+                    "subject": "Hello World",
+                    "html": "<p>Congrats on sending your <strong>first email</strong>!</p>"
+                    })
                     logger.info(f'Password reset email sent successfully to {email}')
                 except Exception as e:
                     logger.error(f'Failed to send password reset email to {email}: {str(e)}')

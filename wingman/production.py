@@ -179,31 +179,3 @@ LOGGING = {
         'level': 'INFO',
     },
 }
-
-# Email Configuration - Gmail SMTP (Production Ready)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_USE_TLS = False
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
-
-# Email timeout settings to prevent worker timeouts
-EMAIL_TIMEOUT = 30  # 30 seconds timeout for email operations
-EMAIL_CONNECTION_TIMEOUT = 10  # 10 seconds connection timeout
-
-# Email optimizations
-EMAIL_SUBJECT_PREFIX = '[Wingman] '  # Add prefix to all emails
-
-# Validate required email settings
-if not all([EMAIL_HOST_USER, EMAIL_HOST_PASSWORD]):
-    print("Email configuration is invalid")
-    print("EMAIL_HOST:", EMAIL_HOST)
-    print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
-    print("EMAIL_HOST_PASSWORD:", EMAIL_HOST_PASSWORD)
-    print("DEFAULT_FROM_EMAIL:", DEFAULT_FROM_EMAIL)
-    raise ValueError("Missing required email environment variables: EMAIL_HOST_USER, EMAIL_HOST_PASSWORD")
-else:
-    print("Email configuration is valid")
