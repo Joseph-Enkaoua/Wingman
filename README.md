@@ -164,6 +164,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Live Demo:** [https://wingman.cyou](https://wingman.cyou)
 - **Email:** joseph.enkaoua@gmail.com
 
+### Password Reset Emails
+
+If you request a password reset, please note that emails may take a few minutes to arrive. Check your spam folder if you don't see the reset email in your inbox within 5-10 minutes.
+
 ---
 
 <div align="center">
