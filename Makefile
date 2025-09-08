@@ -1,7 +1,7 @@
 # Wingman Project Makefile
 # Usage: make <command>
 
-.PHONY: help start stop redis-start redis-stop redis-status clean test migrate makemigrations shell
+.PHONY: help start stop redis-start redis-stop redis-status clean test migrate makemigrations shell check-venv check-deps
 
 # Default target
 help:
@@ -10,7 +10,7 @@ help:
 	@echo "Development:"
 	@echo "  start          - Start Django development server with Redis"
 	@echo "  stop           - Stop Django development server"
-	@echo "  dev            - Start development environment (Redis + Django)"
+	@echo "  dev            - Start development environment (auto-setup + Redis + Django)"
 	@echo ""
 	@echo "Redis Management:"
 	@echo "  redis-start    - Start Redis service"
@@ -29,9 +29,28 @@ help:
 	@echo "  clean          - Clean Python cache files"
 	@echo "  install        - Install dependencies"
 	@echo "  setup          - Initial project setup"
+	@echo "  check-venv     - Check/create virtual environment"
+	@echo "  check-deps     - Check/install dependencies"
+
+# Check if virtual environment exists
+check-venv:
+	@if [ ! -d "venv" ]; then \
+		echo "Virtual environment not found. Creating one..."; \
+		python3 -m venv venv; \
+		echo "Virtual environment created!"; \
+	fi
+
+# Check if dependencies are installed
+check-deps:
+	@echo "Checking dependencies..."
+	@source venv/bin/activate && pip list | grep -q Django || { \
+		echo "Dependencies not installed. Installing..."; \
+		pip install -r requirements.txt; \
+		echo "Dependencies installed!"; \
+	}
 
 # Start development environment
-dev: redis-start migrate
+dev: check-venv check-deps redis-start migrate
 	@echo "Starting development environment..."
 	@echo "Redis: Starting..."
 	@sleep 2

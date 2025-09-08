@@ -45,22 +45,9 @@ cd wingman
 
 # Set up virtual environment
 python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Run migrations
-python manage.py migrate
-
-# Create superuser
-python manage.py createsuperuser
-
-# Load sample data (optional)
-python manage.py load_sample_data
-
-# Start development server
-python manage.py runserver
+# Activate virtual environment and start development server
+make dev
 ```
 
 Visit `http://127.0.0.1:8000` and start logging your flights!
