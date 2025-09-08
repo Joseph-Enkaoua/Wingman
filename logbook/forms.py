@@ -445,8 +445,15 @@ class UserRegistrationForm(UserCreationForm):
         """Ensure email uniqueness"""
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("A user with this email already exists.")
+            raise forms.ValidationError("This email cannot be used to register.")
         return email
+    
+    def clean_username(self):
+        """Ensure username uniqueness with generic error message"""
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("This username cannot be used to register.")
+        return username
     
     def save(self, commit=True):
         user = super().save(commit=False)

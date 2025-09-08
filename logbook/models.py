@@ -292,7 +292,7 @@ class CustomUser(User):
         if self.email:
             # Check if another user has this email (excluding current user)
             if User.objects.filter(email=self.email).exclude(pk=self.pk).exists():
-                raise ValidationError("A user with this email already exists.")
+                raise ValidationError("This email cannot be used to register.")
     
     def save(self, *args, **kwargs):
         """Ensure email uniqueness before saving"""

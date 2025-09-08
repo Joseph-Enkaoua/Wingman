@@ -46,7 +46,7 @@ def ensure_email_uniqueness(sender, instance, **kwargs):
     if instance.email:
         # Check if another user has this email (excluding current user)
         if User.objects.filter(email=instance.email).exclude(pk=instance.pk).exists():
-            raise ValidationError("A user with this email already exists.")
+            raise ValidationError("This email cannot be used to register.")
 
 @receiver(post_save, sender=User)
 def log_user_creation(sender, instance, created, **kwargs):
