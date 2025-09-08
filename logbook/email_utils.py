@@ -43,7 +43,7 @@ def test_resend_connection():
             return result
         
         # Check if we have a configured domain
-        default_from = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
+        default_from = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Wingman Flight Logbook <notifications@mail.wingman.cyou>')
         if '@' in default_from:
             domain = default_from.split('@')[1]
             result['domain_configured'] = True
@@ -77,7 +77,7 @@ def send_email_via_resend(to_email, subject, html_content, text_content=None, fr
             return False
             
         if not from_email:
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Wingman Flight Logbook <notifications@mail.wingman.cyou>')
         
         # Prepare email data
         email_data = {
@@ -136,7 +136,7 @@ def send_email_via_django(to_email, subject, html_content, text_content=None, fr
     """
     try:
         if not from_email:
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Wingman Flight Logbook <notifications@mail.wingman.cyou>')
         
         # Send email via Django (will print to console in development)
         send_mail(
@@ -219,8 +219,8 @@ Best regards,
 The Wingman Team
 
 ---
-This email was sent from Wingman Flight Logbook ({user.email})
-If you have questions, please reply to this email or contact us at support@mail.wingman.cyou
+This email was sent from Wingman Flight Logbook
+If you have questions, please contact us at support@mail.wingman.cyou
         """
         
         subject = "Password Reset Request - Wingman Flight Logbook"

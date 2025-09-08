@@ -153,8 +153,8 @@ RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 
 # Use subdomain for better deliverability and reputation management
 # This helps segment your sending by purpose and protects your main domain reputation
-# Using 'notifications' instead of 'noreply' for better deliverability
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'notifications@mail.wingman.cyou')
+# Using a professional sender name for better branding and trust
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Wingman Flight Logbook <notifications@mail.wingman.cyou>')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Reply-To email for better trust and deliverability

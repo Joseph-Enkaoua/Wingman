@@ -244,7 +244,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Resend Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'notifications@wingman.cyou')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Wingman Flight Logbook <notifications@wmail.wingman.cyou>')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Note: We don't use Django's SMTP backend in production
