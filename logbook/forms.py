@@ -81,6 +81,7 @@ class FlightForm(forms.ModelForm):
     """Form for creating and editing flight entries"""
     
     # Custom fields for time inputs - new structure (removed single_engine_time and multi_engine_time)
+    total_time = TimeInMinutesField(required=False, label="Total Flight Time")
     multi_pilot_time = TimeInMinutesField(required=False, label="Multi-Pilot Flight Time")
     night_time = TimeInMinutesField(required=False, label="Night Flight Time")
     ifr_time = TimeInMinutesField(required=False, label="IFR Flight Time")
@@ -133,6 +134,7 @@ class FlightForm(forms.ModelForm):
         flight = super().save(commit=False)
         
         # Set the time values from our custom fields
+        flight.total_time_minutes = self.cleaned_data.get('total_time', 0)
         flight.multi_pilot_time = self.cleaned_data.get('multi_pilot_time', 0)
         flight.night_time = self.cleaned_data.get('night_time', 0)
         flight.ifr_time = self.cleaned_data.get('ifr_time', 0)
@@ -151,14 +153,6 @@ class FlightForm(forms.ModelForm):
             flight.aircraft_manufacturer = aircraft.manufacturer
             flight.aircraft_type = aircraft.type
             flight.aircraft_engine_type = aircraft.engine_type
-            
-            # Auto-populate engine time based on aircraft type and flight duration
-            if aircraft.engine_type == 'SINGLE':
-                flight.single_engine_time = int(flight.total_time * 60) if flight.total_time else 0
-                flight.multi_engine_time = 0
-            elif aircraft.engine_type == 'MULTI':
-                flight.multi_engine_time = int(flight.total_time * 60) if flight.total_time else 0
-                flight.single_engine_time = 0
         else:
             # No aircraft selected - this is allowed for simulator flights
             flight.aircraft = None
@@ -166,9 +160,6 @@ class FlightForm(forms.ModelForm):
             flight.aircraft_manufacturer = ''
             flight.aircraft_type = ''
             flight.aircraft_engine_type = ''
-            # Set both engine times to 0 for simulator flights
-            flight.single_engine_time = 0
-            flight.multi_engine_time = 0
         
         if commit:
             flight.save()
@@ -215,12 +206,12 @@ class FlightForm(forms.ModelForm):
             elif total_hours > 24:
                 raise forms.ValidationError("Flight duration cannot exceed 24 hours")
             
-            # Auto-calculate total time
-            cleaned_data['total_time'] = round(total_hours, 1)
+            # Auto-calculate total time in minutes
+            cleaned_data['total_time'] = total_minutes
             
             # Convert total time to HH:MM format for consistent error messages
-            total_hours_int = int(total_hours)
-            total_mins_int = int((total_hours - total_hours_int) * 60)
+            total_hours_int = total_minutes // 60
+            total_mins_int = total_minutes % 60
             total_time_formatted = f"{total_hours_int:02d}:{total_mins_int:02d}"
             
             # Validate that time components don't exceed total flight time (convert to minutes for comparison)

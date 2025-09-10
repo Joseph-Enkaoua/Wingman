@@ -219,7 +219,7 @@
                   <strong>{{ flight.arrival_aerodrome }}</strong>
                 </td>
                 <td>
-                  <span class="badge bg-success">{{ flight.total_time }}h</span>
+                  <span class="badge bg-success">{{ flight.total_time_hhmm }}</span>
                   {% if flight.night_time > 0 %}
                   <span class="badge bg-dark"
                     >{{ flight.night_time|minutes_to_time }} night</span

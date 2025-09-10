@@ -47,7 +47,8 @@ class Flight(models.Model):
     # Time tracking
     departure_time = models.TimeField()
     arrival_time = models.TimeField()
-    total_time = models.DecimalField(max_digits=4, decimal_places=1, validators=[MinValueValidator(Decimal('0.1'))])
+    total_time = models.DecimalField(max_digits=4, decimal_places=1, validators=[MinValueValidator(Decimal('0.1'))])  # Legacy field for backward compatibility
+    total_time_minutes = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Total flight time in minutes")
     
     # New time breakdowns for the refactored structure
     single_engine_time = models.IntegerField(default=0, validators=[MinValueValidator(0)], help_text="Single engine time in minutes")
@@ -90,24 +91,25 @@ class Flight(models.Model):
         return f"{self.date} - {aircraft_info} - {self.departure_aerodrome} to {self.arrival_aerodrome}"
     
     def save(self, *args, **kwargs):
-        # Auto-calculate total time if not provided
-        if not self.total_time:
+        # Auto-calculate total time in minutes if not provided
+        if not self.total_time_minutes and self.departure_time and self.arrival_time:
             from datetime import datetime, timedelta
-            if self.departure_time and self.arrival_time:
-                # Calculate time difference
-                departure_dt = datetime.combine(self.date, self.departure_time)
-                arrival_dt = datetime.combine(self.date, self.arrival_time)
-                
-                # Handle overnight flights
-                if arrival_dt < departure_dt:
-                    arrival_dt += timedelta(days=1)
-                
-                time_diff = arrival_dt - departure_dt
-                # Calculate in minutes first for accuracy, then convert to hours
-                total_minutes = time_diff.total_seconds() / 60
-                # Round to the nearest minute, then convert to hours with more precision
-                total_minutes_rounded = round(total_minutes)
-                self.total_time = Decimal(str(total_minutes_rounded / 60)).quantize(Decimal('0.01'))
+            
+            # Calculate time difference
+            departure_dt = datetime.combine(self.date, self.departure_time)
+            arrival_dt = datetime.combine(self.date, self.arrival_time)
+            
+            # Handle overnight flights
+            if arrival_dt < departure_dt:
+                arrival_dt += timedelta(days=1)
+            
+            time_diff = arrival_dt - departure_dt
+            # Calculate total minutes (rounded to nearest minute)
+            self.total_time_minutes = round(time_diff.total_seconds() / 60)
+        
+        # Keep legacy total_time field in sync for backward compatibility
+        if self.total_time_minutes:
+            self.total_time = Decimal(str(self.total_time_minutes / 60)).quantize(Decimal('0.01'))
         
         # Auto-populate aircraft details from aircraft reference
         if self.aircraft:
@@ -123,10 +125,10 @@ class Flight(models.Model):
             # Auto-populate engine time based on aircraft type
             # Always update engine time since users can no longer set it manually
             if self.aircraft.engine_type == 'SINGLE':
-                self.single_engine_time = int(self.total_time * 60) if self.total_time else 0
+                self.single_engine_time = self.total_time_minutes
                 self.multi_engine_time = 0  # Reset multi-engine time for single-engine aircraft
             elif self.aircraft.engine_type == 'MULTI':
-                self.multi_engine_time = int(self.total_time * 60) if self.total_time else 0
+                self.multi_engine_time = self.total_time_minutes
                 self.single_engine_time = 0  # Reset single-engine time for multi-engine aircraft
         else:
             # No aircraft (simulator flights) - reset both engine times
@@ -204,14 +206,25 @@ class Flight(models.Model):
             
             time_diff = arrival_dt - departure_dt
             return int(time_diff.total_seconds() / 60)
-        return int(self.total_time * 60) if self.total_time else 0
+        return self.total_time_minutes or 0
+    
+    @property
+    def total_time_hhmm(self):
+        """Get total flight time in HH:MM format"""
+        if not self.total_time_minutes:
+            return "00:00"
+        
+        hours = self.total_time_minutes // 60
+        minutes = self.total_time_minutes % 60
+        return f"{hours:02d}:{minutes:02d}"
     
     def recalculate_total_time(self):
-        """Recalculate and update total_time field with exact calculation"""
+        """Recalculate and update total_time fields with exact calculation"""
         if self.departure_time and self.arrival_time:
             exact_minutes = self.exact_flight_minutes
+            self.total_time_minutes = exact_minutes
             self.total_time = Decimal(str(exact_minutes / 60)).quantize(Decimal('0.01'))
-            self.save(update_fields=['total_time'])
+            self.save(update_fields=['total_time_minutes', 'total_time'])
             return True
         return False
 
