@@ -3,7 +3,7 @@ from logbook.models import Flight
 
 
 class Command(BaseCommand):
-    help = 'Recalculate all flight times using the new accurate calculation method'
+    help = 'Recalculate all flight times using the new accurate calculation method and update engine time accordingly'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -27,7 +27,8 @@ class Command(BaseCommand):
                 exact_minutes = flight.exact_flight_minutes
                 new_time = round(exact_minutes / 60, 2)
                 
-                if abs(old_time - new_time) > 0.01:  # If difference is more than 0.01 hours
+                if abs(float(old_time) - new_time) > 0.01:  # If difference is more than 0.01 hours
+                    updated_count += 1  # Count for both dry-run and actual updates
                     if dry_run:
                         self.stdout.write(
                             f"Flight {flight.id} ({flight.date}): "
@@ -38,8 +39,8 @@ class Command(BaseCommand):
                     else:
                         try:
                             flight.total_time = new_time
-                            flight.save(update_fields=['total_time'])
-                            updated_count += 1
+                            # Use full save() to trigger engine time recalculation
+                            flight.save()
                             self.stdout.write(
                                 f"Updated Flight {flight.id}: {old_time:.2f}h -> {new_time:.2f}h"
                             )

@@ -121,10 +121,17 @@ class Flight(models.Model):
                 self.aircraft_engine_type = self.aircraft.engine_type
             
             # Auto-populate engine time based on aircraft type
-            if self.aircraft.engine_type == 'SINGLE' and not self.single_engine_time:
+            # Always update engine time since users can no longer set it manually
+            if self.aircraft.engine_type == 'SINGLE':
                 self.single_engine_time = int(self.total_time * 60) if self.total_time else 0
-            elif self.aircraft.engine_type == 'MULTI' and not self.multi_engine_time:
+                self.multi_engine_time = 0  # Reset multi-engine time for single-engine aircraft
+            elif self.aircraft.engine_type == 'MULTI':
                 self.multi_engine_time = int(self.total_time * 60) if self.total_time else 0
+                self.single_engine_time = 0  # Reset single-engine time for multi-engine aircraft
+        else:
+            # No aircraft (simulator flights) - reset both engine times
+            self.single_engine_time = 0
+            self.multi_engine_time = 0
         
         super().save(*args, **kwargs)
     
