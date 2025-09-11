@@ -3,6 +3,7 @@
 {% load time_filters %}
 
 {% block title %}Flight Details - Wingman{% endblock %}
+{% block canonical_url %}{% url 'flight-detail' flight.pk %}{% endblock %}
 
 {% block content %}
 

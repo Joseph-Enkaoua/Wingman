@@ -4,6 +4,7 @@
 {% block title %}
 {% if form.instance.pk %}Edit Flight{% else %}Log New Flight{% endif %} - Wingman
 {% endblock %}
+{% block canonical_url %}{% if form.instance.pk %}{% url 'flight-update' form.instance.pk %}{% else %}{% url 'flight-create' %}{% endif %}{% endblock %}
 
 {% block content %}
 <div class="row">
