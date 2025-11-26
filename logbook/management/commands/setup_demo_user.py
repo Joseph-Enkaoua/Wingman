@@ -77,11 +77,27 @@ class Command(BaseCommand):
         Flight.objects.filter(pilot=demo_user).delete()
         self.stdout.write('Cleared existing demo flights')
 
-        # Create sample flights spread across 2025 with more instrument time
+        # Create sample flights spread across the last 12 months with more instrument time
+        today = datetime.now().date()
+        import calendar
+        
+        # Helper function to get a date N months ago
+        def months_ago(months, day=15):
+            result_date = today
+            for _ in range(months):
+                if result_date.month == 1:
+                    result_date = result_date.replace(year=result_date.year - 1, month=12)
+                else:
+                    result_date = result_date.replace(month=result_date.month - 1)
+                # Adjust day if it doesn't exist in target month
+                last_day = calendar.monthrange(result_date.year, result_date.month)[1]
+                result_date = result_date.replace(day=min(day, last_day))
+            return result_date
+        
         flight_data = [
-            # January 2025
+            # 11 months ago
             {
-                'date': datetime(2025, 1, 15).date(),
+                'date': months_ago(11, 15),
                 'departure_aerodrome': 'LFPB',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('09:00', '%H:%M').time(),
@@ -96,9 +112,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 2,
                 'remarks': 'First cross-country flight with instrument training. Great weather conditions.',
             },
-            # February 2025
+            # 10 months ago
             {
-                'date': datetime(2025, 2, 8).date(),
+                'date': months_ago(10, 8),
                 'departure_aerodrome': 'LFPO',
                 'arrival_aerodrome': 'LFST',
                 'departure_time': datetime.strptime('14:00', '%H:%M').time(),
@@ -113,9 +129,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 1,
                 'remarks': 'Solo cross-country to Strasbourg. Some IFR conditions encountered.',
             },
-            # March 2025
+            # 9 months ago
             {
-                'date': datetime(2025, 3, 12).date(),
+                'date': months_ago(9, 12),
                 'departure_aerodrome': 'LFST',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('18:00', '%H:%M').time(),
@@ -130,9 +146,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 1,
                 'remarks': 'Return flight with night time and IFR. Sunset was spectacular.',
             },
-            # April 2025
+            # 8 months ago
             {
-                'date': datetime(2025, 4, 5).date(),
+                'date': months_ago(8, 5),
                 'departure_aerodrome': 'LFPO',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('10:00', '%H:%M').time(),
@@ -147,9 +163,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 4,
                 'remarks': 'Intensive instrument training. Practiced multiple approaches and holds.',
             },
-            # May 2025
+            # 7 months ago
             {
-                'date': datetime(2025, 5, 20).date(),
+                'date': months_ago(7, 20),
                 'departure_aerodrome': 'LFPO',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('20:00', '%H:%M').time(),
@@ -164,9 +180,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 0,
                 'remarks': 'Night flying training. Practiced night landings and navigation.',
             },
-            # June 2025
+            # 6 months ago
             {
-                'date': datetime(2025, 6, 10).date(),
+                'date': months_ago(6, 10),
                 'departure_aerodrome': 'LFPO',
                 'arrival_aerodrome': 'LFML',
                 'departure_time': datetime.strptime('12:00', '%H:%M').time(),
@@ -181,9 +197,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 2,
                 'remarks': 'Long cross-country to Marseille with IFR conditions. Beautiful coastal views.',
             },
-            # July 2025
+            # 5 months ago
             {
-                'date': datetime(2025, 7, 4).date(),
+                'date': months_ago(5, 4),
                 'departure_aerodrome': 'LFML',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('15:00', '%H:%M').time(),
@@ -198,9 +214,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 1,
                 'remarks': 'Return flight from Marseille. Some IFR conditions with strong headwinds.',
             },
-            # August 2025
+            # 4 months ago
             {
-                'date': datetime(2025, 8, 18).date(),
+                'date': months_ago(4, 18),
                 'departure_aerodrome': 'LFPO',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('13:00', '%H:%M').time(),
@@ -215,9 +231,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 3,
                 'remarks': 'Advanced instrument training. Worked on precision approaches.',
             },
-            # September 2025
+            # 3 months ago
             {
-                'date': datetime(2025, 9, 22).date(),
+                'date': months_ago(3, 22),
                 'departure_aerodrome': 'LFPO',
                 'arrival_aerodrome': 'LFPG',
                 'departure_time': datetime.strptime('10:00', '%H:%M').time(),
@@ -232,9 +248,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 2,
                 'remarks': 'IFR flight to Paris CDG. Excellent practice with ATC.',
             },
-            # October 2025
+            # 2 months ago
             {
-                'date': datetime(2025, 10, 5).date(),
+                'date': months_ago(2, 5),
                 'departure_aerodrome': 'LFPG',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('16:00', '%H:%M').time(),
@@ -249,9 +265,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 1,
                 'remarks': 'Return from CDG. Smooth IFR approach and landing.',
             },
-            # November 2025
+            # 1 month ago
             {
-                'date': datetime(2025, 11, 1).date(),
+                'date': months_ago(1, 1),
                 'departure_aerodrome': 'LFPO',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('14:00', '%H:%M').time(),
@@ -266,9 +282,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 4,
                 'remarks': 'IFR proficiency check. Multiple approaches in various conditions.',
             },
-            # November 2025
+            # 2 weeks ago
             {
-                'date': datetime(2025, 11, 15).date(),
+                'date': today - timedelta(days=14),
                 'departure_aerodrome': 'LFPO',
                 'arrival_aerodrome': 'LFST',
                 'departure_time': datetime.strptime('09:30', '%H:%M').time(),
@@ -283,9 +299,9 @@ class Command(BaseCommand):
                 'ifr_approaches': 2,
                 'remarks': 'IFR cross-country to Strasbourg. Excellent navigation practice.',
             },
-            # November 2025 (most recent)
+            # 2 days ago (most recent)
             {
-                'date': datetime(2025, 11, 24).date(),
+                'date': today - timedelta(days=2),
                 'departure_aerodrome': 'LFST',
                 'arrival_aerodrome': 'LFPO',
                 'departure_time': datetime.strptime('15:00', '%H:%M').time(),
