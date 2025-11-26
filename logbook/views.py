@@ -184,9 +184,12 @@ def logout_view(request):
 
 
 def demo_login_view(request):
-    """Demo login view that automatically logs in as demo user"""
+    """Demo login view that automatically logs in as demo user and ensures sample data exists"""
     from django.contrib.auth import login
     from django.contrib.auth.models import User
+    from .models import Aircraft, Flight, PilotProfile
+    from datetime import datetime, timedelta
+    import random
     
     # Get or create demo user
     demo_user, created = User.objects.get_or_create(
@@ -206,7 +209,169 @@ def demo_login_view(request):
         demo_user.set_password('demo_password_secure_12345')
         demo_user.save()
         logger.info('Created demo user account')
-        # Note: Admin should run setup_demo_user command to populate sample data
+    
+    # Ensure demo user has sample data
+    flight_count = Flight.objects.filter(pilot=demo_user).count()
+    
+    if flight_count == 0:
+        # Create sample aircraft if they don't exist
+        aircraft_data = [
+            {'registration': 'F-GABC', 'type': 'Cessna 152', 'manufacturer': 'Cessna', 'year_manufactured': 1978, 'engine_type': 'SINGLE'},
+            {'registration': 'F-GDEF', 'type': 'Piper PA-28', 'manufacturer': 'Piper', 'year_manufactured': 1982, 'engine_type': 'SINGLE'},
+            {'registration': 'F-GHIJ', 'type': 'Diamond DA40', 'manufacturer': 'Diamond', 'year_manufactured': 2005, 'engine_type': 'SINGLE'},
+            {'registration': 'N123AB', 'type': 'Cessna 172', 'manufacturer': 'Cessna', 'year_manufactured': 2010, 'engine_type': 'SINGLE'},
+        ]
+        
+        aircraft_list = []
+        for data in aircraft_data:
+            aircraft, _ = Aircraft.objects.get_or_create(
+                registration=data['registration'],
+                defaults=data
+            )
+            aircraft_list.append(aircraft)
+        
+        # Create or update pilot profile
+        pilot_profile, _ = PilotProfile.objects.get_or_create(
+            user=demo_user,
+            defaults={
+                'license_number': 'DEMO-123456',
+                'license_type': 'PPL',
+                'medical_class': 'Class 2',
+                'medical_expiry': datetime.now().date() + timedelta(days=365),
+                'phone': '+1 555 123 4567',
+                'address': '123 Aviation Way, Demo City',
+                'flight_school': 'Demo Flight Academy',
+                'instructor': 'Captain Demo Instructor',
+            }
+        )
+        
+        # Create sample flights
+        flight_data = [
+            {
+                'date': datetime.now().date() - timedelta(days=30),
+                'departure_aerodrome': 'LFPB',
+                'arrival_aerodrome': 'LFPO',
+                'departure_time': datetime.strptime('09:00', '%H:%M').time(),
+                'arrival_time': datetime.strptime('10:30', '%H:%M').time(),
+                'pic_time': 0,
+                'instructor_time': 90,  # 1.5 hours in minutes
+                'single_engine_time': 90,
+                'night_time': 0,
+                'ifr_time': 0,
+                'day_landings': 2,
+                'night_landings': 0,
+                'ifr_approaches': 0,
+                'remarks': 'First cross-country flight. Great weather conditions.',
+            },
+            {
+                'date': datetime.now().date() - timedelta(days=25),
+                'departure_aerodrome': 'LFPO',
+                'arrival_aerodrome': 'LFST',
+                'departure_time': datetime.strptime('14:00', '%H:%M').time(),
+                'arrival_time': datetime.strptime('16:00', '%H:%M').time(),
+                'pic_time': 120,  # 2 hours in minutes
+                'instructor_time': 0,
+                'single_engine_time': 120,
+                'night_time': 0,
+                'ifr_time': 0,
+                'day_landings': 1,
+                'night_landings': 0,
+                'ifr_approaches': 0,
+                'remarks': 'Solo cross-country to Strasbourg. Beautiful flight over the countryside.',
+            },
+            {
+                'date': datetime.now().date() - timedelta(days=20),
+                'departure_aerodrome': 'LFST',
+                'arrival_aerodrome': 'LFPO',
+                'departure_time': datetime.strptime('18:00', '%H:%M').time(),
+                'arrival_time': datetime.strptime('19:30', '%H:%M').time(),
+                'pic_time': 90,
+                'instructor_time': 0,
+                'single_engine_time': 90,
+                'night_time': 30,  # 0.5 hours in minutes
+                'ifr_time': 0,
+                'day_landings': 1,
+                'night_landings': 1,
+                'ifr_approaches': 0,
+                'remarks': 'Return flight with some night time. Sunset was spectacular.',
+            },
+            {
+                'date': datetime.now().date() - timedelta(days=15),
+                'departure_aerodrome': 'LFPO',
+                'arrival_aerodrome': 'LFPO',
+                'departure_time': datetime.strptime('10:00', '%H:%M').time(),
+                'arrival_time': datetime.strptime('11:30', '%H:%M').time(),
+                'pic_time': 0,
+                'instructor_time': 90,
+                'single_engine_time': 90,
+                'night_time': 0,
+                'ifr_time': 90,  # 1.5 hours in minutes
+                'day_landings': 3,
+                'night_landings': 0,
+                'ifr_approaches': 3,
+                'remarks': 'Instrument training. Practiced approaches and holds.',
+            },
+            {
+                'date': datetime.now().date() - timedelta(days=10),
+                'departure_aerodrome': 'LFPO',
+                'arrival_aerodrome': 'LFPO',
+                'departure_time': datetime.strptime('20:00', '%H:%M').time(),
+                'arrival_time': datetime.strptime('21:30', '%H:%M').time(),
+                'pic_time': 0,
+                'instructor_time': 90,
+                'single_engine_time': 90,
+                'night_time': 90,  # 1.5 hours in minutes
+                'ifr_time': 0,
+                'day_landings': 0,
+                'night_landings': 3,
+                'ifr_approaches': 0,
+                'remarks': 'Night flying training. Practiced night landings and navigation.',
+            },
+            {
+                'date': datetime.now().date() - timedelta(days=5),
+                'departure_aerodrome': 'LFPO',
+                'arrival_aerodrome': 'LFML',
+                'departure_time': datetime.strptime('12:00', '%H:%M').time(),
+                'arrival_time': datetime.strptime('14:30', '%H:%M').time(),
+                'pic_time': 150,  # 2.5 hours in minutes
+                'instructor_time': 0,
+                'single_engine_time': 150,
+                'night_time': 0,
+                'ifr_time': 0,
+                'day_landings': 1,
+                'night_landings': 0,
+                'ifr_approaches': 0,
+                'remarks': 'Long cross-country to Marseille. Beautiful coastal views.',
+            },
+            {
+                'date': datetime.now().date() - timedelta(days=2),
+                'departure_aerodrome': 'LFML',
+                'arrival_aerodrome': 'LFPO',
+                'departure_time': datetime.strptime('15:00', '%H:%M').time(),
+                'arrival_time': datetime.strptime('17:30', '%H:%M').time(),
+                'pic_time': 150,
+                'instructor_time': 0,
+                'single_engine_time': 150,
+                'night_time': 0,
+                'ifr_time': 0,
+                'day_landings': 1,
+                'night_landings': 0,
+                'ifr_approaches': 0,
+                'remarks': 'Return flight from Marseille. Strong headwinds on the way back.',
+            },
+        ]
+        
+        for data in flight_data:
+            # Randomly select an aircraft
+            aircraft = random.choice(aircraft_list)
+            
+            Flight.objects.create(
+                pilot=demo_user,
+                aircraft=aircraft,
+                **data
+            )
+        
+        logger.info('Created sample data for demo user')
     
     # Log in as demo user
     login(request, demo_user)
