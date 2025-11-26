@@ -183,6 +183,39 @@ def logout_view(request):
     return redirect('/login/')
 
 
+def demo_login_view(request):
+    """Demo login view that automatically logs in as demo user"""
+    from django.contrib.auth import login
+    from django.contrib.auth.models import User
+    
+    # Get or create demo user
+    demo_user, created = User.objects.get_or_create(
+        username='demo',
+        defaults={
+            'first_name': 'Demo',
+            'last_name': 'Pilot',
+            'email': 'demo@wingman.cyou',
+            'is_staff': False,
+            'is_superuser': False,
+            'is_active': True,
+        }
+    )
+    
+    if created:
+        # Set a random password (users won't need to know it)
+        demo_user.set_password('demo_password_secure_12345')
+        demo_user.save()
+        logger.info('Created demo user account')
+        # Note: Admin should run setup_demo_user command to populate sample data
+    
+    # Log in as demo user
+    login(request, demo_user)
+    logger.info(f'Demo login from IP: {get_client_ip(request)}')
+    messages.info(request, 'Welcome to Demo Mode! You can explore all features. Create an account to save your own data.')
+    
+    return redirect('dashboard')
+
+
 @login_required
 def dashboard(request):
     """Dashboard view with flight statistics and charts"""

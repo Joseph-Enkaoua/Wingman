@@ -6,6 +6,7 @@ urlpatterns = [
     # Authentication
     path('register/', views.register_view, name='register'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
+    path('demo/', views.demo_login_view, name='demo-login'),
     path('logout/', views.logout_view, name='logout'),
     
     # Password Reset

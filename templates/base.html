@@ -669,7 +669,19 @@
     <!-- Main Content -->
     <div class="container-fluid">
       <div class="main-content">
-
+        <!-- Demo Mode Banner -->
+        {% if user.is_authenticated and user.username == 'demo' %}
+        <div class="alert alert-info alert-dismissible fade show mb-4" role="alert" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6;">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2" style="font-size: 1.2rem;"></i>
+            <div class="flex-grow-1">
+              <strong>Demo Mode:</strong> You're exploring Wingman with sample data. 
+              <a href="{% url 'register' %}" class="alert-link">Create an account</a> to save your own flights and data.
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        </div>
+        {% endif %}
         
         <!-- Page Content -->
         {% block content %}{% endblock %}
