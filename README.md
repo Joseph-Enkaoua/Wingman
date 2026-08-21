@@ -2,7 +2,7 @@
 
 **Professional flight logging for pilots, built with Django**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Wingman.cyou-blue?style=for-the-badge&logo=airplane)](https://wingman.cyou)
+
 [![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat&logo=python)](https://python.org)
 [![Django](https://img.shields.io/badge/Django-5.2.5-green?style=flat&logo=django)](https://djangoproject.com)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.0-purple?style=flat&logo=bootstrap)](https://getbootstrap.com)
