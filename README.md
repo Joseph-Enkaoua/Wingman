@@ -7,7 +7,6 @@
 [![Django](https://img.shields.io/badge/Django-5.2.5-green?style=flat&logo=django)](https://djangoproject.com)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.0-purple?style=flat&logo=bootstrap)](https://getbootstrap.com)
 
-> **Live Demo:** [https://wingman.cyou](https://wingman.cyou)
 
 A modern, comprehensive flight logbook application designed for pilots and flight schools. Track your flights, manage aircraft, generate professional reports, and analyze your aviation progress with beautiful charts and analytics.
 
